@@ -84,8 +84,9 @@ static const uint16_t scanStepValues[] = {
  * noise. <8:6> AF Tx LPF2, <5:4> BW mode (00 12.5k, 01 6.25k, 10 25k), <3> 1.
  * These are the words the sweep has always written (the table used to hold
  * 16-bit values that GetBWRegValueForScan() cut to 8 bits). v0.2.0 wrote the
- * whole word: RF/weak-RF up to 5.5/5.5 kHz at 12.5 kHz steps and 7.0/6.0 kHz
- * at 25 kHz, a 2-4 dB higher noise floor that hid weak (FRS) signals. */
+ * whole word: RF/weak-RF up to 5.5/5.5 kHz at 12.5 kHz steps and 7.0/7.0 kHz
+ * at 25 kHz (BK4829 register table), a 2.4-4.4 dB higher noise floor that hid
+ * weak (FRS) signals. */
 static const uint8_t scanStepBWRegValues[] = {
     0x58,   // 1     (S_STEP_0_01kHz,  index 0)  6.25k mode
     0x58,   // 10    (S_STEP_0_1kHz,   index 1)

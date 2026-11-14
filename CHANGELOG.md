@@ -12,10 +12,11 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   during the sweep is undone: the sweep writes again the same bytes as 0.1.0
   (bits 15:8 = 0, RF and weak-RF filter at their narrowest, 2.0 kHz, 4.0 kHz
   in 25k mode). The full word opened them to 5.5/5.5 kHz on 12.5 kHz steps,
-  5.0/5.0 kHz on 8.33/10 kHz, 4.0/4.0 kHz on 6.25 kHz and 7.0/6.0 kHz on
-  15 kHz and up (25 kHz is the default, MR included). That is a 2–4 dB
-  higher noise floor, and AUTO raised the trigger with it, so weak signals
-  lost that whole margin. The step table now holds those bytes as `uint8_t`.
+  5.0/5.0 kHz on 8.33/10 kHz, 4.0/4.0 kHz on 6.25 kHz and 7.0/7.0 kHz on
+  15 kHz and up (25 kHz is the default, MR included), per the BK4829
+  register table. That is a 2.4–4.4 dB higher noise floor, and the entry
+  calibration raised the trigger with it, so weak signals lost that whole
+  margin. The step table now holds those bytes as `uint8_t`.
   -12 B. Not tested on a radio yet.
 
 ### Changed
