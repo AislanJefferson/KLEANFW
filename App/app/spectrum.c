@@ -1059,6 +1059,14 @@ static void ExitToSpectrumPeak()
 
 // Scan info
 
+// Frequency of sweep index i: the MR channel, or FStart + i steps (GetFEnd()
+// is one step past the last VFO bin, so it must not start a reverse pass).
+static uint32_t SweepFrequencyAt(uint16_t i)
+{
+    return spectrumChannelMode ? SpectrumChannelFrequencyAt(i)
+                               : GetFStart() + (uint32_t)i * scanInfo.scanStep;
+}
+
 static void ResetScanStats()
 {
     scanInfo.rssi = 0;
@@ -1095,15 +1103,13 @@ static void InitScanPosition()
     if (!startFromLeft && scanInfo.measurementsCount > 1)
     {
         scanInfo.i = scanInfo.measurementsCount - 1;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(scanInfo.i)
-                                         : GetFEnd();
+        scanInfo.f = SweepFrequencyAt(scanInfo.i);
         scanForward = false;
     }
     else
     {
         scanInfo.i = 0;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(0)
-                                         : GetFStart();
+        scanInfo.f = SweepFrequencyAt(0);
         scanForward = true;
     }
     scanReturnPending = scanInfo.measurementsCount > 1;
@@ -1534,15 +1540,13 @@ static void ResumeSweepInDirection(bool forward)
     {
         scanForward = true;
         scanInfo.i = 0;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(0)
-                                         : GetFStart();
+        scanInfo.f = SweepFrequencyAt(0);
     }
     else
     {
         scanForward = false;
         scanInfo.i = scanInfo.measurementsCount - 1;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(scanInfo.i)
-                                         : GetFEnd();
+        scanInfo.f = SweepFrequencyAt(scanInfo.i);
     }
 
     newScanStart = false;
@@ -2879,8 +2883,7 @@ static bool NextScanStepInterlaced()
         {
             interlacePhase = phase;
             scanInfo.i = phase;
-            scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(phase)
-                                             : GetFStart() + (uint32_t)phase * scanInfo.scanStep;
+            scanInfo.f = SweepFrequencyAt(phase);
             return false;
         }
     }
@@ -2992,7 +2995,7 @@ static void UpdateScan()
 #endif
 
     bool atEnd = scanForward ? (scanInfo.i >= scanInfo.measurementsCount - 1)
-                             : (scanInfo.i <= 1);
+                             : (scanInfo.i == 0);
 
     if (!atEnd)
     {

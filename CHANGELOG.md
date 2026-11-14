@@ -18,6 +18,14 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   calibration raised the trigger with it, so weak signals lost that whole
   margin. The step table now holds those bytes as `uint8_t`.
   -12 B. Not tested on a radio yet.
+- Spectrum (F+5): every other sweep starts from the right, and that pass
+  started one step past the last VFO bin (`GetFEnd()`). Each bin of that pass
+  got the RSSI of its right-hand neighbour, so a narrow signal jumped between
+  two bins and its peak was halved by the decay. The pass also stopped at bin 1:
+  the left edge in VFO, and the first channel of the list in MR, were
+  measured in only half the sweeps. Both passes now measure the same bins
+  (`SweepFrequencyAt()`), bin 0 included. The bug comes from F4HWN and was
+  in 0.1.0 too. -32 B. Not tested on a radio yet.
 
 ### Changed
 
