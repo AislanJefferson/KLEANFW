@@ -101,7 +101,7 @@ struct {
   offsetDir:4;
 
 // 0x0C
-  u8 narrower:1,
+  u8 __UNUSED01:1,
   txLock:1,
   busyChLockout:1,
   txpower:3,
@@ -109,7 +109,8 @@ struct {
   freq_reverse:1;
 
   // 0x0D
-  u8 __UNUSED02:4,
+  u8 nplus:2,
+  __UNUSED02:2,
   dtmf_pttid:3,
   dtmf_decode:1;
 
@@ -166,7 +167,7 @@ struct {
   offsetDir:4;
 
 // 0x0C
-  u8 narrower:1,
+  u8 __UNUSED05:1,
   txLock:1,
   busyChLockout:1,
   txpower:3,
@@ -174,7 +175,8 @@ struct {
   freq_reverse:1;
 
   // 0x0D
-  u8 __UNUSED06:4,
+  u8 nplus:2,
+  __UNUSED06:2,
   dtmf_pttid:3,
   dtmf_decode:1;
 
@@ -1808,12 +1810,14 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         rs.set_doc('Selects the per-channel voice inversion frequency.')
         mem.extra.append(rs)
 
-        # Narrower (N+): bit 7 of byte 0x0C, only meaningful with NFM/NAM
-        narrower = bool(int(_mem.bandwidth) and int(_mem.narrower))
+        # Narrower (N+): byte 0x0D bits 7:6 == 10, only meaningful with NFM
+        # (legacy records hold 00 or 11 there, never 10)
+        narrower = bool(int(_mem.modulation) == 0 and int(_mem.bandwidth)
+                        and int(_mem.nplus) == 2)
         val = RadioSettingValueBoolean(narrower)
         rs = RadioSetting("narrower", "Narrower (N+)", val)
-        rs.set_doc('N+: with NFM/NAM, use the 6.25 kHz Narrower filter '
-                   'instead of 12.5 kHz Narrow. Ignored for FM, AM and USB.')
+        rs.set_doc('N+: with NFM, use the Narrower (N+) filter instead of '
+                   '12.5 kHz Narrow. Ignored for FM, AM, NAM and USB.')
         mem.extra.append(rs)
 
         # BusyCL
@@ -3859,9 +3863,9 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         _mem_chan.noRoger = get_setting("noRoger", False)
         _mem_chan.scrambler = get_setting("scrambler", 0)
         _mem_chan.busyChLockout = get_setting("busyChLockout", False)
-        # N+ only with a narrow FM/AM mode; FM/AM/USB always clear it
-        _mem_chan.narrower = 1 if (memory.mode in ("NFM", "NAM") and
-                                   get_setting("narrower", False)) else 0
+        # N+ only with NFM; every other mode clears it (0x0D bits 7:6)
+        _mem_chan.nplus = 2 if (memory.mode == "NFM" and
+                                get_setting("narrower", False)) else 0
         _mem_chan.dtmf_pttid = get_setting("pttid", 0)
         _mem_chan.freq_reverse = get_setting("frev", False)
         _mem_chan.dtmf_decode = get_setting("dtmfdecode", False)

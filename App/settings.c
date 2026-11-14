@@ -723,7 +723,7 @@ bool SETTINGS_FetchChannelScanDisplayInfo(const uint16_t channel, ChannelScanDis
     {
         const uint8_t d4 = raw.data[4];
         info->frequencyReverse = !!((d4 >> 0) & 1u);
-        info->channelBandwidth = RADIO_DecodeBandwidth(d4);
+        info->channelBandwidth = RADIO_DecodeBandwidth(d4, raw.data[5]);
         info->outputPower      =   ((d4 >> 2) & 7u);
         info->busyChannelLock  = !!((d4 >> 5) & 1u);
         info->txLock           = !!((d4 >> 6) & 1u);
@@ -1307,9 +1307,10 @@ void SETTINGS_SaveChannel(uint16_t Channel, uint8_t VFO, const VFO_Info_t *pVFO,
             | (pVFO->TX_LOCK << 6)
             | (pVFO->BUSY_CHANNEL_LOCK << 5)
             | (pVFO->OUTPUT_POWER      << 2)
-            | RADIO_EncodeBandwidth(pVFO->CHANNEL_BANDWIDTH)
+            | RADIO_EncodeBandwidthD4(pVFO->CHANNEL_BANDWIDTH)
             | (pVFO->FrequencyReverse  << 0);
-        State -> _8[5] = ((pVFO->DTMF_PTT_ID_TX_MODE & 7u) << 1)
+        State -> _8[5] = RADIO_EncodeBandwidthD5(pVFO->CHANNEL_BANDWIDTH)
+            | ((pVFO->DTMF_PTT_ID_TX_MODE & 7u) << 1)
 #ifdef ENABLE_DTMF_CALLING
             | ((pVFO->DTMF_DECODING_ENABLE & 1u) << 0)
 #endif

@@ -419,7 +419,7 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         {
             const uint8_t d4 = data[4];
             pVfo->FrequencyReverse  = !!((d4 >> 0) & 1u);
-            pVfo->CHANNEL_BANDWIDTH = RADIO_DecodeBandwidth(d4);
+            pVfo->CHANNEL_BANDWIDTH = RADIO_DecodeBandwidth(d4, data[5]);
             pVfo->OUTPUT_POWER      =   ((d4 >> 2) & 7u);
             pVfo->BUSY_CHANNEL_LOCK = !!((d4 >> 5) & 1u);
             pVfo->TX_LOCK           = !!((d4 >> 6) & 1u);

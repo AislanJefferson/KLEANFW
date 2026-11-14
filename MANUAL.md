@@ -316,7 +316,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 | **RxCTCS / TxCTCS** | OFF, 67.0–254.1 Hz (50 tons) | OFF | Tom CTCSS de RX / TX *(canal)* |
 | **TxODir** | OFF, +, − | OFF | Direção do offset de repetidora *(canal)* |
 | **TxOffs** | 0 a 999.99999 MHz | 0 | Valor do offset *(canal)* |
-| **W/N** | WIDE, NARROW, NARROWER | NARROW | Largura de banda: W (25 kHz), N (12,5 kHz) ou N+ (6,25 kHz) *(canal)* |
+| **W/N** | WIDE, NARROW, NARROWER | NARROW | Largura de banda: W (25 kHz), N (12,5 kHz) ou N+ (6,25 kHz; não em AM) *(canal)* |
 | **Scramb** | OFF, 2600–3500 Hz, HOP | OFF | Scrambler de voz *(canal)* |
 | **BusyCL** | OFF, ON | OFF | Impede TX com o canal ocupado *(canal)* |
 | **Compnd** | OFF, TX, RX, TX/RX | OFF | Compressor/expansor de áudio *(canal)* |
@@ -398,14 +398,14 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 
 #### `W/N`: largura de banda *(canal)*
 
-- **O que faz**: escolhe a largura de banda do canal ou VFO atual: `WIDE` (25 kHz), `NARROW` (12,5 kHz) ou `NARROWER` (6,25 kHz, exibido como **N+** / **NAR+**).
+- **O que faz**: escolhe a largura de banda do canal ou VFO atual: `WIDE` (25 kHz), `NARROW` (12,5 kHz) ou `NARROWER` (6,25 kHz, exibido como **N+** / **NAR+**). Em AM só há `WIDE` e `NARROW`.
 - **Opções**:
   - `WIDE` (25 kHz);
   - `NARROW` (12,5 kHz);
   - `NARROWER` (6,25 kHz, **N+**).
 - **Padrão**: NARROW.
 - **Quando mudar**: use a mesma largura dos outros rádios da conversa. Com largura diferente, a voz fica baixa e distorcida (larga demais) ou estoura (estreita demais).
-- **Atenção**: a escolha é **por canal/VFO** (não existe mais o ajuste global `SetNFM`). N+ não aumenta o alcance (seção 13). A ação lateral **WIDE NARROW** percorre W → N → N+ → W em FM (e W ↔ N em AM) temporariamente.
+- **Atenção**: a escolha é **por canal/VFO** (não existe mais o ajuste global `SetNFM`). N+ estreita só o filtro de RX; o desvio de TX é o mesmo do N (seção 13). A ação lateral **WIDE NARROW** percorre W → N → N+ → W em FM (e W ↔ N em AM) temporariamente.
 
 #### `Scramb`: scrambler de voz *(canal)*
 
@@ -1289,17 +1289,20 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 
 ## 13. Largura de banda: W, N e N+
 
-| Modo | Canal | Filtro de RX | Filtro de RX (sinal fraco) | Áudio TX |
-|---|---|---|---|---|
-| **Wide (W)** | 25 kHz | 7,0 kHz | 4,0 kHz | 3,0 kHz |
-| **Narrow (N)** | 12,5 kHz | 4,0 kHz | 2,0 kHz | 2,5 kHz |
-| **Narrower (N+)** | 6,25 kHz | 3,0 kHz | 2,0 kHz | 2,5 kHz |
+| Modo | Canal | Filtro de RX | Filtro de RX (sinal fraco) | Áudio TX (LPF2) | Modo do chip |
+|---|---|---|---|---|---|
+| **Wide (W)** | 25 kHz | 7,0 kHz | 6,0 kHz | 3,0 kHz | 25k |
+| **Narrow (N)** | 12,5 kHz | 3,5 kHz | 3,0 kHz | 2,5 kHz | 12,5k |
+| **Narrower (N+)** | 6,25 kHz (nominal) | 2,5 kHz | 2,0 kHz | 5,0 kHz | 12,5k |
+
+Valores do registrador REG_43 que o firmware grava em FM (W `0x3428`, N `0x3448`, N+ `0x1148`), lidos na tabela de registradores do BK4829.
 
 - **W/N** define a banda de cada canal ou VFO diretamente entre `WIDE` (25 kHz), `NARROW` (12,5 kHz) e `NARROWER` (6,25 kHz, **N+**).
 - Na tela: `W` / `N` / `N+` (GUI CLASSIC) ou `WIDE` / `NAR` / `NAR+` (GUI TINY).
 - **Padrões**: canais e VFOs novos em FM ficam em **Narrow** (12,5 kHz); AM fica em Wide.
-- **Compatibilidade na EEPROM**: o modo N+ fica gravado no bit 7 do byte de flags do canal, junto com o bit de Narrow. Firmwares e módulos CHIRP antigos leem um canal N+ como Narrow comum.
-- N e N+ usam o mesmo filtro para sinal fraco, então **N+ não aumenta o alcance** e reduz o desvio de TX.
+- **Compatibilidade na EEPROM**: o bit de Narrow continua no byte `+0x0C` do canal; o N+ é a marca `10` nos bits 7:6 do byte `+0x0D`, um padrão que canais antigos nunca têm (`00` se gravados pelo rádio, `11` se gravados pelo CHIRP num slot vazio). Canais existentes continuam Narrow comum, e firmwares e módulos CHIRP antigos leem um canal N+ como Narrow comum.
+- O "6,25 kHz" do N+ é nominal: o chip continua no modo 12,5k do N, só com o filtro de RX mais estreito. Por isso o **desvio de TX do N+ é o mesmo do N**.
+- Em AM o N+ não existe: o menu `W/N` e a ação **WIDE NARROW** só oferecem W e N.
 
 ---
 

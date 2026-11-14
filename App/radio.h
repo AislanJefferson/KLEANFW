@@ -48,31 +48,43 @@ _Static_assert((int)BANDWIDTH_NARROW == (int)BK4819_FILTER_BW_NARROW, "bandwidth
 _Static_assert((int)BANDWIDTH_NARROWER == (int)BK4819_FILTER_BW_NARROWER, "bandwidth enum");
 #endif
 
-/* Channel record byte +0x0C: bit 1 = narrow, bit 7 = narrower (N+, only
- * meaningful with bit 1 set). Older firmware/CHIRP read N+ as plain N. */
-#define CHANNEL_BW_NARROW_BIT   (1u << 1)
-#define CHANNEL_BW_NARROWER_BIT (1u << 7)
+/* Channel record: byte +0x0C bit 1 = narrow; N+ (narrower, only meaningful
+ * with bit 1 set) = byte +0x0D bits 7:6 == 10. Legacy records hold 00 there
+ * (saved by the firmware) or 11 (CHIRP over an erased slot leaves its unused
+ * bits at 1), so neither reads as N+, and bit 6 = 0 keeps +0x0D from ever
+ * being 0xFF ("unwritten"). Older firmware/CHIRP read N+ as plain N. */
+#define CHANNEL_BW_NARROW_BIT     (1u << 1)
+#define CHANNEL_BW_NARROWER_MASK  0xC0u
+#define CHANNEL_BW_NARROWER_VALUE 0x80u
 
-static inline uint8_t RADIO_DecodeBandwidth(uint8_t d4)
+static inline uint8_t RADIO_DecodeBandwidth(uint8_t d4, uint8_t d5)
 {
     if (!(d4 & CHANNEL_BW_NARROW_BIT))
         return BANDWIDTH_WIDE;
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (d4 & CHANNEL_BW_NARROWER_BIT)
+    if ((d5 & CHANNEL_BW_NARROWER_MASK) == CHANNEL_BW_NARROWER_VALUE)
         return BANDWIDTH_NARROWER;
+#else
+    (void)d5;
 #endif
     return BANDWIDTH_NARROW;
 }
 
-static inline uint8_t RADIO_EncodeBandwidth(uint8_t bw)
+// Byte +0x0C part: anything but Wide (unknown included) is saved as Narrow.
+static inline uint8_t RADIO_EncodeBandwidthD4(uint8_t bw)
 {
-    if (bw == BANDWIDTH_WIDE)
-        return 0u;                       // anything unknown is saved as Narrow
+    return bw == BANDWIDTH_WIDE ? 0u : CHANNEL_BW_NARROW_BIT;
+}
+
+// Byte +0x0D part: the N+ marker.
+static inline uint8_t RADIO_EncodeBandwidthD5(uint8_t bw)
+{
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
     if (bw == BANDWIDTH_NARROWER)
-        return CHANNEL_BW_NARROW_BIT | CHANNEL_BW_NARROWER_BIT;
+        return CHANNEL_BW_NARROWER_VALUE;
 #endif
-    return CHANNEL_BW_NARROW_BIT;
+    (void)bw;
+    return 0u;
 }
 
 enum PTT_ID_t {

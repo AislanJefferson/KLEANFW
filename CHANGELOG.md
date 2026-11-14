@@ -32,13 +32,23 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 - `W/N` menu and side-key action now select `WIDE` (25 kHz), `NARROW`
   (12.5 kHz) and `NARROWER` (`N+`, 6.25 kHz) per channel/VFO, unifying `W/N`
-  and the removed global `SetNFM` menu item. `N+` is stored in bit 7 of
-  channel flags byte `+0x0C` alongside bit 1 (`NARROW`), so older firmware and
-  CHIRP modules degrade gracefully to plain `NARROW`. Existing radios that had
-  `SetNFM = NARROWER` revert to 12.5 kHz `NARROW` until `NARROWER` is selected
-  per channel. Spectrum (`F+5`) peak-to-VFO transfer now sets `W`/`N`/`N+` on
-  the target VFO only, and the CHIRP module exposes per-memory `Narrower (N+)`
-  under Extra instead of global `SetNFM`.
+  and the removed global `SetNFM` menu item. `NARROW` stays bit 1 of channel
+  byte `+0x0C`; `N+` is the pattern `10` in bits 7:6 of byte `+0x0D`. Legacy
+  records only hold `00` there (saved by the radio) or `11` (written by CHIRP
+  over an erased slot, whose unused bits stay 1), so existing Narrow channels
+  stay plain `NARROW`; older firmware and CHIRP modules read `N+` as plain
+  `NARROW`. Bit 7 of `+0x0C`, which old CHIRP modules leave at 1, is ignored,
+  and an `N+` channel with HIGH power, TX lock, BusyCL and reverse can no
+  longer save `+0x0C = 0xFF` (read back as an unwritten record). Existing
+  radios that had `SetNFM = NARROWER` revert to 12.5 kHz `NARROW` until
+  `NARROWER` is selected per channel. AM has no `N+`: the `W/N` menu offers
+  only `WIDE`/`NARROW` in AM, as the side key already did (+16 B). Spectrum
+  (`F+5`) peak-to-VFO transfer now sets `W`/`N`/`N+` on the target VFO only,
+  and the CHIRP module exposes per-memory `Narrower (N+)` (NFM only) under
+  Extra instead of global `SetNFM`. `N+` is nominally 6.25 kHz: per the
+  BK4829 register table it keeps the 12.5k BW mode of `N` (same TX deviation)
+  with a narrower RX filter (2.5 kHz, 2.0 kHz weak, against 3.5/3.0 kHz).
+  The N+ storage costs +40 B. Not tested on a radio yet.
 - Switching from MR to VFO with `F+3` (or the `VFO MEM` side-key action) now
   carries the active MR channel's RX frequency into the target band's VFO in
   clean simplex (tones, offset and frequency reverse cleared), keeping the

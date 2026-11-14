@@ -249,7 +249,9 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
 
         case MENU_W_N:
             //*pMin = 0;
-            *pMax = ARRAY_SIZE(gSubMenu_W_N) - 1;
+            // AM has no N+ filter (RADIO_GetAMFilterBandwidth), as in ACTION_Wn
+            *pMax = gTxVfo->Modulation == MODULATION_AM
+                  ? BANDWIDTH_NARROW : ARRAY_SIZE(gSubMenu_W_N) - 1;
             break;
 
         #ifdef ENABLE_ALARM
