@@ -842,7 +842,7 @@ uint32_t GetFEnd()
                           : currentFreq + GetBW();
 }
 
-uint8_t GetBWRegValueForScan(void);
+uint16_t GetBWRegValueForScan(void);
 
 static void TuneToPeak()
 {
@@ -885,7 +885,7 @@ static void DeInitSpectrum()
     isInitialized = false;
 }
 
-uint8_t GetBWRegValueForScan()
+uint16_t GetBWRegValueForScan()
 {
     return scanStepBWRegValues[settings.scanStepIndex];
 }

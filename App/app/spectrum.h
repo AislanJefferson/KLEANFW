@@ -78,31 +78,31 @@ static const uint16_t scanStepValues[] = {
     10000,
 };
 
-/* REG_43 during the sweep, one byte per scan step: bits 15:8 are 0 on
- * purpose. <14:12> RF and <11:9> weak-RF filter = 000 (2.0 kHz, doubled to
- * 4.0 kHz in 25k mode), the narrowest, so weak signals stand out of the
- * noise. <8:6> AF Tx LPF2, <5:4> BW mode (00 12.5k, 01 6.25k, 10 25k), <3> 1.
- * These are the words the sweep has always written (the table used to hold
- * 16-bit values that GetBWRegValueForScan() cut to 8 bits). v0.2.0 wrote the
- * whole word: RF/weak-RF up to 5.5/5.5 kHz at 12.5 kHz steps and 7.0/7.0 kHz
- * at 25 kHz (BK4829 register table), a 2.4-4.4 dB higher noise floor that hid
- * weak (FRS) signals. */
-static const uint8_t scanStepBWRegValues[] = {
-    0x58,   // 1     (S_STEP_0_01kHz,  index 0)  6.25k mode
-    0x58,   // 10    (S_STEP_0_1kHz,   index 1)
-    0x58,   // 50    (S_STEP_0_5kHz,   index 2)
-    0x58,   // 100   (S_STEP_1_0kHz,   index 3)
-    0x58,   // 250   (S_STEP_2_5kHz,   index 4)
-    0x58,   // 500   (S_STEP_5_0kHz,   index 5)
-    0x58,   // 625   (S_STEP_6_25kHz,  index 6)
-    0x48,   // 833   (S_STEP_8_33kHz,  index 7)  12.5k mode
-    0x48,   // 1000  (S_STEP_10_0kHz,  index 8)
-    0x08,   // 1250  (S_STEP_12_5kHz,  index 9)  12.5k mode, LPF2 3.0k
-    0x28,   // 1500  (S_STEP_15_0kHz,  index 10) 25k mode
-    0x28,   // 2000  (S_STEP_20_0kHz,  index 11)
-    0x28,   // 2500  (S_STEP_25_0kHz,  index 12)
-    0x28,   // 5000  (S_STEP_50_0kHz,  index 13)
-    0x28,   // 10000 (S_STEP_100_0kHz, index 14)
+/* REG_43 (16-bit, BK4829 register table) written during the sweep, one word
+ * per scan step. <14:12> RF filter and <11:9> weak-RF filter = 000: 2.0 kHz,
+ * doubled to 4.0 kHz when <5> = 1 (25k mode), the narrowest, so weak signals
+ * stand out of the noise; bits 15:8 are 0 on purpose. <8:6> AF Tx LPF2 (TX
+ * only), <5:4> BW mode (00 12.5k, 01 6.25k, 10 25k/20k), <3> = 1 as in the
+ * 0x4048 default. These are the words the sweep wrote up to 0.1.0. v0.2.0
+ * wrote wider words: RF/weak-RF up to 5.5/5.5 kHz at 12.5 kHz steps and
+ * 7.0/7.0 kHz at 25 kHz, a 2.4-4.4 dB higher noise floor that hid weak (FRS)
+ * signals. */
+static const uint16_t scanStepBWRegValues[] = {
+    0x0058, // 1     (S_STEP_0_01kHz,  index 0)  6.25k mode
+    0x0058, // 10    (S_STEP_0_1kHz,   index 1)
+    0x0058, // 50    (S_STEP_0_5kHz,   index 2)
+    0x0058, // 100   (S_STEP_1_0kHz,   index 3)
+    0x0058, // 250   (S_STEP_2_5kHz,   index 4)
+    0x0058, // 500   (S_STEP_5_0kHz,   index 5)
+    0x0058, // 625   (S_STEP_6_25kHz,  index 6)
+    0x0048, // 833   (S_STEP_8_33kHz,  index 7)  12.5k mode
+    0x0048, // 1000  (S_STEP_10_0kHz,  index 8)
+    0x0008, // 1250  (S_STEP_12_5kHz,  index 9)  12.5k mode, LPF2 3.0k
+    0x0028, // 1500  (S_STEP_15_0kHz,  index 10) 25k mode
+    0x0028, // 2000  (S_STEP_20_0kHz,  index 11)
+    0x0028, // 2500  (S_STEP_25_0kHz,  index 12)
+    0x0028, // 5000  (S_STEP_50_0kHz,  index 13)
+    0x0028, // 10000 (S_STEP_100_0kHz, index 14)
 };
 
 typedef enum State

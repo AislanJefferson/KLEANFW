@@ -16,8 +16,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   15 kHz and up (25 kHz is the default, MR included), per the BK4829
   register table. That is a 2.4–4.4 dB higher noise floor, and the entry
   calibration raised the trigger with it, so weak signals lost that whole
-  margin. The step table now holds those bytes as `uint8_t`.
-  -12 B. Not tested on a radio yet.
+  margin. The step table holds them as 16-bit REG_43 words (bits 15:8 = 0,
+  as the BK4829 register table defines the register). 0 B. Not tested on a
+  radio yet.
 - Spectrum (F+5): every other sweep starts from the right, and that pass
   started one step past the last VFO bin (`GetFEnd()`). Each bin of that pass
   got the RSSI of its right-hand neighbour, so a narrow signal jumped between
