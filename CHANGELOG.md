@@ -46,7 +46,7 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   (`F+5`) peak-to-VFO transfer now sets `W`/`N`/`N+` on the target VFO only,
   and the CHIRP module exposes per-memory `Narrower (N+)` (NFM only) under
   Extra instead of global `SetNFM`. `N+` is nominally 6.25 kHz: per the
-  BK4829 register table it keeps the 12.5k BW mode of `N` (same TX deviation)
+  BK4829 register table it keeps the 12.5k BW mode of `N` (so the same TX deviation is expected; not measured)
   with a narrower RX filter (2.5 kHz, 2.0 kHz weak, against 3.5/3.0 kHz).
   The N+ storage costs +40 B. Not tested on a radio yet.
 - Switching from MR to VFO with `F+3` (or the `VFO MEM` side-key action) now

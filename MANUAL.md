@@ -405,7 +405,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
   - `NARROWER` (6,25 kHz, **N+**).
 - **Padrão**: NARROW.
 - **Quando mudar**: use a mesma largura dos outros rádios da conversa. Com largura diferente, a voz fica baixa e distorcida (larga demais) ou estoura (estreita demais).
-- **Atenção**: a escolha é **por canal/VFO** (não existe mais o ajuste global `SetNFM`). N+ estreita só o filtro de RX; o desvio de TX é o mesmo do N (seção 13). A ação lateral **WIDE NARROW** percorre W → N → N+ → W em FM (e W ↔ N em AM) temporariamente.
+- **Atenção**: a escolha é **por canal/VFO** (não existe mais o ajuste global `SetNFM`). N+ estreita só o filtro de RX; pela tabela do chip, o desvio de TX deve ser o mesmo do N (seção 13). A ação lateral **WIDE NARROW** percorre W → N → N+ → W em FM (e W ↔ N em AM) temporariamente.
 
 #### `Scramb`: scrambler de voz *(canal)*
 
@@ -1301,7 +1301,7 @@ Valores do registrador REG_43 que o firmware grava em FM (W `0x3428`, N `0x3448`
 - Na tela: `W` / `N` / `N+` (GUI CLASSIC) ou `WIDE` / `NAR` / `NAR+` (GUI TINY).
 - **Padrões**: canais e VFOs novos em FM ficam em **Narrow** (12,5 kHz); AM fica em Wide.
 - **Compatibilidade na EEPROM**: o bit de Narrow continua no byte `+0x0C` do canal; o N+ é a marca `10` nos bits 7:6 do byte `+0x0D`, um padrão que canais antigos nunca têm (`00` se gravados pelo rádio, `11` se gravados pelo CHIRP num slot vazio). Canais existentes continuam Narrow comum, e firmwares e módulos CHIRP antigos leem um canal N+ como Narrow comum.
-- O "6,25 kHz" do N+ é nominal: o chip continua no modo 12,5k do N, só com o filtro de RX mais estreito. Por isso o **desvio de TX do N+ é o mesmo do N**.
+- O "6,25 kHz" do N+ é nominal: o chip continua no modo 12,5k do N, só com o filtro de RX mais estreito. Pela tabela de registradores, o **desvio de TX do N+ deve ser o mesmo do N** (o firmware não altera o desvio; ainda não medido no rádio).
 - Em AM o N+ não existe: o menu `W/N` e a ação **WIDE NARROW** só oferecem W e N.
 
 ---
