@@ -3,10 +3,16 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.1.1 — 2026-11-14
 
-Image 120,196 / 120,832 bytes (636 bytes free); RAM 15,608 / 16,384 bytes at
-link time.
+Firmware identity `KLEANFW v0.1.1` (the USB host identity stays
+`v7 GGFW v6.3.0`), multiboot image `f4hwn.kleanfw.v0.1.1.bin`, CHIRP module
+`KLEANFW_0.1.1_chirp_module.py` (same EEPROM layout as 0.1.0). Image
+120,196 / 120,832 bytes (636 bytes free); RAM 15,608 / 16,384 bytes at link
+time. The apps are byte-identical to 0.1.0.
+
+0.1.1 replaces 0.2.0, which was published on 2026-11-14 and withdrawn the same
+day: the 0.2.0 changes are not in this release.
 
 ### Fixed
 
