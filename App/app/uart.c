@@ -17,7 +17,6 @@
  * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
-#include <stddef.h>
 #include <string.h>
 
 #if !defined(ENABLE_OVERLAY)
@@ -225,10 +224,7 @@ static void SendReply_VCP(void *pReply, uint16_t Size)
     memcpy(VCP_ReplyBuf + sizeof(Header_t), pReply, Size);
 
     Header_t *pHeader = (Header_t *)VCP_ReplyBuf;
-    /* The footer follows a host-sized payload: it can sit at an odd address,
-     * where a 16-bit store HardFaults. Build it here and copy it bytewise. */
-    Footer_t Footer;
-    Footer_t *pFooter = &Footer;
+    Footer_t *pFooter = (Footer_t *)(VCP_ReplyBuf + sizeof(Header_t) + Size);
     pReply = VCP_ReplyBuf + sizeof(Header_t);
 
     if (bIsEncrypted)
@@ -256,7 +252,8 @@ static void SendReply_VCP(void *pReply, uint16_t Size)
         pFooter->Padding[1] = 0xFF;
     }
     pFooter->ID = 0xBADC;
-    memcpy(VCP_ReplyBuf + sizeof(Header_t) + Size, &Footer, sizeof(Footer));
+
+    // VCP_Send((uint8_t *)&Footer, sizeof(Footer));
 
     VCP_SendAsync(VCP_ReplyBuf, sizeof(Header_t) + Size + sizeof(Footer_t));
 }
@@ -413,11 +410,6 @@ static void CMD_051B(uint32_t Port, const uint8_t *pBuffer)
         gFmRadioCountdown_500ms = fm_radio_countdown_500ms;
     #endif
 
-    /* Size comes from the host: never read past the 128-byte reply buffer
-     * (it is on the stack). CHIRP reads 0x80-byte blocks. */
-    if (pCmd->Size > sizeof(Reply.Data.Data))
-        return;
-
     memset(&Reply, 0, sizeof(Reply));
     Reply.Header.ID   = 0x051C;
     Reply.Header.Size = pCmd->Size + 4;
@@ -468,10 +460,6 @@ static void CMD_051D(uint32_t Port, const uint8_t *pBuffer)
 
     gSerialConfigCountDown_500ms = 12; // 6 sec
     
-    /* Size comes from the host: the data must lie inside the command buffer. */
-    if (pCmd->Size > sizeof(SharedCommand.Buffer) - offsetof(CMD_051D_t, Data))
-        return;
-
     bReloadEeprom = false;
 
     #ifdef ENABLE_FMRADIO_EMBEDDED
@@ -709,38 +697,18 @@ bool UART_IsCommandAvailable(uint32_t Port)
         return false;
     }
 
-    /* The USB writer leaves its pointer at ReadBufSize when a packet ends at
-     * the end of the ring (it wraps on the next packet). The reader then
-     * stops at ReadBufSize too (see the end of this function), and restarts
-     * from 0 once new data has arrived. */
-    if (*pReadPointer >= ReadBufSize && DmaLength != *pReadPointer)
-        *pReadPointer = 0;
-
     // Limit iterations to prevent long loops when buffer is full of non-command data
     uint16_t maxIterations = ReadBufSize + 1;
 
-    for (;;)
+    while (maxIterations--)
     {
-        /* Test before decrementing: "while (n--)" leaves n at 0xFFFF when it
-         * runs out, so a later "n == 0" check never fired. */
-        if (maxIterations == 0)
-        {
-            // Safety: too many outer loop iterations
-            *pReadPointer = DmaLength;
-            return false;
-        }
-        maxIterations--;
-
         if ((*pReadPointer) == DmaLength)
             return false;
 
         // Find 0xAB with iteration limit
         uint16_t searchLimit = ReadBufSize;
-        while ((*pReadPointer) != DmaLength && ReadBuf[*pReadPointer] != 0xABU && searchLimit)
-        {
+        while ((*pReadPointer) != DmaLength && ReadBuf[*pReadPointer] != 0xABU && searchLimit--)
             *pReadPointer = DMA_INDEX((*pReadPointer), 1, ReadBufSize);
-            searchLimit--;
-        }
 
         if (searchLimit == 0)
         {
@@ -764,6 +732,13 @@ bool UART_IsCommandAvailable(uint32_t Port)
             break;
 
         *pReadPointer = DMA_INDEX(*pReadPointer, 1, ReadBufSize);
+    }
+
+    if (maxIterations == 0)
+    {
+        // Safety: too many outer loop iterations
+        *pReadPointer = DmaLength;
+        return false;
     }
 
     Index = DMA_INDEX(*pReadPointer, 2, ReadBufSize);
@@ -805,10 +780,7 @@ bool UART_IsCommandAvailable(uint32_t Port)
     else
         memset(ReadBuf + (*pReadPointer), 0, TailIndex - (*pReadPointer));
 
-    /* Consumed up to a writer parked at ReadBufSize: park here too, so the
-     * ring reads as empty instead of being rescanned (or the same frame
-     * parsed again) until the next packet. */
-    *pReadPointer = (DmaLength == ReadBufSize && TailIndex == 0) ? DmaLength : TailIndex;
+    *pReadPointer = TailIndex;
 
     /* --
     if (pUART_Command->Header.ID == 0x0514)
@@ -988,10 +960,7 @@ void UART_HandleCommand(uint32_t Port)
             uint8_t status;
             if (ts != mb_port_timestamp(Port))
                 status = MB_ERR_AUTH;
-            /* Header.Size is host data, not the received length: bound len by
-             * the command buffer too, or the copy runs past RAM. */
-            else if (len > pUART_Command->Header.Size - 12u ||
-                     len > sizeof(pUART_Command->Data) - 12u)
+            else if (len > pUART_Command->Header.Size - 12u)
                 status = MB_ERR_SIZE;
             else
                 status = MB_SlotWrite(slot, offset, &pUART_Command->Data[12], len);
@@ -1116,10 +1085,7 @@ void UART_HandleCommand(uint32_t Port)
             uint8_t status;
             if (ts != mb_port_timestamp(Port))
                 status = APP_ERR_AUTH;
-            /* Header.Size is host data, not the received length: bound len by
-             * the command buffer too, or the copy runs past RAM. */
-            else if (len > pUART_Command->Header.Size - 12u ||
-                     len > sizeof(pUART_Command->Data) - 12u)
+            else if (len > pUART_Command->Header.Size - 12u)
                 status = APP_ERR_SIZE;
             else
                 status = APP_SlotWrite(slot, offset, &pUART_Command->Data[12], len);

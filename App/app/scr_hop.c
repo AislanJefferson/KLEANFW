@@ -20,7 +20,6 @@
 
 #ifdef ENABLE_GOGUFW_CRYPTO
 
-#include "app/messenger_store.h"
 #include "driver/bk4819.h"
 #include "driver/bk4819-regs.h"
 #include "driver/system.h"
@@ -28,7 +27,6 @@
 #include "misc.h"
 #include "radio.h"
 #include "scheduler.h"
-#include "settings.h"
 
 #define HOP_MAGIC      0x47u     /* word0 = 'G' << 8 | resync index */
 #define HOP_CHECK_N    0x48505351u
@@ -49,12 +47,6 @@
 #define HOP_ANCHOR_MS  (((16u + 4u + 8u) * 20u + 1u) / 3u)
 /* Whole burst on air: preamble + sync + 8 data + 2 CRC bytes. */
 #define HOP_BURST_MS   (((16u + 4u + 8u + 2u) * 20u + 2u) / 3u)
-/* RX drift tracking between precise resync stamps. Below the dead band (twice
- * the worst stamp-difference jitter: 2 ms TX start, ms truncation, IRQ
- * latency) no correction is applied, so drift-free radios behave exactly as
- * without it. Over 1/32 (~3 %) the measurement is taken as bogus. */
-#define HOP_DRIFT_DEAD_MS  12u
-#define HOP_DRIFT_SPAN     16u   /* resync intervals per baseline */
 
 SCR_HOP_State_t gScrHop __attribute__((section(".noncacheable")));
 
@@ -77,16 +69,9 @@ static uint32_t tx_wide(void)
     return gCurrentVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE;
 }
 
-/* Slot clock in TX ms. RX scales the time since the anchor by the measured
- * TX/RX clock ratio (adj = 0: plain difference, as on TX). The correction
- * stops growing after HOP_DRIFT_MAX_MS without a resync (a carrier can keep
- * the session alive): no int32 overflow, and the clock stays monotonic. */
-#define HOP_DRIFT_MAX_MS  (1u << 19)   /* ~8.7 min */
 static uint32_t elapsed(void)
 {
-    const int32_t d = (int32_t)(SCHEDULER_GetMs() - gScrHop.anchor);
-    const int32_t c = d < (int32_t)HOP_DRIFT_MAX_MS ? d : (int32_t)HOP_DRIFT_MAX_MS;
-    return gScrHop.base + (uint32_t)(d + ((c * gScrHop.adj) >> 16));
+    return SCHEDULER_GetMs() - gScrHop.t0;
 }
 
 void SCR_HOP_Apply(bool tx)
@@ -100,11 +85,10 @@ void SCR_HOP_Apply(bool tx)
                                                        : carrier(tx_wide(), 0xFFFFFFFFu));
 }
 
-static void start(uint32_t seed, uint32_t anchor, uint32_t base, bool rx)
+static void start(uint32_t seed, uint32_t t0, bool rx)
 {
     gScrHop.seed    = seed;
-    gScrHop.anchor  = anchor;
-    gScrHop.base    = base;
+    gScrHop.t0      = t0;
     gScrHop.last_rx = SCHEDULER_GetMs();
     gScrHop.slot    = (uint16_t)(elapsed() / HOP_SLOT_MS);
     gScrHop.idx     = 0;
@@ -131,10 +115,8 @@ void SCR_HOP_TxBurst(uint16_t idx)
     };
     const uint16_t irq_mask = BK4819_ReadRegister(BK4819_REG_3F);
 
-    if (!idx) {
+    if (!idx)
         gScrHop.active = 0;
-        gScrHop.adj    = 0;
-    }
     BK4819_EnterTxMute();
     BK4819_DisableScramble();
     /* Same narrow-lock as Messenger FSK TX: a Wide channel sends the burst
@@ -187,50 +169,21 @@ void SCR_HOP_TxBurst(uint16_t idx)
     if (wide)
         BK4819_SetFilterBandwidth(BK4819_FILTER_BW_WIDE, false);
 
-    if (idx) {
-        /* A late tick runs the resync before the slot switch: catch up. */
-        gScrHop.slot = (uint16_t)(elapsed() / HOP_SLOT_MS);
+    if (idx)
         SCR_HOP_Apply(true);
-    } else
-        start(seed, t_start + HOP_ANCHOR_MS, HOP_POS_MS, false);
+    else
+        start(seed, t_start + HOP_ANCHOR_MS - HOP_POS_MS, false);
     BK4819_ExitTxMute();
 }
 
-bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms, bool precise)
+bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms)
 {
     const uint32_t seed = (uint32_t)words[1] | ((uint32_t)words[2] << 16);
-    const uint8_t  idx  = (uint8_t)words[0];
 
     if ((words[0] >> 8) != HOP_MAGIC ||
         words[3] != (uint16_t)CRYPTO_Word(seed, HOP_CHECK_N ^ words[0]))
         return false;
-
-    /* A new over (or another transmitter) starts without a clock correction. */
-    if (!gScrHop.active || !gScrHop.rx || gScrHop.seed != seed) {
-        gScrHop.adj    = 0;
-        gScrHop.ref_ok = 0;
-    }
-    /* Bursts idx apart were sent exactly idx * HOP_RESYNC_MS apart on the TX
-     * clock: compare with the local interval from the first precise stamp.
-     * A constant RX latency cancels out; late (imprecise) stamps are skipped. */
-    if (precise) {
-        const uint8_t span = (uint8_t)(idx - gScrHop.ref_idx);
-        if (gScrHop.ref_ok && span - 1u < HOP_DRIFT_SPAN) {
-            const uint32_t n   = span * HOP_RESYNC_MS;
-            const uint32_t m   = stamp_ms - gScrHop.ref_stamp;
-            const int32_t  err = (int32_t)(n - m);
-            const uint32_t a   = err < 0 ? (uint32_t)-err : (uint32_t)err;
-            if (a <= HOP_DRIFT_DEAD_MS)
-                gScrHop.adj = 0;
-            else if (a <= n / 32u)
-                gScrHop.adj = (int16_t)((err * 65536) / (int32_t)m);
-        } else {
-            gScrHop.ref_stamp = stamp_ms;
-            gScrHop.ref_idx   = idx;
-            gScrHop.ref_ok    = 1;
-        }
-    }
-    start(seed, stamp_ms, idx * HOP_RESYNC_MS + HOP_POS_MS, true);
+    start(seed, stamp_ms - (words[0] & 0xFFu) * HOP_RESYNC_MS - HOP_POS_MS, true);
     return true;
 }
 
@@ -246,36 +199,16 @@ static void guard_mute(bool mute)
 
 void SCR_HOP_Stop(void)
 {
-    const bool rx_session = gScrHop.active && gScrHop.rx;
-
+    if (gScrHop.active && gScrHop.rx)
+        BK4819_DisableScramble();
     gScrHop.active  = 0;
     gScrHop.rx_wait = 0;
-    /* The RX VFO may already be a fixed-scrambler channel (channel change or
-     * DW within the hang): restore its state instead of forcing REG_31<1> off. */
-    if (rx_session)
-        RADIO_ApplyScramble(gRxVfo, false);
 }
 
 bool SCR_HOP_VfoUsesHop(const VFO_Info_t *vfo)
 {
     return vfo->SCRAMBLING_TYPE == SCRAMBLE_TYPE_HOP &&
            vfo->Modulation == MODULATION_FM && gSetting_ScrambleEnable;
-}
-
-bool SCR_HOP_Watching(void)
-{
-    /* Without MsgRx (or with VOX) the seed burst is never decoded: sleeping
-     * costs nothing then. */
-    if (!gMessengerConfig.msg_rx)
-        return false;
-#ifdef ENABLE_VOX
-    if (gEeprom.VOX_SWITCH)
-        return false;
-#endif
-    return SCR_HOP_VfoUsesHop(gRxVfo) ||
-           (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF &&
-            (SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[0]) ||
-             SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[1])));
 }
 
 void SCR_HOP_Tick(void)

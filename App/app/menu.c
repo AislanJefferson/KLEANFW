@@ -1346,10 +1346,6 @@ void MENU_ShowCurrentSetting(void)
                 &gEeprom.KEY_M_LONG_PRESS_ACTION};
             uint8_t id = *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT];
 
-            /* An id this build has no entry for (ALARM, 1750, BACKLIGHT...,
-             * accepted by the settings load and offered by CHIRP) shows NONE
-             * instead of indexing the table with the previous item's value. */
-            gSubMenuSelection = 0;
             for(int i = 0; i < gSubMenu_SIDEFUNCTIONS_size; i++) {
                 if(gSubMenu_SIDEFUNCTIONS[i].id==id) {
                     gSubMenuSelection = i;
@@ -1627,7 +1623,7 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         return;
     }
 
-    Offset = (Max >= 1000) ? 4 : (Max >= 100) ? 3 : (Max >= 10) ? 2 : 1;
+    Offset = (Max >= 100) ? 3 : (Max >= 10) ? 2 : 1;
 
     /*
     switch (gInputBoxIndex)
@@ -1651,18 +1647,10 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     if (Offset == gInputBoxIndex)
         gInputBoxIndex = 0;
 
-    /* Below Min the value would index the menu's tables out of range
-     * (ScList 0 -> gListName[-1]): a partial entry just waits for more
-     * digits, a complete one is refused like a value above Max. */
     if (Value <= Max)
     {
-        if (Value >= Min)
-        {
-            gSubMenuSelection = Value;
-            return;
-        }
-        if (gInputBoxIndex != 0)
-            return;
+        gSubMenuSelection = Value;
+        return;
     }
 
     gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
@@ -2209,13 +2197,20 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
 
     if(m == MENU_S_PRI_CH_1 || m == MENU_S_PRI_CH_2)
     {
-        if(gSubMenuSelection == MR_CHANNELS_MAX && Direction > 0)
-            gSubMenuSelection = -1;
+        static int16_t last;
 
-        /* The selection before this step: a wrap past either end goes to
-         * "None". (A static here kept the value of the previous visit, or of
-         * the other PriCh menu, and jumped to "None" by mistake.) */
-        const int32_t last = gSubMenuSelection;
+        if(gSubMenuSelection == MR_CHANNELS_MAX) {
+            if(Direction > 0)
+            {
+                gSubMenuSelection = -1;
+                last = -1;
+            }
+            else if(Direction < 0)
+            {
+                gSubMenuSelection = MR_CHANNELS_MAX;
+                last = MR_CHANNELS_MAX;
+            }
+        }
 
         Channel = RADIO_FindNextChannel(gSubMenuSelection + Direction, Direction, bCheckScanList, VFO);
         if (Channel != 0xFFFF)
@@ -2228,6 +2223,10 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
         else if(Direction < 0 && gSubMenuSelection > last)
         {
             gSubMenuSelection = MR_CHANNELS_MAX;           
+        }
+        else
+        {
+            last = Channel;
         }
 
         gRequestDisplayScreen = DISPLAY_MENU;

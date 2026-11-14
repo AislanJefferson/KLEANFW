@@ -34,24 +34,17 @@
 
 #define SCRAMBLE_TYPE_HOP 11u   /* index of "HOP" in gSubMenu_SCRAMBLER */
 
-/* Byte fields first: Thumb-1 LDRB/STRB reach offsets 0..31 only. */
 typedef struct {
-    uint8_t  active;
-    uint8_t  rx;        /* session started by a received burst       */
-    uint8_t  rx_wait;   /* RX: sync seen, waiting for first FIFO     */
-    uint8_t  stamp_ok;  /* stamp from the REG_0C spin (~1 ms), not a late sync */
-    uint8_t  ref_idx;
-    uint8_t  ref_ok;
-    int16_t  adj;       /* RX: TX/RX clock ratio - 1, Q16 (0 on TX)  */
-    uint16_t slot;
-    uint16_t idx;       /* TX: last resync burst sent                */
-    uint16_t reg48;     /* saved AF gain during the RX guard mute    */
     uint32_t seed;
-    uint32_t anchor;    /* local ms: end of the 8th byte of the anchoring burst */
-    uint32_t base;      /* TX slot-clock ms at anchor                */
-    uint32_t stamp;     /* ms: RX time of the pending FSK IRQ        */
-    uint32_t ref_stamp; /* RX: precise stamp the drift is measured from */
-    uint32_t last_rx;   /* ms: last tick seen in RX (fade hang)      */
+    uint32_t t0;        /* ms: end of the 8th burst byte          */
+    uint32_t stamp;     /* ms: RX time of the pending FSK IRQ     */
+    uint32_t last_rx;   /* ms: last tick seen in RX (fade hang)   */
+    uint16_t slot;
+    uint16_t idx;       /* TX: last resync burst sent             */
+    uint16_t reg48;     /* saved AF gain during the RX guard mute */
+    uint8_t  active;
+    uint8_t  rx;        /* session started by a received burst    */
+    uint8_t  rx_wait;   /* RX: sync seen, waiting for first FIFO  */
 } SCR_HOP_State_t;
 
 extern SCR_HOP_State_t gScrHop;
@@ -61,18 +54,14 @@ void SCR_HOP_Reset(void);
  * fixed key-derived carrier, so a HOP TX is never sent in clear. */
 void SCR_HOP_Apply(bool tx);
 void SCR_HOP_TxBurst(uint16_t idx);
-/* Validate the first 4 FIFO words of a received burst and start hopping.
- * precise: stamp_ms came from the REG_0C spin (used for drift tracking). */
-bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms, bool precise);
+/* Validate the first 4 FIFO words of a received burst and start hopping. */
+bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms);
 void SCR_HOP_Stop(void);
 void SCR_HOP_Tick(void);
 /* HOP is active on this VFO: same rule as RADIO_ApplyScramble() (FM only,
  * ScraEn on). Every HOP path that bypasses RADIO_ApplyScramble() uses it. */
 struct VFO_Info_t;
 bool SCR_HOP_VfoUsesHop(const struct VFO_Info_t *vfo);
-/* The RX listens to a HOP channel (either VFO with Dual Watch) and can decode
- * its seed burst: battery save must not sleep through that ~0.2 s burst. */
-bool SCR_HOP_Watching(void);
 
 #endif
 #endif

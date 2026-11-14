@@ -1688,12 +1688,8 @@ void UI_DisplayMenu(void)
         case MENU_SET_CTR:
             #ifdef ENABLE_FEAT_F4HWN_CTR
                 sprintf(String, "%d", gSubMenuSelection);
-                {   /* Preview only: EXIT must leave the setting unchanged. */
-                    const uint8_t saved = gSetting_set_ctr;
-                    gSetting_set_ctr = gSubMenuSelection;
-                    ST7565_ContrastAndInv();
-                    gSetting_set_ctr = saved;
-                }
+                gSetting_set_ctr = gSubMenuSelection;
+                ST7565_ContrastAndInv();
             #else
                 strcpy(String, gSubMenu_NA);
             #endif
@@ -1702,12 +1698,7 @@ void UI_DisplayMenu(void)
         case MENU_SET_INV:
             #ifdef ENABLE_FEAT_F4HWN_INV
                 strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
-                {   /* Preview the selection, as SetCtr does. */
-                    const bool saved = gSetting_set_inv;
-                    gSetting_set_inv = gSubMenuSelection;
-                    ST7565_ContrastAndInv();
-                    gSetting_set_inv = saved;
-                }
+                ST7565_ContrastAndInv();
             #else
                 strcpy(String, gSubMenu_NA);
             #endif
@@ -1902,8 +1893,7 @@ void UI_DisplayMenu(void)
     if (m == MENU_R_DCS ||
         m == MENU_T_DCS) {
         const uint8_t approved_index =
-            (gSubMenuSelection > 0) ? DCS_GetDcsApprovedIndex(gSubMenuSelection -
-                                      (gSubMenuSelection < 105 ? 1 : 105)) : 0xFF;   // N / I codes
+            (gSubMenuSelection > 0) ? DCS_GetDcsApprovedIndex(gSubMenuSelection - 1) : 0xFF;
 
         if (gSubMenuSelection == 0)
             sprintf(top_right_badge, "000/00");

@@ -1,8 +1,8 @@
-# Manual do Usuário — KLEANFW 0.2.0
+# Manual do Usuário — KLEANFW 0.1.0
 
 Firmware customizado para **Quansheng UV-K1 / UV-K5 V3** (MCU PY32F071 + RF BK4829), baseado no **F4HWN 6.3.0**.
 O KLEANFW é uma versão modificada do **GOGUFW 3.6.2** (Gogu-Qs), que por sua vez é baseado no F4HWN. É um projeto independente, sem afiliação ou endosso do Gogu-Qs, do F4HWN ou da Quansheng.
-Este manual descreve o build **Fusion** (o preset oficial) do código atual, versão `v0.2.0`.
+Este manual descreve o build **Fusion** (o preset oficial) do código atual, versão `v0.1.0`.
 
 > [!CAUTION]
 > Instale somente em rádios **UV-K1 / UV-K5 V3** (PY32F071 + BK4829). **Não** instale em UV-K5 V1/V2 ou em outros rádios com BK4819.
@@ -637,7 +637,6 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: 1:4.
 - **Quando mudar**: `OFF` ou `1:1` quando o início das transmissões não pode ser perdido (o receptor dormindo pode cortar a primeira sílaba). Valores altos servem para escuta longa.
 - **Atenção**: durante o sono do receptor aparece um ícone na barra de status.
-- **Atenção**: enquanto o receptor escuta um canal **HOP** (com `MsgRx` ON e `VOX` OFF; com Dual Watch, qualquer um dos dois VFOs), o BatSav fica suspenso, como em `OFF`, para não perder o burst de ~0,2 s do início do câmbio, inclusive com a tela apagada pelo `SetOff`. Nos outros canais a economia funciona normalmente.
 
 #### `BatTxt`: texto da bateria
 
@@ -1275,8 +1274,6 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
-- Em câmbios longos, a partir do primeiro resync (8 s) o receptor mede a diferença de relógio para o transmissor e passa a acompanhá-la entre os resyncs.
-- Num canal HOP o receptor não entra em economia de bateria (BatSav), para não perder o burst.
 
 **Requisitos no receptor:**
 
@@ -1453,8 +1450,6 @@ Ao sair com o segundo PTT:
 - **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
 
 A largura de banda de escuta começa igual à do VFO ou canal ativo ao apertar F+5 (W = 25k, N = 12,5k, N com SetNFM = 6,25k), e o filtro é o mesmo que o rádio usa nesses modos.
-
-O Spectrum sempre escuta **em claro**: o scrambler do canal de onde se abriu o F+5 (fixo ou HOP) não é aplicado. Ao sair, o canal volta com o scrambler dele.
 
 ---
 
@@ -1679,7 +1674,7 @@ Se as setas parecerem invertidas, ajuste `SetNav`.
 ## 25. CHIRP
 
 1. Abra o CHIRP e escolha **File → Load Module**.
-2. Selecione o `KLEANFW_0.2.0_chirp_module.py` (mesma versão do firmware).
+2. Selecione o `KLEANFW_0.1.0_chirp_module.py` (mesma versão do firmware).
 3. Baixe do rádio com **Quansheng → UV-K1 / UV-K5 V3 KLEANFW**.
 4. Edite canais, ações de teclas, configurações do Messenger/CALLTX, CryKey, nomes de FM, F Lock, `No FSK TX`, `No Roger`, `Scrambler` (incluindo HOP) e `Compander`.
 5. Envie para o rádio e **espere cerca de 2 s** antes de desligá-lo (veja a seção 27.5).
@@ -1751,7 +1746,7 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 
 | Ajuste | Recomendação |
 |---|---|
-| `BatSav` | Mantenha 1:4 ou 1:5 em escuta longa. O WAKE do Messenger acorda rádios em economia. Em canal HOP a economia fica suspensa |
+| `BatSav` | Mantenha 1:4 ou 1:5 em escuta longa. O WAKE do Messenger acorda rádios em economia |
 | `BLTime` | 10–30 s; use **F+8** para acender sob demanda |
 | `BLMax` | Reduza (5–7) em ambientes internos |
 | `BLTxRx` | OFF ou só RX se não precisar da luz no TX |
@@ -1809,8 +1804,7 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Última configuração não ficou salva | Rádio desligado menos de 2 s após a mudança | Espere cerca de 2 s antes de desligar |
 | Áudio picota e o LED verde apaga num sinal forte de repetidora | `STE` ON detectando em falso o fim de transmissão | Use `STE` OFF nesse canal (e `RP STE` para a cauda da repetidora) |
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
-| HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
-| HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey e Scramb = HOP no canal de RX |
+| HOP sai embaralhado | Receptor perdeu o burst, CryKey diferente, receptor fora de HOP, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
 | Início da fala cortado no HOP | Mic mudo durante o burst | Espere meio segundo após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |
 | F+4 / F+\* só dão bipe duplo | Falta `Search.app` | Instale-o |
@@ -1836,7 +1830,7 @@ cmake --preset Fusion --fresh
 cmake --build --preset Fusion
 ```
 
-Saída em `build/Fusion/`: `kleanfw.bin` e a imagem multiboot `f4hwn.kleanfw.v0.2.0.bin`.
+Saída em `build/Fusion/`: `kleanfw.bin` e a imagem multiboot `f4hwn.kleanfw.v0.1.0.bin`.
 
 Veja também `BUILD_WITH_VSCODE.md`, `BUILD_VSCODE_MAC.md` e `compile-with-docker.sh` (build em Docker).
 

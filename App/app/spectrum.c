@@ -848,7 +848,7 @@ uint32_t GetFEnd()
                           : currentFreq + GetBW();
 }
 
-uint16_t GetBWRegValueForScan(void);
+uint8_t GetBWRegValueForScan(void);
 
 static void TuneToPeak()
 {
@@ -891,7 +891,7 @@ static void DeInitSpectrum()
     isInitialized = false;
 }
 
-uint16_t GetBWRegValueForScan()
+uint8_t GetBWRegValueForScan()
 {
     return scanStepBWRegValues[settings.scanStepIndex];
 }
@@ -1459,19 +1459,6 @@ static void UpdateRssiTriggerLevel(bool inc)
 }
 
 
-#ifdef ENABLE_SCAN_RANGES
-/* The sweep counts steps in 16 bits: a scan range with a step that needs
- * 65536 points or more was truncated (144-146 MHz at 0.01 kHz swept 34 kHz
- * under a 2 MHz axis). Move up to the first step that fits; the largest
- * (100 kHz) always does. */
-static void __attribute__((noinline)) FitRangeStep(void)
-{
-    while (gScanRangeStart && settings.scanStepIndex < S_STEP_100_0kHz &&
-           (gScanRangeStop - gScanRangeStart) / GetScanStep() >= 0xFFFFu)
-        settings.scanStepIndex++;
-}
-#endif
-
 static void UpdateScanStep(bool inc)
 {
     if (inc)
@@ -1482,9 +1469,6 @@ static void UpdateScanStep(bool inc)
     {
         settings.scanStepIndex = settings.scanStepIndex != 0 ? settings.scanStepIndex - 1 : S_STEP_100_0kHz;
     }
-#ifdef ENABLE_SCAN_RANGES
-    FitRangeStep();
-#endif
 
     settings.frequencyChangeStep = GetBW() >> 1;
     /* Scan steps below 15 kHz use a much narrower BK4819 filter than the
@@ -3316,7 +3300,6 @@ void APP_RunSpectrum()
     else if (gScanRangeStart)
     {
         currentFreq = initialFreq = gScanRangeStart;
-        FitRangeStep();
         // Keep saved spectrum step/count in scan-range mode.
         // Previously this branch forced scanStepIndex from VFO step and
         // stepsCount to STEPS_128 on every entry, which made the user think
@@ -3347,10 +3330,6 @@ void APP_RunSpectrum()
     PY25Q16_Flush();
 
     BackupRegisters();
-    /* Listen in clear: the entry channel's voice scrambler would invert every
-     * FM signal found. On exit VFO_CONFIGURE -> RADIO_SetupRegisters()
-     * reapplies the channel's scrambler. */
-    BK4819_DisableScramble();
 
     isListening = true; // to turn off RX later
     newScanStart = true;

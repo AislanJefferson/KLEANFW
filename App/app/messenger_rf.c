@@ -427,10 +427,8 @@ static void MSG_RF_RxChannelLockStartTarget(uint8_t vfo, uint16_t ticks,
         gCurrentVfo = target;
         RADIO_SetupRegisters(false);
     }
-    /* Countdown first: a SysTick between the two stores with the old count
-     * at 1 would set gScheduleDualWatch again (spurious VFO swap). */
-    gDualWatchCountdown_10ms = ticks ? ticks : 1u;
     gScheduleDualWatch = false;
+    gDualWatchCountdown_10ms = ticks ? ticks : 1u;
     gDualWatchActive = false;
     gUpdateStatus = true;
 }
@@ -460,12 +458,11 @@ static void MSG_RF_RxChannelLockStop(void)
         RADIO_SetupRegisters(false);
     }
     gDualWatchActive = s_rx_channel_lock_old_dw_active;
+    gScheduleDualWatch = false;
     /* A scheduler ISR may have observed the old zero/expired countdown while
      * the lock was being released.  Start a fresh normal dwell explicitly so
-     * Full Watch cannot immediately race into another swap; the countdown is
-     * stored before the flag is cleared, or a tick in between re-arms it. */
+     * Full Watch cannot immediately race into another swap. */
     gDualWatchCountdown_10ms = dual_watch_count_toggle_10ms;
-    gScheduleDualWatch = false;
     gUpdateStatus = true;
 }
 
@@ -510,8 +507,8 @@ static void MSG_RF_RxChannelLockTick(void)
         gCurrentVfo = lock_target;
         RADIO_SetupRegisters(false);
     }
+    gScheduleDualWatch = false;
     gDualWatchCountdown_10ms = s_rx_channel_lock_ticks ? s_rx_channel_lock_ticks : 1u;
-    gScheduleDualWatch = false;   // after the countdown, as above
     gDualWatchActive = false;
     if (s_rx_channel_lock_ticks > 0u) --s_rx_channel_lock_ticks;
     if (s_rx_channel_lock_ticks == 0u) MSG_RF_RxChannelLockStop();
@@ -1667,16 +1664,6 @@ static bool MSG_RF_ParseAckText(const char *text, uint16_t *id)
     return true;
 }
 
-/* ACK/PONG carry the requester's callsign in "to" (MSG_RF_QueueAck and
- * MSG_RF_QueueRangePong use the request's "from", which the packet builder
- * never leaves empty; our callsign is never empty either). Message ids start
- * at 1 on every radio, so a reply to another station must not complete our
- * own request. */
-static bool MSG_RF_ReplyIsForMe(const MSG_Packet_t *pkt)
-{
-    return strncmp(pkt->to, gMessengerConfig.callsign, MSG_CALLSIGN_LEN) == 0;
-}
-
 static void MSG_RF_HandleAckFor(uint16_t ack_id, const char *ack_from)
 {
     if (s_wait_ack_active) {
@@ -1739,8 +1726,7 @@ static void try_store_rx_packet(void)
     }
 
     if (pkt.type == MSG_PKT_TYPE_PONG) {
-        const bool remote_pong = strncmp(pkt.from, gMessengerConfig.callsign, MSG_CALLSIGN_LEN) != 0 &&
-                                 MSG_RF_ReplyIsForMe(&pkt);
+        const bool remote_pong = strncmp(pkt.from, gMessengerConfig.callsign, MSG_CALLSIGN_LEN) != 0;
         if (remote_pong) {
             uint16_t remote_battery = 0u;
             if (pkt.payload_len >= 2u) {
@@ -1763,8 +1749,7 @@ static void try_store_rx_packet(void)
         if (pkt.payload_len >= 2u) {
             ack_id = (uint16_t)(uint8_t)pkt.payload[0] | ((uint16_t)(uint8_t)pkt.payload[1] << 8);
         }
-        if (MSG_RF_ReplyIsForMe(&pkt))
-            MSG_RF_HandleAckFor(ack_id, pkt.from);
+        MSG_RF_HandleAckFor(ack_id, pkt.from);
         /* ACK has its own short success chirp; do not queue a message alert. */
         MSG_RF_FinishRxAttempt(false);
         return;
@@ -1856,7 +1841,6 @@ void MSG_RF_OnRadioInterrupt(uint16_t status)
             if (SCR_HOP_VfoUsesHop(gRxVfo)) {
                 gScrHop.rx_wait = 1;
                 gScrHop.stamp   = SCHEDULER_GetMs();
-                gScrHop.stamp_ok = 0;   // late if FIFO is already in this status
             } else
 #endif
             MSG_RF_FskSyncHoldStart(gEeprom.RX_VFO);
@@ -1879,11 +1863,9 @@ void MSG_RF_OnRadioInterrupt(uint16_t status)
 #ifdef ENABLE_GOGUFW_CRYPTO
         if (gScrHop.rx_wait) {
             gScrHop.rx_wait = 0;
-            if (s_rx_words == 4u && SCR_HOP_RxStart(g_FSK_Buffer, gScrHop.stamp,
-                                                     gScrHop.stamp_ok)) {
+            if (s_rx_words == 4u && SCR_HOP_RxStart(g_FSK_Buffer, gScrHop.stamp)) {
                 /* Seed burst: drop the capture and give the audio back. */
                 s_rx_capture_active = false;
-                s_rx_stale_ticks = 0;
                 s_rx_words = 0;
                 gFSKWriteIndex = 0;
                 MSG_RF_KeepFskRxEnabled();
@@ -1919,8 +1901,7 @@ void MSG_RF_OnRadioInterrupt(uint16_t status)
                 return;
             }
         }
-        gScrHop.stamp    = SCHEDULER_GetMs();
-        gScrHop.stamp_ok = 1;
+        gScrHop.stamp = SCHEDULER_GetMs();
     }
 #endif
 #else
