@@ -113,7 +113,8 @@ static void BEAM_SendPacket(void)
     payload->tx_lock = vfo->TX_LOCK;
     payload->busy_channel_lock = vfo->BUSY_CHANNEL_LOCK;
     payload->output_power = vfo->OUTPUT_POWER;
-    payload->channel_bandwidth = vfo->CHANNEL_BANDWIDTH;
+    /* N+ travels as N: KLEANFW 0.2.0 saves this byte as a 0/1 bit. */
+    payload->channel_bandwidth = vfo->CHANNEL_BANDWIDTH != BANDWIDTH_WIDE;
     payload->frequency_reverse = vfo->FrequencyReverse;
     payload->dtmf_ptt_id_mode = vfo->DTMF_PTT_ID_TX_MODE;
 #ifdef ENABLE_DTMF_CALLING
@@ -185,8 +186,7 @@ static void BEAM_SavePayloadToFirstFreeChannel(const BEAM_Payload_t *payload)
     vfo.TX_LOCK = payload->tx_lock;
     vfo.BUSY_CHANNEL_LOCK = payload->busy_channel_lock;
     vfo.OUTPUT_POWER = payload->output_power;
-    vfo.CHANNEL_BANDWIDTH = payload->channel_bandwidth < BANDWIDTH_N_ELEM
-                          ? payload->channel_bandwidth : BANDWIDTH_NARROW;
+    vfo.CHANNEL_BANDWIDTH = payload->channel_bandwidth;
     vfo.FrequencyReverse = payload->frequency_reverse;
     vfo.DTMF_PTT_ID_TX_MODE = payload->dtmf_ptt_id_mode;
 #ifdef ENABLE_DTMF_CALLING

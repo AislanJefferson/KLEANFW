@@ -1303,6 +1303,7 @@ Valores do registrador REG_43 que o firmware grava em FM (W `0x3428`, N `0x3448`
 - **Compatibilidade na EEPROM**: o bit de Narrow continua no byte `+0x0C` do canal; o N+ é a marca `10` nos bits 7:6 do byte `+0x0D`, um padrão que canais antigos nunca têm (`00` se gravados pelo rádio, `11` se gravados pelo CHIRP num slot vazio). Canais existentes continuam Narrow comum, e firmwares e módulos CHIRP antigos leem um canal N+ como Narrow comum.
 - O "6,25 kHz" do N+ é nominal: o chip continua no modo 12,5k do N, só com o filtro de RX mais estreito. Pela tabela de registradores, o **desvio de TX do N+ deve ser o mesmo do N** (o firmware não altera o desvio; ainda não medido no rádio).
 - Em AM o N+ não existe: o menu `W/N` e a ação **WIDE NARROW** só oferecem W e N.
+- Um canal N+ enviado por **BEAM** chega como N (compatível com rádios KLEANFW 0.2.0).
 
 ---
 
