@@ -325,7 +325,7 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         uint16_t bandIdx = channel - FREQ_CHANNEL_FIRST;
         RADIO_InitInfo(pVfo, channel, frequencyBandTable[bandIdx].lower);
         if (pVfo->Modulation != MODULATION_AM)
-            pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;   // fresh VFO: N+ with SetNFM
+            pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;   // fresh VFO: plain Narrow
         return;
     }
 
@@ -408,7 +408,7 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         if (data[4] == 0xFF)
         {
             pVfo->FrequencyReverse  = false;
-            /* Unwritten record: FM defaults to Narrow (N+ with SetNFM). */
+            /* Unwritten record: FM defaults to Narrow (12.5 kHz). */
             pVfo->CHANNEL_BANDWIDTH = pVfo->Modulation == MODULATION_AM ? BANDWIDTH_WIDE
                                                                          : BANDWIDTH_NARROW;
             pVfo->OUTPUT_POWER      = OUTPUT_POWER_LOW1;
@@ -419,7 +419,7 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         {
             const uint8_t d4 = data[4];
             pVfo->FrequencyReverse  = !!((d4 >> 0) & 1u);
-            pVfo->CHANNEL_BANDWIDTH = !!((d4 >> 1) & 1u);
+            pVfo->CHANNEL_BANDWIDTH = RADIO_DecodeBandwidth(d4);
             pVfo->OUTPUT_POWER      =   ((d4 >> 2) & 7u);
             pVfo->BUSY_CHANNEL_LOCK = !!((d4 >> 5) & 1u);
             pVfo->TX_LOCK           = !!((d4 >> 6) & 1u);
@@ -814,13 +814,6 @@ void RADIO_SetupRegisters(bool switchToForeground)
 {
     BK4819_FilterBandwidth_t Bandwidth = gRxVfo->CHANNEL_BANDWIDTH;
 
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if(Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
-        {
-            Bandwidth = BK4819_FILTER_BW_NARROWER;
-        }
-    #endif
-
     AUDIO_AudioPathOff();
 
     gEnableSpeaker = false;
@@ -1052,13 +1045,6 @@ static void RADIO_SetTxParametersEx(bool fm)
      * after its clear DTMF/Apollo signalling; FSK, alarm and tone TX stay
      * unscrambled. */
     BK4819_DisableScramble();
-
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if(Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
-        {
-            Bandwidth = BK4819_FILTER_BW_NARROWER;
-        }
-    #endif
 
     AUDIO_AudioPathOff();
 
@@ -1458,12 +1444,6 @@ void RADIO_SendEndOfTransmission(void)
 
     /* Roger/MDC, DTMF and the CSS tail are protocol signalling, not voice. */
     BK4819_DisableScramble();
-
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1) {
-        Bandwidth = BK4819_FILTER_BW_NARROWER;
-    }
-#endif
 
     /* CALLTX already consists entirely of an alert melody.  Its shared TX
      * shutdown path must still send DTMF/CSS tails and restore RX, but must

@@ -326,8 +326,11 @@ static void MSG_RF_NarrowLockBegin(void)
 
     s_bw_lock_tx_old = gTxVfo->CHANNEL_BANDWIDTH;
     s_bw_lock_rx_old = gRxVfo ? gRxVfo->CHANNEL_BANDWIDTH : s_bw_lock_tx_old;
-    gTxVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
-    if (gRxVfo) gRxVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
+    /* Wide becomes Narrow; Narrow and Narrower (N+) keep their filter. */
+    if (gTxVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
+        gTxVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
+    if (gRxVfo && gRxVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
+        gRxVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
     s_bw_lock_active = true;
 }
 

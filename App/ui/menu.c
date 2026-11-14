@@ -163,9 +163,6 @@ const t_menu_item MenuList[] =
 #ifdef ENABLE_FEAT_F4HWN_SLEEP
     {"SetOff",       MENU_SET_OFF      },
 #endif
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    {"SetNFM",      MENU_SET_NFM       },
-#endif
 #ifdef ENABLE_FEAT_F4HWN_VOL
     {"SetVol",      MENU_SET_VOL       },
 #endif
@@ -249,10 +246,13 @@ const char gSubMenu_SFT_D[][4] =
     "-"
 };
 
-const char gSubMenu_W_N[][7] =
+const char gSubMenu_W_N[BANDWIDTH_N_ELEM][9] =
 {
     "WIDE",
-    "NARROW"
+    "NARROW",
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    "NARROWER",
+#endif
 };
 
 const char gSubMenu_OFF_ON[][4] =
@@ -467,13 +467,6 @@ const char gSubMenu_SCRAMBLER[][7] =
         };
     #endif
 
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        const char gSubMenu_SET_NFM[][9] =
-        {
-            "NARROW",
-            "NARROWER"
-        };
-    #endif
 
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         const char gSubMenu_SET_KEY[][9] =
@@ -609,9 +602,6 @@ const char *const CategoryNames[CAT_COUNT] = {
 static const uint8_t CatChannels[] = {
     MENU_STEP, MENU_TXP, MENU_SET_PWR, MENU_R_DCS, MENU_R_CTCS, MENU_T_DCS,
     MENU_T_CTCS, MENU_SFT_D, MENU_OFFSET, MENU_W_N,
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    MENU_SET_NFM,
-#endif
 #ifdef ENABLE_GOGUFW_SCRAMBLER
     MENU_SCR,
 #endif
@@ -1765,12 +1755,6 @@ void UI_DisplayMenu(void)
                     strcpy(String, "ON\n(COMPND)");
                 else
                     strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
-                break;
-        #endif
-
-        #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            case MENU_SET_NFM:
-                strcpy(String, gSubMenu_SET_NFM[gSubMenuSelection]);
                 break;
         #endif
 

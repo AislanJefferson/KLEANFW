@@ -420,12 +420,6 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
                   ? 0 : ARRAY_SIZE(gSubMenu_OFF_ON) - 1;
             break;
         #endif
-        #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            case MENU_SET_NFM:
-                //*pMin = 0;
-                *pMax = ARRAY_SIZE(gSubMenu_SET_NFM) - 1;
-                break;
-        #endif
         #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
             case MENU_SET_KEY:
                 //*pMin = 0;
@@ -970,13 +964,6 @@ void MENU_AcceptSetting(void)
             RADIO_SetModulation(gTxVfo->Modulation);
             break;
         #endif
-        #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            case MENU_SET_NFM:
-                gSetting_set_nfm = gSubMenuSelection;
-                RADIO_SetTxParameters();
-                RADIO_SetupRegisters(true);
-                break;
-        #endif
         #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
             case MENU_SET_KEY:
                 gEeprom.SET_KEY = gSubMenuSelection;
@@ -1383,11 +1370,6 @@ void MENU_ShowCurrentSetting(void)
             gSubMenuSelection = RADIO_IsRxCompanderOn(gTxVfo)
                               ? 0 : gSetting_set_rxg;
             break;
-        #endif
-        #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            case MENU_SET_NFM:
-                gSubMenuSelection = gSetting_set_nfm;
-                break;
         #endif
         #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
             case MENU_SET_KEY:

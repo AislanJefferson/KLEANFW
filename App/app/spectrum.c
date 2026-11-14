@@ -782,17 +782,11 @@ static void LoadSpectrumChannels(void)
         spectrumList = spectrumList > MR_CHANNELS_LIST ? 0 : MR_CHANNELS_LIST + 1;
 }
 
-// Listen filter for a VFO/channel bandwidth bit: N becomes N+ with SetNFM,
-// as in RADIO_SetupRegisters().
+// Listen filter for a VFO/channel bandwidth: the values match the BK4819
+// filter enum (W/N/N+), as in RADIO_SetupRegisters().
 static uint8_t ListenBwFor(uint8_t channelBw)
 {
-    if (channelBw == BANDWIDTH_WIDE)
-        return BK4819_FILTER_BW_WIDE;
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (gSetting_set_nfm)
-        return BK4819_FILTER_BW_NARROWER;
-#endif
-    return BK4819_FILTER_BW_NARROW;
+    return channelBw < BANDWIDTH_N_ELEM ? channelBw : BK4819_FILTER_BW_NARROW;
 }
 
 static void CacheSpectrumChannel(uint16_t ordinal)
@@ -1038,18 +1032,8 @@ static void ExitToSpectrumPeak()
         VFO_Info_t *target = &gEeprom.VfoInfo[targetVfo];
         RADIO_SetSimplexFrequency(target, f);
         // The Spectrum listen filter (inherited, or changed with key 6)
-        // becomes the VFO mode. N+ is the global SetNFM: saved only if it
-        // actually changes.
-        const bool narrow = settings.listenBw != BK4819_FILTER_BW_WIDE;
-        target->CHANNEL_BANDWIDTH = narrow ? BANDWIDTH_NARROW : BANDWIDTH_WIDE;
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-        const bool nfm = settings.listenBw == BK4819_FILTER_BW_NARROWER;
-        if (narrow && gSetting_set_nfm != nfm)
-        {
-            gSetting_set_nfm = nfm;
-            gRequestSaveSettings = true;
-        }
-#endif
+        // becomes this VFO's bandwidth (25k = W, 12.5k = N, 6.25k = N+).
+        target->CHANNEL_BANDWIDTH = ListenBwFor(settings.listenBw);
         target->pRX = &target->freq_config_RX;
         target->pTX = &target->freq_config_TX;
         RADIO_ApplyOffset(target);

@@ -150,9 +150,6 @@ enum
     #ifdef ENABLE_FEAT_F4HWN_LOGO_SAV
         MENU_SET_SAV,
     #endif
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        MENU_SET_NFM,
-    #endif
     #ifdef ENABLE_FEAT_F4HWN_VOL
         MENU_SET_VOL,
     #endif
@@ -240,7 +237,7 @@ extern const t_menu_item MenuList[];
 
 extern const char        gSubMenu_TXP[8][6];
 extern const char        gSubMenu_SFT_D[3][4];
-extern const char        gSubMenu_W_N[2][7];
+extern const char        gSubMenu_W_N[BANDWIDTH_N_ELEM][9];
 extern const char        gSubMenu_OFF_ON[2][4];
 extern const char        gSubMenu_NA[4];
 extern const char        gSubMenu_TOT[11][7];
@@ -269,9 +266,6 @@ extern const char        gSubMenu_D_RSP[4][11];
     extern const char    gSubMenu_SET_MET[2][8];
     #ifdef ENABLE_FEAT_F4HWN_SCAN_FASTER
         extern const char    gSubMenu_SET_SCN[2][7];
-    #endif
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        extern const char    gSubMenu_SET_NFM[2][9];
     #endif
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         extern const char gSubMenu_SET_KEY[][9];

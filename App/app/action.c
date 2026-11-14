@@ -895,22 +895,18 @@ void ACTION_Wn(void)
     const bool isRx = FUNCTION_IsRx();
     VFO_Info_t *pVfo = isRx ? gRxVfo : gTxVfo;
 
-    pVfo->CHANNEL_BANDWIDTH = !pVfo->CHANNEL_BANDWIDTH;
+    /* W -> N -> N+ -> W. AM only toggles W/N: N+ uses the same AM filter. */
+    uint8_t bw = pVfo->CHANNEL_BANDWIDTH + 1u;
+    if (bw >= BANDWIDTH_N_ELEM ||
+        (pVfo->Modulation == MODULATION_AM && bw > BANDWIDTH_NARROW))
+        bw = BANDWIDTH_WIDE;
+    pVfo->CHANNEL_BANDWIDTH = bw;
 
     if (pVfo->Modulation == MODULATION_AM)
     {
         BK4819_SetFilterBandwidth(RADIO_GetAMFilterBandwidth(pVfo), true);
         return;
     }
-
-    uint8_t bw = pVfo->CHANNEL_BANDWIDTH;
-
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if (bw == BANDWIDTH_NARROW && gSetting_set_nfm == 1)   // RX and TX alike
-        {
-            bw++; 
-        }
-    #endif
 
     #ifdef ENABLE_AM_FIX
         BK4819_SetFilterBandwidth(bw, true);

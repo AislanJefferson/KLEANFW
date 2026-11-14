@@ -31,10 +31,49 @@ enum {
     RADIO_CHANNEL_DOWN = 0xFFu,
 };
 
+/* Per-channel bandwidth. The values match BK4819_FILTER_BW_WIDE/NARROW/
+ * NARROWER, so CHANNEL_BANDWIDTH is passed to the filter as is. */
 enum {
     BANDWIDTH_WIDE = 0,
-    BANDWIDTH_NARROW
+    BANDWIDTH_NARROW,
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    BANDWIDTH_NARROWER,
+#endif
+    BANDWIDTH_N_ELEM
 };
+
+_Static_assert((int)BANDWIDTH_WIDE   == (int)BK4819_FILTER_BW_WIDE,   "bandwidth enum");
+_Static_assert((int)BANDWIDTH_NARROW == (int)BK4819_FILTER_BW_NARROW, "bandwidth enum");
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+_Static_assert((int)BANDWIDTH_NARROWER == (int)BK4819_FILTER_BW_NARROWER, "bandwidth enum");
+#endif
+
+/* Channel record byte +0x0C: bit 1 = narrow, bit 7 = narrower (N+, only
+ * meaningful with bit 1 set). Older firmware/CHIRP read N+ as plain N. */
+#define CHANNEL_BW_NARROW_BIT   (1u << 1)
+#define CHANNEL_BW_NARROWER_BIT (1u << 7)
+
+static inline uint8_t RADIO_DecodeBandwidth(uint8_t d4)
+{
+    if (!(d4 & CHANNEL_BW_NARROW_BIT))
+        return BANDWIDTH_WIDE;
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    if (d4 & CHANNEL_BW_NARROWER_BIT)
+        return BANDWIDTH_NARROWER;
+#endif
+    return BANDWIDTH_NARROW;
+}
+
+static inline uint8_t RADIO_EncodeBandwidth(uint8_t bw)
+{
+    if (bw == BANDWIDTH_WIDE)
+        return 0u;                       // anything unknown is saved as Narrow
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    if (bw == BANDWIDTH_NARROWER)
+        return CHANNEL_BW_NARROW_BIT | CHANNEL_BW_NARROWER_BIT;
+#endif
+    return CHANNEL_BW_NARROW_BIT;
+}
 
 enum PTT_ID_t {
     PTT_ID_OFF = 0,    // OFF

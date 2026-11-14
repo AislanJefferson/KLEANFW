@@ -209,9 +209,6 @@ extern enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
         extern uint8_t            gSetting_set_audio_am;
         extern bool               gSetting_set_rxg;
     #endif
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        extern bool               gSetting_set_nfm;
-    #endif
     #ifdef ENABLE_FEAT_F4HWN_LOGO_SAV
         extern uint8_t            gSetting_set_sav;
     #endif

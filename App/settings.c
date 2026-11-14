@@ -191,9 +191,8 @@ void SETTINGS_InitEEPROM(void)
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         gEeprom.TAIL_TONE_ELIMINATION = Data[6] & 0x01;
-        /* Saved values only use bits 0..2, so 0xFF is erased flash:
-         * default to plain Narrow (12.5 kHz), not N+. */
-        gSetting_set_nfm = (Data[6] != 0xFF) && ((Data[6] >> 1) & 0x01);
+        /* Bit 1 was the global SetNFM: N+ is now per channel, the bit is
+         * reserved and ignored. */
         #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
             gEeprom.VFO_OPEN = ((Data[6] >> 2) & 0x01) != 0 ? true : true;
         #endif
@@ -724,7 +723,7 @@ bool SETTINGS_FetchChannelScanDisplayInfo(const uint16_t channel, ChannelScanDis
     {
         const uint8_t d4 = raw.data[4];
         info->frequencyReverse = !!((d4 >> 0) & 1u);
-        info->channelBandwidth = !!((d4 >> 1) & 1u);
+        info->channelBandwidth = RADIO_DecodeBandwidth(d4);
         info->outputPower      =   ((d4 >> 2) & 7u);
         info->busyChannelLock  = !!((d4 >> 5) & 1u);
         info->txLock           = !!((d4 >> 6) & 1u);
@@ -869,9 +868,8 @@ void SETTINGS_FactoryReset(bool bIsAll)
     #endif
 
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        // Narrow channels default to plain Narrow (12.5 kHz), not N+.
+        // Bit 1 (old global SetNFM) is reserved: keep it cleared.
         Data8[14] &= (uint8_t)~0x02;
-        gSetting_set_nfm = 0;
     #endif
 
     PY25Q16_WriteBuffer(0x00A000, Data8, sizeof(Data8), false);
@@ -887,7 +885,7 @@ void SETTINGS_FactoryReset(bool bIsAll)
     #ifdef ENABLE_FEAT_F4HWN_RESET_VFO
         RADIO_InitInfo(&gEeprom.VfoInfo[0], FREQ_CHANNEL_FIRST + BAND3_137MHz, 14550000);
         RADIO_InitInfo(&gEeprom.VfoInfo[1], FREQ_CHANNEL_FIRST + BAND6_400MHz, 43350000);
-        gEeprom.VfoInfo[0].CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;   // N+ with SetNFM
+        gEeprom.VfoInfo[0].CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;   // plain Narrow
         gEeprom.VfoInfo[1].CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
 
         gEeprom.ScreenChannel[0] = FREQ_CHANNEL_FIRST + BAND3_137MHz;
@@ -1053,8 +1051,7 @@ void SETTINGS_SaveSettings(void)
 
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         State[6] =
-            (gEeprom.TAIL_TONE_ELIMINATION & 0x01) |
-            ((gSetting_set_nfm & 0x01) << 1)
+            (gEeprom.TAIL_TONE_ELIMINATION & 0x01)   // bit 1: reserved (old SetNFM)
         #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
           | ((gEeprom.VFO_OPEN & 0x01) << 2)
         #endif
@@ -1310,7 +1307,7 @@ void SETTINGS_SaveChannel(uint16_t Channel, uint8_t VFO, const VFO_Info_t *pVFO,
             | (pVFO->TX_LOCK << 6)
             | (pVFO->BUSY_CHANNEL_LOCK << 5)
             | (pVFO->OUTPUT_POWER      << 2)
-            | (pVFO->CHANNEL_BANDWIDTH << 1)
+            | RADIO_EncodeBandwidth(pVFO->CHANNEL_BANDWIDTH)
             | (pVFO->FrequencyReverse  << 0);
         State -> _8[5] = ((pVFO->DTMF_PTT_ID_TX_MODE & 7u) << 1)
 #ifdef ENABLE_DTMF_CALLING

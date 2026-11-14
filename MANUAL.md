@@ -194,7 +194,7 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 - **Em MR**: digite até 4 dígitos do canal. Com 4 dígitos confirma na hora; senão confirma em cerca de 2 s (ou com **MENU**).
 - **EXIT** apaga o último dígito; com todos apagados, restaura o VFO anterior.
 - **Frequência digitada entra em simplex limpo**: ao digitar uma frequência no VFO, CTCSS/DCS (RX e TX), direção e valor do offset e Reverse voltam para OFF. Potência, largura de banda, passo, modulação e scrambler são mantidos. Para usar uma repetidora no VFO, configure `TxODir`, `TxOffs` e os tons **depois** de digitar a frequência, ou copie um canal gravado com **F+1**. Cancelar com EXIT restaura os valores anteriores.
-- **F+3** de MR para VFO volta ao último estado salvo do VFO (cada banda guarda os próprios parâmetros); ele não copia o canal de memória.
+- **F+3** de MR para VFO leva **apenas a frequência** do canal de memória ativo para o VFO (da banda correspondente) em simplex limpo (tons, offset e Reverse em OFF). Potência, largura de banda, modulação e scrambler continuam os do VFO; o passo também é mantido, exceto quando a frequência do canal não cabe nele (nesse caso, adota o passo do canal, ou 0.01 kHz). Para copiar o canal inteiro (incluindo tons e repetidora), use **F+1**.
 
 ### 5.2 Teclas sem F
 
@@ -265,25 +265,25 @@ Com `SetPTT = ONEPUSH`, o primeiro toque no PTT começa a transmitir e o segundo
 | 21 | PriCh1 | Scan | | 63 | SetRxG | Audio |
 | 22 | PriCh2 | Scan | | 64 | SetTmr | Timers |
 | 23 | ScnRev | Scan | | 65 | SetOff | Power |
-| 24 | F1Shrt | Keys | | 66 | SetNFM | Channels |
-| 25 | F1Long | Keys | | 67 | SetVol | Audio |
-| 26 | F2Shrt | Keys | | 68 | SetScn | Scan |
-| 27 | F2Long | Keys | | 69 | SetCfg | Channels |
-| 28 | M Long | Keys | | 70 | CllTon | Audio |
-| 29 | KeyLck | Keys | | 71 | CllVol | Audio |
-| 30 | TxTOut | Timers | | 72 | MsgRx | Msg |
-| 31 | BatSav | Power | | 73 | MsgAck | Msg |
-| 32 | BatTxt | Power | | 74 | MsgBep | Msg |
-| 33 | Mic | Audio | | 75 | MsgLed | Msg |
-| 34 | MicBar | Audio | | 76 | CllSgn | Msg |
-| 35 | ChDisp | Display | | 77 | CryKey | Msg |
-| 36 | BLTime | Display | | 78 | RngRsp | Msg |
-| 37 | BLMin | Display | | 79 | F Lock | Service |
-| 38 | BLMax | Display | | 80 | 350 En | Service |
-| 39 | BLTxRx | Display | | 81 | BatCal | Service |
-| 40 | Beep | Audio | | 82 | BatTyp | Service |
-| 41 | Roger | Radio | | 83 | SetNav | Service |
-| 42 | STE | Radio | | 84 | Reset | Service |
+| 24 | F1Shrt | Keys | | 66 | SetVol | Audio |
+| 25 | F1Long | Keys | | 67 | SetScn | Scan |
+| 26 | F2Shrt | Keys | | 68 | SetCfg | Channels |
+| 27 | F2Long | Keys | | 69 | CllTon | Audio |
+| 28 | M Long | Keys | | 70 | CllVol | Audio |
+| 29 | KeyLck | Keys | | 71 | MsgRx | Msg |
+| 30 | TxTOut | Timers | | 72 | MsgAck | Msg |
+| 31 | BatSav | Power | | 73 | MsgBep | Msg |
+| 32 | BatTxt | Power | | 74 | MsgLed | Msg |
+| 33 | Mic | Audio | | 75 | CllSgn | Msg |
+| 34 | MicBar | Audio | | 76 | CryKey | Msg |
+| 35 | ChDisp | Display | | 77 | RngRsp | Msg |
+| 36 | BLTime | Display | | 78 | F Lock | Service |
+| 37 | BLMin | Display | | 79 | 350 En | Service |
+| 38 | BLMax | Display | | 80 | BatCal | Service |
+| 39 | BLTxRx | Display | | 81 | BatTyp | Service |
+| 40 | Beep | Audio | | 82 | SetNav | Service |
+| 41 | Roger | Radio | | 83 | Reset | Service |
+| 42 | STE | Radio | | | | |
 
 > [!NOTE]
 > A categoria **Power** trata de bateria e modo sono. A **potência de TX** (item `Power`) fica em **Channels**.
@@ -316,8 +316,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 | **RxCTCS / TxCTCS** | OFF, 67.0–254.1 Hz (50 tons) | OFF | Tom CTCSS de RX / TX *(canal)* |
 | **TxODir** | OFF, +, − | OFF | Direção do offset de repetidora *(canal)* |
 | **TxOffs** | 0 a 999.99999 MHz | 0 | Valor do offset *(canal)* |
-| **W/N** | WIDE, NARROW | NARROW | Largura de banda *(canal)* |
-| **SetNFM** | NARROW, NARROWER | NARROW | O que "Narrow" significa no rádio todo |
+| **W/N** | WIDE, NARROW, NARROWER | NARROW | Largura de banda: W (25 kHz), N (12,5 kHz) ou N+ (6,25 kHz) *(canal)* |
 | **Scramb** | OFF, 2600–3500 Hz, HOP | OFF | Scrambler de voz *(canal)* |
 | **BusyCL** | OFF, ON | OFF | Impede TX com o canal ocupado *(canal)* |
 | **Compnd** | OFF, TX, RX, TX/RX | OFF | Compressor/expansor de áudio *(canal)* |
@@ -399,21 +398,14 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 
 #### `W/N`: largura de banda *(canal)*
 
-- **O que faz**: escolhe entre canal largo (25 kHz) e estreito.
+- **O que faz**: escolhe a largura de banda do canal ou VFO atual: `WIDE` (25 kHz), `NARROW` (12,5 kHz) ou `NARROWER` (6,25 kHz, exibido como **N+** / **NAR+**).
 - **Opções**:
-  - `WIDE`;
-  - `NARROW`: 12,5 kHz, ou 6,25 kHz se `SetNFM = NARROWER`.
+  - `WIDE` (25 kHz);
+  - `NARROW` (12,5 kHz);
+  - `NARROWER` (6,25 kHz, **N+**).
 - **Padrão**: NARROW.
 - **Quando mudar**: use a mesma largura dos outros rádios da conversa. Com largura diferente, a voz fica baixa e distorcida (larga demais) ou estoura (estreita demais).
-- **Atenção**: a tabela completa de filtros está na seção 13. A ação lateral **WIDE NARROW** troca a largura temporariamente.
-
-#### `SetNFM`: significado de "Narrow"
-
-- **O que faz**: define, para o rádio todo, se `NARROW` é o Narrow comum (12,5 kHz) ou o Narrower (6,25 kHz, chamado de **N+**).
-- **Opções**: `NARROW`, `NARROWER`.
-- **Padrão**: NARROW.
-- **Quando mudar**: só se o seu grupo usa canais de 6,25 kHz.
-- **Atenção**: é um ajuste **global**: afeta todos os canais em NARROW. N+ não aumenta o alcance (seção 13).
+- **Atenção**: a escolha é **por canal/VFO** (não existe mais o ajuste global `SetNFM`). N+ não aumenta o alcance (seção 13). A ação lateral **WIDE NARROW** percorre W → N → N+ → W em FM (e W ↔ N em AM) temporariamente.
 
 #### `Scramb`: scrambler de voz *(canal)*
 
@@ -1027,7 +1019,7 @@ Configure em **Keys → F1Shrt, F1Long, F2Shrt, F2Long, M Long** (ou pelo CHIRP)
 | **RX MODE** | Percorre os 6 modos de RxMode |
 | **MAIN ONLY** | Liga/desliga "só principal" (guarda e restaura Dual Watch/Cross Band) |
 | **PTT MODE** | Alterna CLASSIC/ONEPUSH na sessão (não transmite e não salva) |
-| **WIDE NARROW** | Alterna a banda do VFO atual, temporariamente |
+| **WIDE NARROW** | Alterna a banda do VFO atual (W → N → N+ → W em FM; W ↔ N em AM), temporariamente |
 | **MUTE** | Silencia/libera o áudio de RX |
 | **RxA** | Avança o perfil de áudio de RX |
 | **MESSENGER** | Abre o Messenger (de novo, na tela inicial do Messenger, volta ao rádio) |
@@ -1112,7 +1104,7 @@ Rascunhos de fábrica: `OK`, `NEED HELP`, `WHERE ARE YOU?`, `ON THE WAY`, `ARRIV
 4. **Com `MsgAck = ON`**: espera ACK por 6 s. Sem resposta, faz **1 retentativa** e espera mais 6 s. Se o canal estiver ocupado, a retentativa é adiada em passos de 0,5 s.
 5. No primeiro ACK, toca um bipe curto e continua ouvindo por mais 2,5 s para coletar até 3 indicativos.
 
-O FSK sempre sai em **Narrow** (ou N+, com `SetNFM = NARROWER`), mesmo num canal Wide.
+Num canal Wide, o FSK sai temporariamente em **Narrow** (canais em N ou N+ mantêm o próprio filtro).
 
 **Marcadores em SENT:**
 
@@ -1303,9 +1295,10 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 | **Narrow (N)** | 12,5 kHz | 4,0 kHz | 2,0 kHz | 2,5 kHz |
 | **Narrower (N+)** | 6,25 kHz | 3,0 kHz | 2,0 kHz | 2,5 kHz |
 
-- **W/N** define a banda de cada canal. **SetNFM** define se "Narrow" significa N (12,5 kHz) ou N+ (6,25 kHz) em todos os canais.
+- **W/N** define a banda de cada canal ou VFO diretamente entre `WIDE` (25 kHz), `NARROW` (12,5 kHz) e `NARROWER` (6,25 kHz, **N+**).
 - Na tela: `W` / `N` / `N+` (GUI CLASSIC) ou `WIDE` / `NAR` / `NAR+` (GUI TINY).
-- **Padrões**: canais e VFOs novos em FM ficam em **Narrow**; AM fica em Wide. O Reset deixa `SetNFM = NARROW`.
+- **Padrões**: canais e VFOs novos em FM ficam em **Narrow** (12,5 kHz); AM fica em Wide.
+- **Compatibilidade na EEPROM**: o modo N+ fica gravado no bit 7 do byte de flags do canal, junto com o bit de Narrow. Firmwares e módulos CHIRP antigos leem um canal N+ como Narrow comum.
 - N e N+ usam o mesmo filtro para sinal fraco, então **N+ não aumenta o alcance** e reduz o desvio de TX.
 
 ---
@@ -1450,9 +1443,9 @@ Em MR, a escuta usa a modulação e a banda do canal (ou a banda escolhida com a
 Ao sair com o segundo PTT:
 
 - **A frequência já está salva num canal MR** (o mais próximo, até meio passo de varredura e no máximo 6,25 kHz): o rádio vai para o modo MR nesse canal, com as configurações do canal.
-- **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
+- **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum naquele VFO: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+** (sem afetar os outros canais). Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
 
-A largura de banda de escuta começa igual à do VFO ou canal ativo ao apertar F+5 (W = 25k, N = 12,5k, N com SetNFM = 6,25k), e o filtro é o mesmo que o rádio usa nesses modos.
+A largura de banda de escuta começa igual à do VFO ou canal ativo ao apertar F+5 (W = 25k, N = 12,5k, N+ = 6,25k), e o filtro é o mesmo que o rádio usa nesses modos.
 
 O Spectrum sempre escuta **em claro**: o scrambler do canal de onde se abriu o F+5 (fixo ou HOP) não é aplicado. Ao sair, o canal volta com o scrambler dele.
 
@@ -1615,7 +1608,7 @@ O acesso dura até o próximo boot normal.
 > [!WARNING]
 > **As duas opções de Reset (VFO e ALL) apagam a memória de canais.** ALL também apaga as configurações. Faça backup com o CHIRP antes.
 
-Depois do reset: VFO A = 145,500 MHz, VFO B = 433,500 MHz, ambos em Narrow, e `SetNFM = NARROW`. O rádio pede `SURE?`, mostra `WAIT!` e reinicia.
+Depois do reset: VFO A = 145,500 MHz e VFO B = 433,500 MHz, ambos em Narrow (12,5 kHz). O rádio pede `SURE?`, mostra `WAIT!` e reinicia.
 
 ---
 
@@ -1688,10 +1681,10 @@ Se as setas parecerem invertidas, ajuste `SetNav`.
 
 - 1024 canais de memória;
 - grupo GGFW: MsgRx, MsgAck, MsgBeep, MsgLed, CllTon, CllVol, RngRsp, indicativo, **CryKey** e os 8 rascunhos;
-- por canal: TXLock, No FSK TX, No Roger, Scrambler, BusyCL, FreqRev, PTT ID, Compander e listas de scan;
+- por canal: TXLock, No FSK TX, No Roger, Scrambler, Narrower (N+), BusyCL, FreqRev, PTT ID, Compander e listas de scan;
 - 48 nomes de FM (15 caracteres);
 - **F Lock** com os três planos do firmware (BRASIL, DISABLE ALL, UNLOCK ALL; UNLOCK ALL só pode ser escolhido no menu do rádio);
-- SetNFM e as ações de teclas laterais deste build (inclusive **SCRAMBLE**).
+- as ações de teclas laterais deste build (inclusive **SCRAMBLE**).
 
 > [!WARNING]
 > Use só o módulo desta versão: módulos do GOGUFW e de outras versões do KLEANFW não são compatíveis e podem sobrescrever campos.

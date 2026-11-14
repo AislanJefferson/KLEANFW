@@ -139,9 +139,6 @@ enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
         uint8_t       gSetting_set_audio_am = 0;
         bool          gSetting_set_rxg = true;
     #endif
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        bool          gSetting_set_nfm = 0;
-    #endif
     #ifdef ENABLE_FEAT_F4HWN_LOGO_SAV
         uint8_t       gSetting_set_sav = SET_SAV_OFF;
     #endif

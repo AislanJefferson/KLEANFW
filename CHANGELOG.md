@@ -18,6 +18,23 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   lost that whole margin. The step table now holds those bytes as `uint8_t`.
   -12 B. Not tested on a radio yet.
 
+### Changed
+
+- `W/N` menu and side-key action now select `WIDE` (25 kHz), `NARROW`
+  (12.5 kHz) and `NARROWER` (`N+`, 6.25 kHz) per channel/VFO, unifying `W/N`
+  and the removed global `SetNFM` menu item. `N+` is stored in bit 7 of
+  channel flags byte `+0x0C` alongside bit 1 (`NARROW`), so older firmware and
+  CHIRP modules degrade gracefully to plain `NARROW`. Existing radios that had
+  `SetNFM = NARROWER` revert to 12.5 kHz `NARROW` until `NARROWER` is selected
+  per channel. Spectrum (`F+5`) peak-to-VFO transfer now sets `W`/`N`/`N+` on
+  the target VFO only, and the CHIRP module exposes per-memory `Narrower (N+)`
+  under Extra instead of global `SetNFM`.
+- Switching from MR to VFO with `F+3` (or the `VFO MEM` side-key action) now
+  carries the active MR channel's RX frequency into the target band's VFO in
+  clean simplex (tones, offset and frequency reverse cleared), keeping the
+  VFO's other parameters and adopting the channel step (or 0.01 kHz) only when
+  the frequency does not fit the VFO step.
+
 ## KLEANFW 0.2.0 — 2026-11-14
 
 Firmware identity `KLEANFW v0.2.0` (the USB host identity stays

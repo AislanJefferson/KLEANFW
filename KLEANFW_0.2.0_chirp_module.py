@@ -101,7 +101,7 @@ struct {
   offsetDir:4;
 
 // 0x0C
-  u8 __UNUSED01:1,
+  u8 narrower:1,
   txLock:1,
   busyChLockout:1,
   txpower:3,
@@ -166,7 +166,7 @@ struct {
   offsetDir:4;
 
 // 0x0C
-  u8 __UNUSED05:1,
+  u8 narrower:1,
   txLock:1,
   busyChLockout:1,
   txpower:3,
@@ -215,7 +215,7 @@ u8 battery_save;
 u8 dual_watch;
 u8 backlight_time;
 u8 __UNUSED10:5,
-   set_nfm:2,
+   __UNUSED_SETNFM:2,
    ste:1;
 u8 current_state;
 
@@ -605,8 +605,6 @@ TALK_TIME_LIST = ["N/U", "N/U", "N/U", "N/U", "N/U", "30 sec", "35 sec", "40 sec
                   "14 min", "14 min : 5 sec", "14 min : 10 sec", "14 min : 15 sec", "14 min : 20 sec", "14 min : 25 sec", "14 min : 30 sec", "14 min : 35 sec", "14 min : 40 sec", "14 min : 45 sec", "14 min : 50 sec", "14 min : 55 sec",
                   "15 min"]
 
-# Set NFM value
-SET_NFM_LIST = ["NARROW", "NARROWER"]
 
 # Set RxA value
 SET_RXA_FM_LIST = ["FLAT", "CLEAN", "MID", "BOOST", "MAX"]
@@ -1659,6 +1657,10 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             mem.extra.append(rs)
 
             val = RadioSettingValueBoolean(False)
+            rs = RadioSetting("narrower", "Narrower (N+)", val)
+            mem.extra.append(rs)
+
+            val = RadioSettingValueBoolean(False)
             rs = RadioSetting("busyChLockout", "BusyCL", val)
             mem.extra.append(rs)
 
@@ -1804,6 +1806,14 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         val = RadioSettingValueList(SCRAMBLER_LIST, None, scrambler)
         rs = RadioSetting("scrambler", "Scrambler", val)
         rs.set_doc('Selects the per-channel voice inversion frequency.')
+        mem.extra.append(rs)
+
+        # Narrower (N+): bit 7 of byte 0x0C, only meaningful with NFM/NAM
+        narrower = bool(int(_mem.bandwidth) and int(_mem.narrower))
+        val = RadioSettingValueBoolean(narrower)
+        rs = RadioSetting("narrower", "Narrower (N+)", val)
+        rs.set_doc('N+: with NFM/NAM, use the 6.25 kHz Narrower filter '
+                   'instead of 12.5 kHz Narrow. Ignored for FM, AM and USB.')
         mem.extra.append(rs)
 
         # BusyCL
@@ -2101,10 +2111,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             # set off f4hwn
             elif elname == "set_off_tmr":
                 _mem.set_off_tmr = int(element.value)
-
-            # set nfm f4hwn
-            elif elname == "set_nfm":
-                _mem.set_nfm = int(element.value)
 
             # set rxa f4hwn
             elif elname == "set_rxa_fm":
@@ -2796,14 +2802,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         SetOffSetting.set_doc('SetOff: Put the radio in battery save, when no RX or keypress \n' + \
                               'To inform you that the radio is in this mode, the Led will flashing in RED \n' + \
                               'the Display will be OFF and hardware go in sleepmode')
-
-        # Set_NFM f4hwn
-        tmpsetnfm = list_def(_mem.set_nfm, SET_NFM_LIST, 0)
-        val = RadioSettingValueList(SET_NFM_LIST, SET_NFM_LIST[tmpsetnfm])
-        SetNFMSetting = RadioSetting("set_nfm", "Set NFM (SetNFM)", val)
-        SetNFMSetting.set_doc('SetNFM: Set Narrow FM bandwidth \n' + \
-                              '* 12.5 kHz \n' + \
-                              '* 6.25 kHz')
 
         # Set_RXA f4hwn
         tmpsetrxafm = list_def(_mem.set_rxa_fm, SET_RXA_FM_LIST, 0)
@@ -3654,7 +3652,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         basic.append(SetGuiSetting)
         basic.append(SetTmrSetting)
         basic.append(SetOffSetting)
-        basic.append(SetNFMSetting)
         basic.append(SetRxAFMSetting)
         basic.append(SetRxAAMSetting)
         if _mem.BUILD_OPTIONS.ENABLE_FEAT_F4HWN_RESCUE_OPS:
@@ -3862,6 +3859,9 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         _mem_chan.noRoger = get_setting("noRoger", False)
         _mem_chan.scrambler = get_setting("scrambler", 0)
         _mem_chan.busyChLockout = get_setting("busyChLockout", False)
+        # N+ only with a narrow FM/AM mode; FM/AM/USB always clear it
+        _mem_chan.narrower = 1 if (memory.mode in ("NFM", "NAM") and
+                                   get_setting("narrower", False)) else 0
         _mem_chan.dtmf_pttid = get_setting("pttid", 0)
         _mem_chan.freq_reverse = get_setting("frev", False)
         _mem_chan.dtmf_decode = get_setting("dtmfdecode", False)

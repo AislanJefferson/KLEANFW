@@ -2379,25 +2379,20 @@ void UI_DisplayMain(void)
 #endif
 
 #if ENABLE_FEAT_F4HWN
-        const uint8_t displayBandwidth = vfoInfo->CHANNEL_BANDWIDTH;
+        uint8_t displayBandwidth = vfoInfo->CHANNEL_BANDWIDTH;
+        if (displayBandwidth >= BANDWIDTH_N_ELEM)
+            displayBandwidth = BANDWIDTH_NARROW;
 
         #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            bool narrower = 0;
-
-            if(displayBandwidth == BANDWIDTH_NARROW && gSetting_set_nfm == 1)
-            {
-                narrower = 1;
-            }
-
             if (gSetting_set_gui)
             {
                 const char *bandWidthNames[] = {"W", "N", "N+"};
-                UI_PrintStringSmallNormal(bandWidthNames[displayBandwidth + narrower], LCD_WIDTH + 80, 0, line + 1);
+                UI_PrintStringSmallNormal(bandWidthNames[displayBandwidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
-                GUI_DisplaySmallest(bandWidthNames[displayBandwidth + narrower], VFO_CLASSIC_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(bandWidthNames[displayBandwidth], VFO_CLASSIC_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
             }
         #else
             if (gSetting_set_gui)

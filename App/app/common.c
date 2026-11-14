@@ -87,13 +87,44 @@ void COMMON_SwitchVFOMode()
         }
 
         if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE))
-        {   // swap to frequency mode
-            gEeprom.ScreenChannel[gEeprom.TX_VFO] = gEeprom.FreqChannel[gEeprom.TX_VFO];
+        {   // swap to frequency mode carrying over the active MR channel frequency
+            const uint8_t        vfo     = gEeprom.TX_VFO;
+            const uint32_t       freq    = gTxVfo->freq_config_RX.Frequency;
+            const STEP_Setting_t chStep  = gTxVfo->STEP_SETTING;
+            const uint16_t       vfoChan = FREQ_CHANNEL_FIRST + FREQUENCY_GetBand(freq);
+
+            // the band's VFO record supplies everything but the frequency
+            gEeprom.FreqChannel[vfo]   = vfoChan;
+            gEeprom.ScreenChannel[vfo] = vfoChan;
+            RADIO_ConfigureChannel(vfo, VFO_CONFIGURE_RELOAD);
+
+            VFO_Info_t *pVfo = &gEeprom.VfoInfo[vfo];
+
+            /* A VFO reload rounds to its step: keep the exact frequency by
+             * taking the channel step (or 10 Hz) only when it does not fit. */
+            if (FREQUENCY_RoundToStep(freq, pVfo->StepFrequency) != freq) {
+                STEP_Setting_t step = chStep;
+                if (FREQUENCY_RoundToStep(freq, gStepFrequencyTable[step]) != freq)
+                    step = STEP_0_01kHz;
+                pVfo->STEP_SETTING  = step;
+                pVfo->StepFrequency = gStepFrequencyTable[step];
+            }
+
+            // plain simplex, exactly as a frequency typed on the keypad
+            RADIO_SetSimplexFrequency(pVfo, freq);
+            pVfo->pRX = &pVfo->freq_config_RX;
+            pVfo->pTX = &pVfo->freq_config_TX;
+            RADIO_ApplyOffset(pVfo);
+            RADIO_ConfigureSquelchAndOutputPower(pVfo);
+
             #ifdef ENABLE_VOICE
                 gAnotherVoiceID        = VOICE_ID_FREQUENCY_MODE;
             #endif
             gRequestSaveVFO            = true;
-            gVfoConfigureMode          = VFO_CONFIGURE_RELOAD;
+            gRequestSaveChannel        = 1;      // persist the VFO record first,
+            gVfoConfigureMode          = VFO_CONFIGURE_NONE; // then the save path reconfigures
+            gFlagReconfigureVfos       = true;
+            gRequestDisplayScreen      = DISPLAY_MAIN;
             return;
         }
 
