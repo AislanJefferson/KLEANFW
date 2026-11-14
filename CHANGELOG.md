@@ -3,6 +3,21 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+### Fixed
+
+- Spectrum (F+5) was deaf to weak signals in 0.2.0 (low-power FRS radios
+  were missed). The 0.2.0 change that wrote the whole 16-bit REG_43 word
+  during the sweep is undone: the sweep writes again the same bytes as 0.1.0
+  (bits 15:8 = 0, RF and weak-RF filter at their narrowest, 2.0 kHz, 4.0 kHz
+  in 25k mode). The full word opened them to 5.5/5.5 kHz on 12.5 kHz steps,
+  5.0/5.0 kHz on 8.33/10 kHz, 4.0/4.0 kHz on 6.25 kHz and 7.0/6.0 kHz on
+  15 kHz and up (25 kHz is the default, MR included). That is a 2–4 dB
+  higher noise floor, and AUTO raised the trigger with it, so weak signals
+  lost that whole margin. The step table now holds those bytes as `uint8_t`.
+  -12 B. Not tested on a radio yet.
+
 ## KLEANFW 0.2.0 — 2026-11-14
 
 Firmware identity `KLEANFW v0.2.0` (the USB host identity stays

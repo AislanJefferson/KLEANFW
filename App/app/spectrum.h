@@ -78,39 +78,30 @@ static const uint16_t scanStepValues[] = {
     10000,
 };
 
-static const uint16_t scanStepBWRegValues[] = {
-    //     RX  RXw TX  BW
-    // 0b0 000 000 001 01 1000
-    // 1    (S_STEP_0_01kHz, index 0)
-    0b0000000001011000, // 6.25
-    // 10   (S_STEP_0_1kHz,  index 1)
-    0b0000000001011000, // 6.25
-    // 50   (S_STEP_0_5kHz,  index 2)
-    0b0000000001011000, // 6.25
-    // 100  (S_STEP_1_0kHz,  index 3)
-    0b0000000001011000, // 6.25
-    // 250  (S_STEP_2_5kHz,  index 4)
-    0b0000000001011000, // 6.25
-    // 500  (S_STEP_5_0kHz,  index 5)
-    0b0010010001011000, // 6.25
-    // 625  (S_STEP_6_25kHz, index 6)
-    0b0100100001011000, // 6.25
-    // 833  (S_STEP_8_33kHz, index 7)
-    0b0110110001001000, // 6.25
-    // 1000 (S_STEP_10_0kHz, index 8)
-    0b0110110001001000, // 6.25
-    // 1250 (S_STEP_12_5kHz, index 9)
-    0b0111111100001000, // 6.25
-    // 1500 (S_STEP_15_0kHz, index 10)
-    0b0011011000101000, // 25
-    // 2000 (S_STEP_20_0kHz, index 11)
-    0b0011011000101000, // 25
-    // 2500 (S_STEP_25_0kHz, index 12)
-    0b0011011000101000, // 25
-    // 5000 (S_STEP_50_0kHz, index 13)
-    0b0011011000101000, // 25
-    // 10000 (S_STEP_100_0kHz, index 14)
-    0b0011011000101000, // 25
+/* REG_43 during the sweep, one byte per scan step: bits 15:8 are 0 on
+ * purpose. <14:12> RF and <11:9> weak-RF filter = 000 (2.0 kHz, doubled to
+ * 4.0 kHz in 25k mode), the narrowest, so weak signals stand out of the
+ * noise. <8:6> AF Tx LPF2, <5:4> BW mode (00 12.5k, 01 6.25k, 10 25k), <3> 1.
+ * These are the words the sweep has always written (the table used to hold
+ * 16-bit values that GetBWRegValueForScan() cut to 8 bits). v0.2.0 wrote the
+ * whole word: RF/weak-RF up to 5.5/5.5 kHz at 12.5 kHz steps and 7.0/6.0 kHz
+ * at 25 kHz, a 2-4 dB higher noise floor that hid weak (FRS) signals. */
+static const uint8_t scanStepBWRegValues[] = {
+    0x58,   // 1     (S_STEP_0_01kHz,  index 0)  6.25k mode
+    0x58,   // 10    (S_STEP_0_1kHz,   index 1)
+    0x58,   // 50    (S_STEP_0_5kHz,   index 2)
+    0x58,   // 100   (S_STEP_1_0kHz,   index 3)
+    0x58,   // 250   (S_STEP_2_5kHz,   index 4)
+    0x58,   // 500   (S_STEP_5_0kHz,   index 5)
+    0x58,   // 625   (S_STEP_6_25kHz,  index 6)
+    0x48,   // 833   (S_STEP_8_33kHz,  index 7)  12.5k mode
+    0x48,   // 1000  (S_STEP_10_0kHz,  index 8)
+    0x08,   // 1250  (S_STEP_12_5kHz,  index 9)  12.5k mode, LPF2 3.0k
+    0x28,   // 1500  (S_STEP_15_0kHz,  index 10) 25k mode
+    0x28,   // 2000  (S_STEP_20_0kHz,  index 11)
+    0x28,   // 2500  (S_STEP_25_0kHz,  index 12)
+    0x28,   // 5000  (S_STEP_50_0kHz,  index 13)
+    0x28,   // 10000 (S_STEP_100_0kHz, index 14)
 };
 
 typedef enum State
