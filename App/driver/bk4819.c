@@ -603,53 +603,52 @@ void BK4819_EnableVox(uint16_t VoxEnableThreshold, uint16_t VoxDisableThreshold)
 
 void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const bool weak_no_different)
 {
-    // REG_43
+    // REG_43 (values per the BK4829 register table; the BK4819 used a
+    // different scale, 1.7 .. 4.5 kHz)
     // <15>    0 ???
     //
     // <14:12> 4 RF filter bandwidth
-    //         0 = 1.7  kHz
-    //         1 = 2.0  kHz
-    //         2 = 2.5  kHz
-    //         3 = 3.0  kHz
-    //         4 = 3.75 kHz
-    //         5 = 4.0  kHz
-    //         6 = 4.25 kHz
-    //         7 = 4.5  kHz
+    //         0 = 2.0  kHz
+    //         1 = 2.5  kHz
+    //         2 = 3.0  kHz
+    //         3 = 3.5  kHz
+    //         4 = 4.0  kHz
+    //         5 = 4.5  kHz
+    //         6 = 5.0  kHz
+    //         7 = 5.5  kHz
     // if <5> == 1, RF filter bandwidth * 2
     //
     // <11:9>  0 RF filter bandwidth when signal is weak
-    //         0 = 1.7  kHz
-    //         1 = 2.0  kHz
-    //         2 = 2.5  kHz
-    //         3 = 3.0  kHz
-    //         4 = 3.75 kHz
-    //         5 = 4.0  kHz
-    //         6 = 4.25 kHz
-    //         7 = 4.5  kHz
+    //         same values as <14:12>
     // if <5> == 1, RF filter bandwidth * 2
     //
-    // <8:6>   1 AFTxLPF2 filter Band Width
+    // <8:6>   1 AF TX LPF2 filter bandwidth (TX only)
+    //         4 = 5.5  kHz
+    //         5 = 5.0  kHz
+    //         6 = 4.5  kHz
+    //         7 = 4.0  kHz
+    //         0 = 3.0  kHz (for 25k   channel space)
     //         1 = 2.5  kHz (for 12.5k channel space)
     //         2 = 2.75 kHz
-    //         0 = 3.0  kHz (for 25k   channel space)
     //         3 = 3.5  kHz
-    //         4 = 4.5  kHz
-    //         5 = 4.25 kHz
-    //         6 = 4.0  kHz
-    //         7 = 3.75 kHz
     //
     // <5:4>   0 BW Mode Selection
     //         0 = 12.5k
     //         1 =  6.25k
     //         2 = 25k/20k
     //
-    // <3>     1 ???
+    // <3>     1 ??? (set in the 0x4048 default)
     //
     // <2>     0 Gain after FM Demodulation
     //         0 = 0dB
     //         1 = 6dB
     //
     // <1:0>   0 ???
+    //
+    // Resulting words: W 0x3428/0x3628 = RF 7.0, weak 6.0/7.0, LPF2 3.0k, 25k
+    // mode; N 0x3448/0x3648 = RF 3.5, weak 3.0/3.5, LPF2 2.5k, 12.5k mode;
+    // N+ 0x1148/0x1348 = RF 2.5, weak 2.0/2.5, LPF2 5.0k, 12.5k mode (N+ keeps
+    // the N BW mode, so its TX deviation is the one of N).
 
     uint16_t val = 0;
     switch (Bandwidth)

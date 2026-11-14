@@ -66,8 +66,9 @@ void SCR_HOP_Reset(void)
 static uint16_t carrier(uint32_t seed, uint32_t slot)
 {
     /* 16 carriers in a 500 Hz window (REG_71: 1032 units = 100 Hz), chosen so
-     * the inverted voice fits the TX audio band: N/N+ (LPF 2.5 kHz)
-     * 2600..3100 Hz, Wide (LPF 3 kHz) 2900..3400 Hz. Seed bit 0 = Wide. */
+     * the inverted voice fits the TX audio band: N/N+ 2600..3100 Hz (N LPF2
+     * 2.5 kHz; N+ LPF2 is 5.0 kHz per the BK4829 table, so it fits too),
+     * Wide (LPF 3 kHz) 2900..3400 Hz. Seed bit 0 = Wide. */
     return (uint16_t)(0x68DCu + ((seed & 1u) ? 3096u : 0u) +
                       (CRYPTO_Word(seed, slot) & 15u) * 344u);
 }
