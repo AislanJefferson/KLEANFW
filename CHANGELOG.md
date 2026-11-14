@@ -3,6 +3,127 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
+without its Spectrum and BK4829 driver-comment changes. The code is the same
+as in 0.2.0 for every file it touches. Image 120,636 / 120,832 bytes (196
+bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on a radio
+yet.
+
+### Fixed
+
+- HOP: a channel with a fixed scrambler (2600–3500 Hz) could receive without
+  descrambling. When a HOP reception ended (2 s hang) after a channel change
+  or a Dual Watch switch to that channel, the end of the HOP session turned
+  the scrambler off (REG_31<1>) over the fixed one, and the first reception
+  on it came out inverted. The end of a HOP RX session now reapplies the
+  scrambler of the channel being received (+16 B).
+- HOP TX: a resync sent after a late tick applied the previous slot's
+  carrier for up to 10 ms.
+- Messenger: after every HOP seed burst it received, the Messenger stayed
+  "busy" for 1.2 s (SEND, ACK and PONG deferred, battery save held, the
+  squelch-close fallback off) and then reset the FSK RX FIFO late. The
+  accepted burst now clears that timer (+8 B).
+- Messenger: ACK and PONG frames were accepted whoever they were addressed
+  to, and every radio numbers its messages from 1. An ACK from station C to
+  station B could mark our own message with the same number as delivered,
+  cancelling its retry. ACK and PONG frames are now accepted only when they
+  are addressed to our callsign (+44 B). The legacy text ACK (`ACK:hhhh`)
+  has no addressee and is still accepted as before.
+- Messenger: RESEND of a Sent message that failed without a TX block (FSK
+  still busy) stored an empty text, or the text of the next message (+12 B).
+- Messenger: the channel lock could trigger a spurious dual-watch swap (and
+  lose an FSK capture) if a timer tick fell between two stores.
+- USB/serial: the EEPROM read command copied a host-chosen size (up to 255
+  bytes) into a 128-byte reply buffer on the stack, and the write command
+  could read past the 256-byte command buffer. Sizes that do not fit are now
+  ignored; CHIRP (0x80-byte blocks) and the other working hosts are not
+  affected. Inherited from upstream (+12 B).
+- USB: when a USB packet ended exactly at the end of the 256-byte receive
+  ring, the reader never saw the ring as empty: every main-loop pass rescanned
+  it (~65,000 steps, about 0.1 s). CHIRP hits this after its 12th read and
+  every 64 reads after. A 256-byte frame starting at the ring start was also
+  executed again on every pass. The search guards of the parser never fired
+  ("while (n--)" leaves n at 0xFFFF). Checked with a host harness running the
+  extracted ISR and parser code (+28 B).
+- USB: a 0x051B read with an odd size put the reply footer at an odd
+  address, and its 16-bit store hung the radio (HardFault). Inherited from
+  upstream.
+- USB/serial: the multiboot and app slot-write commands (0x0724/0x0734)
+  bounded the chunk length only by a size field sent by the host. A large
+  value made them copy past the end of RAM (HardFault) or copy RAM contents
+  to external flash. The length is now also bounded by the command buffer
+  (valid frames carry at most 232 bytes, so working hosts are not affected)
+  (+12 B with the previous item).
+- F1Shrt/F1Long/F2Shrt/F2Long/M Long menus: a key action that this build does
+  not have (ALARM, 1750Hz, BLMIN, BACKLIGHT, POWER HIGH, REMOVE OFFSET or BEAM,
+  all offered by CHIRP) made the menu read its label through a garbage
+  pointer, which could hang the radio. It now shows NONE.
+- A NOAA channel number stored as the current channel (from a NOAA-enabled
+  firmware or an external tool) was accepted although NOAA is not built in.
+  It led to a NULL dereference and reads past the band tables. Only memory
+  and VFO channels are accepted now.
+- Menu keypad entry ignored each menu's minimum: `ScList` accepted 0 (its
+  label then read out of range) and `SetCtr` accepted contrast 0. `BatCal`
+  (1500–3500) could not be typed at all, because the entry stopped at 3
+  digits; it now takes 4.
+- `SetCtr`: the preview changed the real setting, so EXIT kept the cancelled
+  contrast and the next settings save wrote it. `SetInv` now previews the
+  inversion too (+52 B with the previous item).
+- PriCh1/PriCh2: browsing jumped to "None" by mistake after visiting the
+  other PriCh menu or a high channel.
+- The DCS menu's "approved" badge was always `/--` for inverted codes.
+- The scan-range tone display kept the wrong tone type when a DCS and a
+  CTCSS code had the same index.
+- TX compander followed the RX VFO's setting. With cross-band on and Dual
+  Watch off, that is the other channel. It now follows the TX VFO.
+  Inherited from upstream.
+- 108–137 MHz (airband): the check that clears the TX offset direction could
+  never be true; a 2023 refactor of the original 108–136 MHz test introduced
+  the error. A stored airband channel with an offset now loads with the
+  offset off. Inherited from upstream.
+- The VFO-save timer flags shared with the timer interrupt were not
+  `volatile`.
+
+### Changed
+
+- HOP RX follows the transmitter's clock rate. From the first 8 s resync of
+  an over (the second if the opening burst was stamped late), the receiver
+  compares the resync interval with its own clock and scales the slot clock
+  by the ratio, so a clock difference between radios no longer drifts past
+  the 8 ms guard before the next resync. Only resyncs stamped in the REG_0C
+  spin (~1 ms) are used. Under 12 ms of difference nothing changes, so
+  radios without drift behave exactly as before. A host simulation gives at
+  most 7–8 ms of slot error for 0.1–3 % of drift (before: 13–238 ms). The
+  correction stops growing after ~8.7 min without a resync (a carrier can
+  keep the session alive), so it cannot overflow. RX only; TX and the
+  over-the-air format are unchanged (+156 B).
+- HOP and battery save: while the RX (or either VFO with Dual Watch) listens
+  to a HOP channel that can decode the seed burst (MsgRx ON, VOX OFF),
+  `BatSav` does not sleep, as with `BatSav` OFF, also while `SetOff` has
+  turned the screen off. A sleeping receiver (1:4 is ~400 ms off per 500 ms)
+  could miss the ~0.2 s burst and stay scrambled until the 8 s resync
+  (+76 B).
+
+### Known issues and proposals
+
+From the review of HOP against the BK4829 register table (register use
+matches it). None of these is changed without a radio A/B test:
+
+- HOP RX guard: zeroing REG_48<9:4> (AF Rx Gain2) is about 30 dB of
+  attenuation, not a mute (the table's range is -28 to +3.5 dB). The
+  Messenger FSK audio mute uses the same method. A full mute would also need
+  REG_48<3:0> = 0 or REG_47<11:8> = 0, if the slot-boundary click is audible.
+- HOP slot clock: the drift tracking above starts at the first resync, so
+  the first 8 s of an over still need about 0.1 % relative clock accuracy
+  between radios. The MCU clock is set by the bootloader and its source is
+  not known here.
+- Messenger TX keeps the channel's voice scrambler as set (fixed, or HOP with
+  a live RX session), while the HOP seed burst turns it off. The table does
+  not say whether REG_31<1> affects the FSK modem; both ends use the same
+  setting today, so changing one side alone could break what works.
+
 ## KLEANFW 0.1.1 — 2026-11-14
 
 Firmware identity `KLEANFW v0.1.1` (the USB host identity stays

@@ -637,6 +637,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: 1:4.
 - **Quando mudar**: `OFF` ou `1:1` quando o início das transmissões não pode ser perdido (o receptor dormindo pode cortar a primeira sílaba). Valores altos servem para escuta longa.
 - **Atenção**: durante o sono do receptor aparece um ícone na barra de status.
+- **Atenção**: enquanto o receptor escuta um canal **HOP** (com `MsgRx` ON e `VOX` OFF; com Dual Watch, qualquer um dos dois VFOs), o BatSav fica suspenso, como em `OFF`, para não perder o burst de ~0,2 s do início do câmbio, inclusive com a tela apagada pelo `SetOff`. Nos outros canais a economia funciona normalmente.
 
 #### `BatTxt`: texto da bateria
 
@@ -1274,6 +1275,8 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
+- Em câmbios longos, a partir do primeiro resync (8 s) o receptor mede a diferença de relógio para o transmissor e passa a acompanhá-la entre os resyncs.
+- Num canal HOP o receptor não entra em economia de bateria (BatSav), para não perder o burst.
 
 **Requisitos no receptor:**
 
@@ -1746,7 +1749,7 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 
 | Ajuste | Recomendação |
 |---|---|
-| `BatSav` | Mantenha 1:4 ou 1:5 em escuta longa. O WAKE do Messenger acorda rádios em economia |
+| `BatSav` | Mantenha 1:4 ou 1:5 em escuta longa. O WAKE do Messenger acorda rádios em economia. Em canal HOP a economia fica suspensa |
 | `BLTime` | 10–30 s; use **F+8** para acender sob demanda |
 | `BLMax` | Reduza (5–7) em ambientes internos |
 | `BLTxRx` | OFF ou só RX se não precisar da luz no TX |
@@ -1804,7 +1807,8 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Última configuração não ficou salva | Rádio desligado menos de 2 s após a mudança | Espere cerca de 2 s antes de desligar |
 | Áudio picota e o LED verde apaga num sinal forte de repetidora | `STE` ON detectando em falso o fim de transmissão | Use `STE` OFF nesse canal (e `RP STE` para a cauda da repetidora) |
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
-| HOP sai embaralhado | Receptor perdeu o burst, CryKey diferente, receptor fora de HOP, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
+| HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
+| HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey e Scramb = HOP no canal de RX |
 | Início da fala cortado no HOP | Mic mudo durante o burst | Espere meio segundo após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |
 | F+4 / F+\* só dão bipe duplo | Falta `Search.app` | Instale-o |
