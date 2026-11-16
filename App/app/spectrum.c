@@ -1476,6 +1476,8 @@ static void UpdateScanStep(bool inc)
     }
 
     settings.frequencyChangeStep = GetBW() >> 1;
+    // A wider span (or a switch to/from center mode) must stay in the band.
+    ClampVfoScanWindow();
     /* Scan steps below 15 kHz use a much narrower BK4819 filter than the
      * 15/20/25/50/100 kHz steps.  Crossing that boundary moves the measured
      * noise floor, so retaining the previous dbMin/dbMax makes most of the
