@@ -315,11 +315,10 @@ static void SaveSettings()
 
     Data[1] = 2u;
 
-    // Data[2]: dbMax encoded as (dbMax + 130) / 5
-    Data[2] = (uint8_t)((settings.dbMax + 130) / 5);
-
-    // Data[3]: rssiTriggerLevel as uint8_t (0xFF = auto)
-    Data[3] = (settings.rssiTriggerLevel == RSSI_MAX_VALUE) ? 0xFF : (uint8_t)settings.rssiTriggerLevel;
+    // Data[2] (dbMax) and Data[3] (trigger) keep their stored bytes: every
+    // entry recalibrates both from the first sweep before they are used, and
+    // the session's values differ each time, so writing them would erase the
+    // 0xA000 settings sector on almost every Spectrum exit.
 
     Data[4] = (uint8_t)settings.stepsCount;
 
