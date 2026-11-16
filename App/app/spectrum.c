@@ -2473,6 +2473,10 @@ static void OnKeyDown(uint8_t key) {
             ToggleStepsCount();
         break;
     case KEY_PTT:
+        // No peak yet (after squelch close, UP/DOWN or SIDE1): peak.f is 0
+        // and STILL would tune to 0 Hz.
+        if (peak.f == 0)
+            break;
         SetState(STILL);
         peakPttArmed = false;
         selectedPeakFrequency = peak.f;
