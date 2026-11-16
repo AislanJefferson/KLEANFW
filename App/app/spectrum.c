@@ -2533,16 +2533,19 @@ static void OnKeyDownFreqInput(KEY_Code_t key)
             break;
         }
         SetState(previousState);
-        currentFreq = tempFreq;
         if (currentState == SPECTRUM)
         {
+            currentFreq = tempFreq;
             ClampVfoScanWindow();
             ResetBlacklist();
             RelaunchScan();
         }
         else
         {
-            SetF(currentFreq);
+            // STILL: tune only, as UP/DOWN do. The sweep window stays and the
+            // second PTT takes the frequency on screen.
+            SetF(tempFreq);
+            selectedPeakFrequency = fMeasure;
         }
         break;
     default:
