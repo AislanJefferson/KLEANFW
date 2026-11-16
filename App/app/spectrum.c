@@ -830,6 +830,11 @@ uint32_t GetFStart()
 {
     if (spectrumChannelMode)
         return SpectrumChannelFrequencyAt(0);
+#ifdef ENABLE_SCAN_RANGES
+    // A scan range starts at its start even with a center-mode step.
+    if (gScanRangeStart)
+        return currentFreq;
+#endif
     return IsCenterMode() ? currentFreq - (GetBW() >> 1) : currentFreq;
 }
 
