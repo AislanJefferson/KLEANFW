@@ -2045,7 +2045,7 @@ static void DrawStatus()
         if (monitorMode || settings.rssiTriggerLevel == RSSI_MAX_VALUE)
             sprintf(trigStr, "--");
         else
-            sprintf(trigStr, "%d", Rssi2DBm(settings.rssiTriggerLevel));
+            sprintf(trigStr, "%d", Rssi2DBm(settings.rssiTriggerLevel + LISTEN_OPEN_HYST_RSSI));
 
         sprintf(String, "M%s/%s", curStr, trigStr);
     }
@@ -2230,9 +2230,9 @@ static bool SpectrumColumnAtOrAboveY(const uint8_t *topY, uint8_t x, uint8_t y)
     for (int8_t dx = start; dx <= end; dx++)
     {
         uint8_t n = x + dx;
-        if (topY[n] != SPECTRUM_TOPY_SKIP && topY[n] <= y + 1)
-            return true;
-        if (peakHoldY[n] != PEAK_HOLD_INIT && peakHoldY[n] <= y + 1)
+        // Only the live crest at or above the line hides it: the dotted peak
+        // hold is an old maximum, and a 1 px slack hid the line 1-2 dB early.
+        if (topY[n] != SPECTRUM_TOPY_SKIP && topY[n] <= y)
             return true;
     }
 
@@ -2263,7 +2263,9 @@ static void DrawRssiTriggerLevel(const uint8_t *topY)
         leftTextX = GetScanStepTextWidth() + 2;
         rightTextX = 128 - GetBwTextWidth() - 2;
     }
-    uint8_t y = Rssi2Y(settings.rssiTriggerLevel);
+    // Draw where the listen opens (trigger + open hysteresis), so a peak
+    // that reaches the line is tuned.
+    uint8_t y = Rssi2Y(settings.rssiTriggerLevel + LISTEN_OPEN_HYST_RSSI);
     for (uint8_t x = 0; x < 128; x += 2)
     {
         if (SpectrumColumnAtOrAboveY(topY, x, y))
@@ -2665,7 +2667,7 @@ static void RenderStill()
 
     if (!monitorMode)
     {
-        uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
+        uint8_t x = Rssi2PX(settings.rssiTriggerLevel + LISTEN_OPEN_HYST_RSSI, 0, 121);
         gFrameBuffer[2][METER_PAD_LEFT + x] = 0b11111111;
     }
 

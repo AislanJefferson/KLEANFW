@@ -1412,7 +1412,7 @@ Canais criados pela busca mantêm a potência que estava em uso, ficam em **NARR
 | **1 / 7** | Passo de varredura + / − |
 | **2 / 8** | Passo de deslocamento + / − |
 | **3 / 9** | Topo da escala +5 / −5 dB |
-| **\* / F** | Nível de disparo sobe / desce |
+| **\* / F** | Nível de disparo sobe / desce. A linha do limiar e o número depois da barra na barra de status (`M<atual>/<limiar>`) marcam onde a escuta abre: um pico que alcança a linha é sintonizado no fim da passada |
 | **4** | VFO: número de pontos 128 / 64 / 32 / 16 · MR: `ALL`, depois cada lista com canais (`01`, `02`…), depois `OFF` (todos os canais) e volta para `ALL`. Vale só no Spectrum: não muda a **ScList** nem a lista do canal |
 | **5** | Digitar uma frequência (\* = ponto decimal, MENU confirma) |
 | **0** | Muda a modulação (só em VFO) |

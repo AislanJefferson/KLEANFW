@@ -9,8 +9,8 @@ The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
 the F+3 frequency carry-over and the Spectrum review below. Of the 0.2.0
 Spectrum changes only two came back (reverse half-sweep, scrambler); the
-REG_43 width and the scan-range step fit did not. Image 120,784 / 120,832
-bytes (48 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
+REG_43 width and the scan-range step fit did not. Image 120,752 / 120,832
+bytes (80 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
 a radio yet.
 
 ### Fixed
@@ -131,6 +131,14 @@ a radio yet.
   every reading) (+8 B).
 - Spectrum VFO: with 50/100 kHz steps, key 8 could take the move step down
   to 0, and UP/DOWN stopped moving the window (+4 B).
+- Spectrum: lowering the trigger (key F) until its line touched a peak did
+  not tune the peak. The line was drawn at the trigger, but the listen opens
+  2 dB above it, and the line also vanished 1 px early and under the dotted
+  peak hold (an old maximum), so it looked touched 3-5 dB before the open
+  level (host check). The line, the STILL meter mark and the status-bar
+  number now show the open level, and only the live trace hides the line;
+  the remaining gap is one pixel. Squelch open/close levels are unchanged
+  (-32 B).
 
 ### Changed
 
