@@ -541,15 +541,21 @@ static void SetFScan(uint32_t f)
 
 // Spectrum related
 
-static bool IsPeakOverOpenLevel()
+// Level that opens RX. The trigger line and the Still meter mark are drawn
+// here, so a peak that crosses the line on screen is one that opens.
+static uint16_t GetOpenLevel()
 {
     uint16_t openLevel = settings.rssiTriggerLevel;
     if (openLevel <= (uint16_t)(RSSI_MAX_VALUE - LISTEN_OPEN_HYST_RSSI))
         openLevel += LISTEN_OPEN_HYST_RSSI;
     else
         openLevel = RSSI_MAX_VALUE;
+    return openLevel;
+}
 
-    return peak.rssi >= openLevel;
+static bool IsPeakOverOpenLevel()
+{
+    return peak.rssi >= GetOpenLevel();
 }
 
 static bool IsListeningSignalPresent(uint16_t rssi)
@@ -1996,12 +2002,16 @@ static void BuildSpectrumTopY(uint8_t *topY, uint8_t bars)
         return;
     }
 
-    // Q8 fixed-point: step256 / 256 advances one sample, multiplied by x.
-    uint16_t step256 = ((uint16_t)(bars - 1) << 8) / 127;
+    // Q8 fixed-point sample position of column x: x*span/127, as
+    // (x*129+1)*span >> 14 (no division; exact at both ends, within 2/256 of
+    // a sample elsewhere, fits 32 bits). A truncated per-column step left
+    // column 127 halfway between the last two samples and the curve off the
+    // arrow's 127*i/(N-1).
+    const uint32_t span256 = (uint32_t)(bars - 1) << 8;
 
     for (uint8_t x = 0; x < 128; x++)
     {
-        uint16_t rssi = InterpolateRssi(bars, (uint16_t)x * step256);
+        uint16_t rssi = InterpolateRssi(bars, (uint16_t)(((x * 129u + 1u) * span256) >> 14));
         topY[x] = (rssi == RSSI_MAX_VALUE) ? SPECTRUM_TOPY_SKIP : Rssi2Y(rssi);
     }
 }
@@ -2136,8 +2146,8 @@ static void ShowChannelName(uint32_t f)
 }
 #endif
 
-static void FormatFrequency(uint32_t freq, char *buffer) {
-    sprintf(buffer, "%u.%05u", freq / 100000, freq % 100000);
+static int FormatFrequency(uint32_t freq, char *buffer) {
+    return sprintf(buffer, "%u.%05u", freq / 100000, freq % 100000);
 }
 
 static void DrawF(uint32_t f)
@@ -2223,8 +2233,10 @@ static void DrawNums()
         }
         GUI_DisplaySmallest(String, 48, 49, false, true);
 
-        FormatFrequency(GetFEnd(), String);
-        GUI_DisplaySmallest(String, 93, 49, false, true);
+        // Right-aligned (x 93 for 9 chars): 1000 MHz and up no longer lose
+        // the last digit past the screen edge.
+        GUI_DisplaySmallest(String, 129 - 4 * FormatFrequency(GetFEnd(), String),
+                            49, false, true);
     }
 }
 
@@ -2269,7 +2281,7 @@ static void DrawRssiTriggerLevel(const uint8_t *topY)
         leftTextX = GetScanStepTextWidth() + 2;
         rightTextX = 128 - GetBwTextWidth() - 2;
     }
-    uint8_t y = Rssi2Y(settings.rssiTriggerLevel);
+    uint8_t y = Rssi2Y(GetOpenLevel());
     for (uint8_t x = 0; x < 128; x += 2)
     {
         if (SpectrumColumnAtOrAboveY(topY, x, y))
@@ -2670,7 +2682,7 @@ static void RenderStill()
 
     if (!monitorMode)
     {
-        uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
+        uint8_t x = Rssi2PX(GetOpenLevel(), 0, 121);
         gFrameBuffer[2][METER_PAD_LEFT + x] = 0b11111111;
     }
 
