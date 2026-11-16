@@ -1418,7 +1418,7 @@ O Spectrum escuta sempre **sem scrambler**, mesmo que o canal ou VFO de onde ele
 | **2 / 8** | Passo de deslocamento + / − |
 | **3 / 9** | Topo da escala +5 / −5 dB |
 | **\* / F** | Nível de disparo sobe / desce |
-| **4** | VFO: número de pontos 16 / 32 / 64 / 128 / 256 / 512 / 1024 / 2048 e volta para 16 · MR: `ALL`, depois cada lista com canais (`01`, `02`…), depois `OFF` (todos os canais) e volta para `ALL`. Vale só no Spectrum: não muda a **ScList** nem a lista do canal |
+| **4** | VFO: número de pontos 16 / 32 / 64 / 128 / 256 / 512 / 1024 / 2048 e volta para 16 · MR: `ALL`, depois cada lista com canais (`01`, `02`…), depois `OFF` (todos os canais) e volta para `ALL`. Vale só no Spectrum: não muda a **ScList** nem a lista do canal. A cada troca, a escala e o nível de disparo são recalibrados na primeira varredura da nova lista, como ao abrir o Spectrum |
 | **5** | Digitar uma frequência (\* = ponto decimal, MENU confirma). Se estiver escutando, o áudio fecha, e EXIT sem digitar recomeça a varredura |
 | **0** | Muda a modulação (só em VFO) |
 | **6** | Largura de banda de escuta 25k / 12,5k / 6,25k, aplicada na hora. Em MR vale para todos os canais, no gráfico e na escuta, até sair ou segurar MENU; antes dela, cada canal usa a própria banda. O canal não muda |

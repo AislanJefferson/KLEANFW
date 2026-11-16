@@ -3,6 +3,16 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+### Fixed
+
+- MR Spectrum: key `4` (next list) now recalibrates the graph scale and the
+  trigger level from the first sweep of the new list, as on entry (F+5).
+  Before, the new list kept the previous list's scale, so a list on another
+  band could draw its trace on the bottom axis or above the top. +12 B; the
+  .bin is 120,796 / 120,832 bytes (36 bytes free).
+
 ## KLEANFW 0.1.2 — 2026-11-16
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,

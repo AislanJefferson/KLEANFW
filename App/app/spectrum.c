@@ -2492,6 +2492,9 @@ static void OnKeyDown(uint8_t key) {
             currentFreq = SpectrumChannelFrequencyAt(0);
             // Leaving a reception: back to the sweep modulation/bandwidth.
             RestoreSpectrumScanRf(true);
+            // New list, maybe another band: calibrate scale and trigger
+            // from its first sweep, as on entry (F+5).
+            initialCalibrationPending = true;
             RearmRuntimeState();
             // Exclusions are stored by list position: drop them with the list.
             ResetBlacklist();
