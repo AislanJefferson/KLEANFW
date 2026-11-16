@@ -288,12 +288,8 @@ static void LoadSettings()
     // Data[0] bits 1:0 (old listenBw) are unused: the listen filter is
     // inherited from the VFO on entry.
 
-    // Data[2]: dbMax encoded as (dbMax + 130) / 5
-    if (Data[2] <= 28)
-        settings.dbMax = (int)Data[2] * 5 - 130;
-
-    // Data[3]: rssiTriggerLevel as uint8_t (0xFF = auto)
-    settings.rssiTriggerLevel = (Data[3] == 0xFF) ? RSSI_MAX_VALUE : Data[3];
+    // Data[2] (dbMax) and Data[3] (trigger) are no longer used: the first
+    // sweep of every session recalibrates both (see SaveSettings()).
 
     // Data[5] ~ Data[7] are free (for the moment...)
 }
