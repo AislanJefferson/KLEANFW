@@ -6,10 +6,11 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 ## Unreleased
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
-without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix
-and the Spectrum carrier-end watch below. Apart from those two, the code is the
-same as in 0.2.0 for every file it touches. Image 120,720 / 120,832 bytes (112
-bytes free); RAM 15,640 / 16,384 bytes at link time. Not tested on a radio yet.
+without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
+the Spectrum carrier-end watch and the Spectrum fixes below. Apart from those,
+the code is the same as in 0.2.0 for every file it touches. Image 120,784 /
+120,832 bytes (48 bytes free); RAM 15,640 / 16,384 bytes at link time. Not
+tested on a radio yet.
 
 ### Fixed
 
@@ -93,6 +94,58 @@ bytes free); RAM 15,640 / 16,384 bytes at link time. Not tested on a radio yet.
   leaves the reception untouched (+40 B). The repeater TX offset plays no
   part: "busy" is a reception on the RX (repeater output) frequency. VOX, the
   alarm/1750 Hz tone and the Messenger-off build were not affected.
+- Spectrum, flash wear: EXIT and the second PTT wrote the scale top (dbMax)
+  and the trigger level, which change with every entry calibration, so most
+  VFO exits erased a flash sector. The saved values were never used either:
+  the entry calibration replaces them before RX can open. Only the scan step
+  and the point count are saved now, so the sector is erased only when one
+  of them changes. The stored bytes are left as they are.
+- Spectrum VFO: every reverse half-sweep started at the window's upper edge,
+  one step past the last sample, so it measured each point one step too high
+  (the peak moved one step between passes and the arrow did not match the
+  curve). MR, and a scan range whose span divides by the step, were not
+  affected. The reverse pass also stopped at the 2nd point: on every other
+  cycle the first step, or the first MR channel of the list, was not
+  measured. UP/DOWN with more than 128 steps or channels started the
+  interlaced sweep from the right and skipped a fraction of the points for
+  that pass (−92 B with the previous item).
+- Spectrum: PTT with no peak yet tuned the listen to 0 Hz. That is the case
+  right after a reception ends (until the next half-sweep ends, while the
+  last peak's frequency is still on screen), just after SIDE1 or a sweep
+  restart, and during the calibration with more than 128 steps. It now does
+  nothing, like SIDE1.
+- Spectrum listen (STILL): a frequency typed with key 5 also moved the sweep
+  window, without keeping it inside the band, and pushed a scan range off its
+  limits. The second PTT still took the old peak. It now only retunes the
+  listen, and the second PTT takes the typed frequency, as after UP/DOWN.
+- Spectrum: keys 2/8 could take the move step down to 0 with 50k/100k scan
+  steps, after which UP/DOWN no longer moved the window.
+- Spectrum MR: key 4 during a reception kept that channel's modulation and
+  bandwidth for the sweep of the new list.
+- Spectrum: in FM, the listen kept the active VFO's voice scrambler, so every
+  signal heard came out scrambled. The Spectrum now listens in clear; leaving
+  it reapplies the channel's scrambler.
+- Spectrum: typing a frequency (key 5) during a reception left the audio open
+  with no carrier check, so noise played once the carrier ended. The audio now
+  closes when the entry opens, and the sweep restarts as after a normal
+  release, so EXIT does not reopen RX on the old peak (+68 B with the 5
+  previous items).
+- Spectrum scan range: with a 0.01–1 kHz step the sweep ran in center mode,
+  half of it below the range start, and the bottom line showed the center
+  layout (+28 B).
+- Spectrum: keys 1/7 did not keep the window inside the band, so a larger step
+  could sweep past 1300 MHz. Crossing 2.5 kHz (where the window switches
+  between center and start mode), and holding MENU, moved the view by half a
+  span. The view's center is now kept when that mode changes (+76 B).
+- Spectrum graph: the last column stopped short of the last sample (with 64
+  points, halfway between the last two, so a peak on the last step was drawn
+  at half height), and the curve drifted up to 1 px off the arrow. The sample
+  position is now exact at both ends and within 2/256 of a sample elsewhere,
+  with a multiply and shift instead of a division. The upper-edge frequency lost its last digit from 1000 MHz; it is
+  now right-aligned. The trigger line and the Still meter mark were drawn at
+  the trigger, 2 dB below the level that opens RX; they now show the opening
+  level, so a peak that crosses the line is one that opens (−16 B for the
+  three).
 
 ### Changed
 
@@ -124,6 +177,18 @@ bytes free); RAM 15,640 / 16,384 bytes at link time. Not tested on a radio yet.
   (+76 B).
 
 ### Known issues and proposals
+
+From the Spectrum review. None of these is changed without a radio test:
+
+- The fixed listen (STILL) opens on an RSSI read with the scan filter
+  (REG_43) and closes on one read with the listen filter. Below a 15k step the
+  two filters differ, which could make it open and close repeatedly.
+- `setTailFoundInterrupt()` does not clear a pending REG_02 interrupt, so an
+  old CTCSS/DCS tail might end a new reception at its first check.
+- dBm values use the band correction of the VFO for every swept frequency.
+- A scan range with more than 65,535 steps overflows the step count (16 bits).
+- The channel name in the VFO listen is cached across sessions: a name edited
+  for the same frequency shows the old one until the frequency changes.
 
 From the review of HOP against the BK4829 register table (register use
 matches it). None of these is changed without a radio A/B test:

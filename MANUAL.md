@@ -1406,24 +1406,28 @@ Canais criados pela busca mantêm a potência que estava em uso, ficam em **NARR
 
 Quando uma transmissão acaba, o Spectrum percebe em até ~45 ms, corta o áudio e volta a varrer. Se outro canal ou passo estiver transmitindo, ele é sintonizado logo em seguida: numa lista FRS de ~22 canais, cerca de 0,1 s depois do fim da anterior. Uma transmissão em andamento não é interrompida por outra mais forte.
 
+A linha pontilhada do gráfico (e a marca no medidor da escuta) fica no nível que abre a escuta: um pico que passa da linha é ouvido. O número `M<atual>/<disparo>` da barra de status mostra o nível de disparo, 2 dB abaixo da linha.
+
+O Spectrum escuta sempre **sem scrambler**, mesmo que o canal ou VFO de onde ele foi aberto tenha um. O scrambler do canal volta ao sair.
+
 ### 17.1 Teclas no gráfico
 
 | Tecla | Função |
 |---|---|
-| **1 / 7** | Passo de varredura + / − |
+| **1 / 7** | Passo de varredura + / −. Abaixo de 2,5 kHz a frequência fica no centro do gráfico; de 2,5 kHz para cima, na borda esquerda. Ao cruzar esse limite, o centro da vista é mantido |
 | **2 / 8** | Passo de deslocamento + / − |
 | **3 / 9** | Topo da escala +5 / −5 dB |
 | **\* / F** | Nível de disparo sobe / desce |
-| **4** | VFO: número de pontos 128 / 64 / 32 / 16 · MR: `ALL`, depois cada lista com canais (`01`, `02`…), depois `OFF` (todos os canais) e volta para `ALL`. Vale só no Spectrum: não muda a **ScList** nem a lista do canal |
-| **5** | Digitar uma frequência (\* = ponto decimal, MENU confirma) |
+| **4** | VFO: número de pontos 16 / 32 / 64 / 128 / 256 / 512 / 1024 / 2048 e volta para 16 · MR: `ALL`, depois cada lista com canais (`01`, `02`…), depois `OFF` (todos os canais) e volta para `ALL`. Vale só no Spectrum: não muda a **ScList** nem a lista do canal |
+| **5** | Digitar uma frequência (\* = ponto decimal, MENU confirma). Se estiver escutando, o áudio fecha, e EXIT sem digitar recomeça a varredura |
 | **0** | Muda a modulação (só em VFO) |
 | **6** | Largura de banda de escuta 25k / 12,5k / 6,25k, aplicada na hora. Em MR vale para todos os canais, no gráfico e na escuta, até sair ou segurar MENU; antes dela, cada canal usa a própria banda. O canal não muda |
 | **UP/DOWN** | Desloca a faixa / retoma a varredura |
 | **SIDE1** | Ignora o pico atual (o canal ou passo que está tocando) até sair do Spectrum |
 | **SIDE2** | Luz sempre acesa → sempre apagada → automática (como **F+8**). Vale até sair do Spectrum |
 | **Segurar MENU** | Volta tudo ao padrão |
-| **PTT** | Para no pico e escuta |
-| **EXIT** | Sai. Em VFO salva o passo de varredura, o número de pontos, o topo da escala e o nível de disparo; em MR não grava nada |
+| **PTT** | Para no pico e escuta. Sem pico ainda, não faz nada: logo depois do fim de uma recepção (até a meia varredura seguinte terminar, mesmo com a frequência do último pico na tela), depois do SIDE1 ou de um reinício da varredura |
+| **EXIT** | Sai. Em VFO salva o passo de varredura e o número de pontos (a flash só é gravada se um deles mudou); em MR não grava nada. O topo da escala e o nível de disparo não são salvos: eles são calibrados a cada entrada |
 
 Em MR, as teclas 1, 7, 2, 8, 5 e 0 ficam inativas: o gráfico mostra a lista inteira, sem uma faixa para deslocar ou digitar, e cada canal usa a própria modulação.
 
@@ -1435,14 +1439,13 @@ Em MR, as teclas 1, 7, 2, 8, 5 e 0 ficam inativas: o gráfico mostra a lista int
 - Com mais de 128 canais ou passos, a coluna continua desenhada (ela é dividida com canais vizinhos), e só as 15 últimas exclusões ficam valendo.
 - As exclusões são apagadas ao sair, ao segurar MENU, ao digitar uma frequência (tecla 5) e, em MR, ao trocar de lista com a tecla 4.
 
-A lista trocada com a tecla 4 vale também para o scan de memória depois de sair. Ela não é gravada na hora: fica na memória do rádio e só vai para a flash quando outra configuração for salva, como acontece ao trocar a lista durante o scan.
-
 ### 17.2 Teclas na escuta
 
 | Tecla | Função |
 |---|---|
 | **UP/DOWN** | Ajuste fino (ou ajuste do ganho, com o menu de ganho aberto) |
 | **MENU** | Percorre os ganhos LNAs → LNA → PGA |
+| **5** | Digitar uma frequência para a escuta (só em VFO). A faixa do gráfico não muda, e o segundo PTT leva essa frequência |
 | **SIDE1** | Monitor |
 | **0** | Muda a modulação da escuta (só em VFO; a escuta continua abrindo com o mesmo nível de disparo) |
 | **6** | Largura de banda de escuta (em MR continua valendo depois do EXIT, para todos os canais; o canal não muda) |
