@@ -1572,7 +1572,10 @@ static void UpdateFreqChangeStep(bool inc)
     {
         settings.frequencyChangeStep += diff;
     }
-    else if (!inc && settings.frequencyChangeStep > 10000)
+    // With 50/100 kHz steps it moves by 200/400 kHz: never down to 0, where
+    // UP/DOWN would stop moving the window.
+    else if (!inc && settings.frequencyChangeStep > 10000 &&
+             settings.frequencyChangeStep > diff)
     {
         settings.frequencyChangeStep -= diff;
     }
