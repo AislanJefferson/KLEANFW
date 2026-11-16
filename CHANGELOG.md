@@ -9,8 +9,8 @@ The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
 the F+3 frequency carry-over and the Spectrum review below. Of the 0.2.0
 Spectrum changes only two came back (reverse half-sweep, scrambler); the
-REG_43 width and the scan-range step fit did not. Image 120,752 / 120,832
-bytes (80 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
+REG_43 width and the scan-range step fit did not. Image 120,796 / 120,832
+bytes (36 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
 a radio yet.
 
 ### Fixed
@@ -142,6 +142,14 @@ a radio yet.
 
 ### Changed
 
+- Spectrum (experimental, A/B pending): after a transmission ends, the
+  Spectrum sweeps for the next one within ~45 ms instead of up to ~0.5 s,
+  with a much shorter noise tail. Between its full listen checks (every
+  ~0.4-0.5 s) it reads the RSSI alone every 32 ticks; a 10 dB drop runs the
+  full check at once, and that check still decides whether to leave. With
+  an FRS list of ~22 channels the next active channel is heard about 0.1 s
+  after the previous one ends. Listening only, VFO and MR; the fixed listen
+  (STILL) is unchanged. `LISTEN_FAST_CHECK_TICKS 0` turns it off (+44 B).
 - F+3 (VFO/MR) carries the frequency across. MR→VFO puts only the active
   channel's frequency in the VFO (rounded to the VFO step when it is off
   the grid): CTCSS/DCS, offset direction and value, Reverse and the

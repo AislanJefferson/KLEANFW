@@ -1405,6 +1405,8 @@ Canais criados pela busca mantêm a potência que estava em uso, ficam em **NARR
   - Em MR, a seta embaixo marca o canal mostrado e fica nele até a varredura achar outro pico.
   - Em VFO, a seta marca o passo do pico atual e volta para a borda esquerda enquanto não há pico. A frequência mostrada continua a do último pico.
 
+Quando uma transmissão acaba, o Spectrum percebe em até ~45 ms, corta o áudio e volta a varrer. Se outro canal ou passo estiver transmitindo, ele é sintonizado logo em seguida: numa lista FRS de ~22 canais, cerca de 0,1 s depois do fim da anterior. Uma transmissão em andamento não é interrompida por outra mais forte.
+
 ### 17.1 Teclas no gráfico
 
 | Tecla | Função |
