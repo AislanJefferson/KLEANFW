@@ -1497,7 +1497,11 @@ static void UpdateCurrentFreq(bool inc)
     }
     else if (!inc && currentFreq > F_MIN)
     {
-        currentFreq -= settings.frequencyChangeStep;
+        // A wide span's half step can exceed currentFreq: stop at F_MIN
+        // instead of wrapping (the clamp then jumped to the band top).
+        currentFreq = currentFreq - F_MIN > settings.frequencyChangeStep
+                          ? currentFreq - settings.frequencyChangeStep
+                          : F_MIN;
     }
     else
     {
