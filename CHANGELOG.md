@@ -7,9 +7,10 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix
-below. Apart from that fix, the code is the same as in 0.2.0 for every file it
-touches. Image 120,676 / 120,832 bytes (156 bytes free); RAM 15,608 / 16,384
-bytes at link time. Not tested on a radio yet.
+and the F+3 frequency carry-over below. Apart from those two, the code is the
+same as in 0.2.0 for every file it touches. Image 120,816 / 120,832 bytes
+(16 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on a radio
+yet.
 
 ### Fixed
 
@@ -96,6 +97,16 @@ bytes at link time. Not tested on a radio yet.
 
 ### Changed
 
+- F+3 (VFO/MR) carries the frequency across. MR→VFO puts only the active
+  channel's frequency in the VFO (rounded to the VFO step when it is off
+  the grid): CTCSS/DCS, offset direction and value, Reverse and the
+  scrambler (HOP too) are cleared, while step, modulation, bandwidth,
+  power, BusyCL, TX lock and PTT-ID come from that band's saved VFO. The
+  VFO record is written at once (at most one erase of the VFO sector, and
+  only when it changes); this also applies during an MR scan. VFO→MR goes
+  to the stored channel with the VFO frequency, searching from the last MR
+  channel, and falls back to the last MR channel as before. Full Watch C/D
+  is unchanged (+140 B).
 - HOP RX follows the transmitter's clock rate. From the first 8 s resync of
   an over (the second if the opening burst was stamped late), the receiver
   compares the resync interval with its own clock and scales the slot clock
