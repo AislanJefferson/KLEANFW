@@ -9,8 +9,8 @@ The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
 the F+3 frequency carry-over and the Spectrum review below. Of the 0.2.0
 Spectrum changes only two came back (reverse half-sweep, scrambler); the
-REG_43 width and the scan-range step fit did not. Image 120,812 / 120,832
-bytes (20 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
+REG_43 width and the scan-range step fit did not. Image 120,784 / 120,832
+bytes (48 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
 a radio yet.
 
 ### Fixed
@@ -104,8 +104,9 @@ a radio yet.
 - Spectrum: every exit from the VFO Spectrum stored the scale top and the
   trigger level. Both are recalibrated by the first sweep of every session
   before use, and the new values differ each time, so almost every exit
-  erased the main settings sector. They are no longer written; the scan
-  step and sample count are still saved, and only when they change (-32 B).
+  erased the main settings sector. They are no longer written or read
+  (re-entry keeps the previous session's values in RAM); the scan step and
+  sample count are still saved, and only when they change (-60 B).
 - Spectrum: the entry channel's voice scrambler stayed on, so every FM
   signal heard (VFO or MR) came out inverted. The Spectrum listens in clear;
   the channel's scrambler is back on exit (+4 B).
@@ -123,7 +124,7 @@ a radio yet.
   the old peak. It now only tunes the fixed listen and becomes the PTT x2
   frequency, as UP/DOWN there; the sweep window does not move (+16 B).
 - Spectrum scan range: with a 0.01-1 kHz step the sweep was centred on the
-  range start: 144-146 MHz at 1 kHz swept 143.0-145.0 MHz. It now sweeps the
+  range start: 144-146 MHz at 1 kHz swept 142.9995-144.9995 MHz. It now sweeps the
   range. The bottom labels keep the center layout for these steps (+12 B).
 - Spectrum MR: key 4 pressed while listening kept the heard channel's
   modulation for the following sweep (with AM, the AM-fix gain was added to
