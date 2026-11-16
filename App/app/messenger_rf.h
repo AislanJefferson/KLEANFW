@@ -25,7 +25,7 @@ void MSG_RF_CancelRangeWait(void);
 bool MSG_RF_LastSendWasBlocked(void);
 MSG_RF_BlockReason_t MSG_RF_LastSendBlockReason(void);
 void MSG_RF_HardRestoreVoicePath(void);
-void MSG_RF_PrepareManualVoiceTx(void);
+bool MSG_RF_PrepareManualVoiceTx(void);
 void MSG_RF_PrepareVoxVoiceTx(void);
 void MSG_RF_OnVoxModeChanged(bool enabled);
 void MSG_RF_OnRadioSetupRegisters(void);

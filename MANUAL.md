@@ -437,6 +437,8 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Opções**: `OFF`, `ON`.
 - **Padrão**: OFF.
 - **Quando mudar**: em canais compartilhados, para não "pisar" em quem já está falando.
+- **Repetidoras**: vale a frequência de RX, que é a saída da repetidora. O offset de TX não interfere. Com `RxCTCS`/`RxDCS` configurado, o bloqueio só age enquanto o código recebido bate.
+- Quando o PTT é bloqueado, aparece `BUSY` no VFO e a recepção continua normalmente. Sem `RxCTCS`/`RxDCS`, o bloqueio segue até a repetidora derrubar a portadora, inclusive no tempo de cauda (*hang time*).
 
 #### `Compnd`: compander *(canal)*
 

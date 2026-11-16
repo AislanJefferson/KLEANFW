@@ -6,10 +6,10 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 ## Unreleased
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
-without its Spectrum and BK4829 driver-comment changes. The code is the same
-as in 0.2.0 for every file it touches. Image 120,636 / 120,832 bytes (196
-bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on a radio
-yet.
+without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix
+below. Apart from that fix, the code is the same as in 0.2.0 for every file it
+touches. Image 120,676 / 120,832 bytes (156 bytes free); RAM 15,608 / 16,384
+bytes at link time. Not tested on a radio yet.
 
 ### Fixed
 
@@ -85,6 +85,14 @@ yet.
   offset off. Inherited from upstream.
 - The VFO-save timer flags shared with the timer interrupt were not
   `volatile`.
+- BusyCL never blocked the PTT, on simplex and repeater channels alike. The
+  Messenger voice-path restore that runs on every PTT press reset the RX
+  state to foreground before RADIO_PrepareTX() checked for a reception, so
+  the radio transmitted over the busy channel. The busy check now runs before
+  that restore, on the VFO that will transmit; a blocked PTT shows BUSY and
+  leaves the reception untouched (+40 B). The repeater TX offset plays no
+  part: "busy" is a reception on the RX (repeater output) frequency. VOX, the
+  alarm/1750 Hz tone and the Messenger-off build were not affected.
 
 ### Changed
 

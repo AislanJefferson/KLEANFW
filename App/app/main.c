@@ -436,7 +436,7 @@ static void MAIN_SendPmrCallTone(void)
     if (tone > 4u) tone = 0;
 
 #ifdef ENABLE_MESSENGER
-    MSG_RF_PrepareManualVoiceTx();
+    (void)MSG_RF_PrepareManualVoiceTx();   // never blocks: no RX here (guard above)
 #endif
 
     gCallToneTxActive = true;

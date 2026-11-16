@@ -210,7 +210,14 @@ void GENERIC_Key_PTT(bool bKeyPressed)
 
 start_tx:
 #ifdef ENABLE_MESSENGER
-    MSG_RF_PrepareManualVoiceTx();
+    if (!MSG_RF_PrepareManualVoiceTx()) {
+        // BusyCL: same outcome as the reject branch of RADIO_PrepareTX()
+        RADIO_SetVfoState(VFO_STATE_BUSY);
+#ifdef ENABLE_DTMF_CALLING
+        gDTMF_ReplyState = DTMF_REPLY_NONE;
+#endif
+        goto cancel_tx;   // no beep: AUDIO_PlayBeep() is muted during RX
+    }
 #endif
     // request start TX
     gFlagPrepareTX = true;

@@ -880,7 +880,7 @@ void MSG_RF_HardRestoreVoicePath(void)
     s_rearm_delay_ticks = MSG_RF_REARM_DELAY_TICKS;
 }
 
-void MSG_RF_PrepareManualVoiceTx(void)
+bool MSG_RF_PrepareManualVoiceTx(void)
 {
     VFO_Info_t *respond_target = NULL;
     uint8_t respond_vfo = gEeprom.RX_VFO & 1u;
@@ -906,6 +906,15 @@ void MSG_RF_PrepareManualVoiceTx(void)
         }
     }
 
+    /* BusyCL must be checked here: the restore below drops the RX state to
+     * FUNCTION_FOREGROUND, so RADIO_PrepareTX() would never see the busy
+     * channel. Test the VFO that will transmit (respond target, or the one
+     * RADIO_SelectVfos() makes gTxVfo) and leave the reception untouched. */
+    const VFO_Info_t *tx_vfo = respond_target != NULL
+        ? respond_target : &gEeprom.VfoInfo[gEeprom.TX_VFO];
+    if (gCurrentFunction == FUNCTION_RECEIVE && tx_vfo->BUSY_CHANNEL_LOCK)
+        return false;
+
     MSG_RF_HardRestoreVoicePath();
 
     if (respond_target != NULL) {
@@ -914,6 +923,7 @@ void MSG_RF_PrepareManualVoiceTx(void)
         gCurrentVfo = respond_target;
         gRxVfoIsActive = true;
     }
+    return true;
 }
 
 static void MSG_RF_ArmSidecarIfIdle(void)
