@@ -66,6 +66,8 @@ direction:
 - **F Lock**: BRASIL (default), DISABLE ALL or UNLOCK ALL.
 - **Multiboot** with up to five firmware images and separate settings banks,
   plus 48 slots for overlay apps (APRS, SSTV, tools, games).
+- The **Quansheng stock firmware** can run from a slot too, with the same
+  selector and a settings bank of its own (`tools/stockpatch`).
 
 | Messenger home | Reading a message | Range Check answer |
 | --- | --- | --- |

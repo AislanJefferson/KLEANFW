@@ -1534,6 +1534,37 @@ Permite manter até 5 firmwares no rádio: o slot **M** (0, backup do principal)
 - **`SetCfg`** (Channels) associa o slot atual a outro banco (`CFG M`, `CFG 1`–`CFG 4`). Pede `SURE?` e reinicia.
 - **Compartilhados entre slots**: calibração, logo de boot e a área de apps.
 
+### 20.2 Firmware stock da Quansheng num slot
+
+O firmware original da Quansheng (o `K5ENG_…` publicado por ela) também pode
+ocupar um slot. Ele não é distribuído com o KLEANFW: a imagem é gerada a partir
+do seu próprio arquivo com `tools/stockpatch/` (veja o README da pasta).
+
+Com essa imagem gravada num slot:
+
+- o stock **passa a ter o seletor**: ligue segurando **MENU** para abri-lo;
+- **UP/DOWN** escolhe o slot, **MENU** pergunta `Restore …?`, **MENU** de novo
+  grava e reinicia, **EXIT** continua o boot no stock;
+- escolher **M** volta para o KLEANFW.
+
+| Slot do stock | Banco de configuração |
+|---|---|
+| M (0) | 0 — mesma região do Main do KLEANFW |
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+| 4 | 4 |
+
+O banco é definido pelo **SetCfg** (seção 20.1), então o stock respeita a
+mesma associação que o KLEANFW. Calibração, logo de boot e área de apps
+continuam compartilhados entre todos os slots.
+
+> [!WARNING]
+> Faça um dump completo da SPI (config, calibração e logo) e guarde uma imagem
+> **DFU** antes de usar o stock num slot. O stock não tem seletor próprio: o
+> que existe nele é o que essa imagem injeta. Sem o seletor, só USB/DFU
+> recupera o rádio.
+
 ---
 
 ## 21. F Lock e menu oculto (Service)

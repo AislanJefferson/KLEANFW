@@ -12,6 +12,17 @@ the code is the same as in 0.2.0 for every file it touches. Image 120,784 /
 120,832 bytes (48 bytes free); RAM 15,640 / 16,384 bytes at link time. Not
 tested on a radio yet.
 
+### Added
+
+- `tools/stockpatch/`: builds a multiboot slot image from the Quansheng stock
+  firmware, keeping the KLEANFW selector (MENU at power-on) embedded in it and
+  giving it a config bank of its own — the stock in slot N uses bank N. The
+  patched stock gets a boot hook on its `SystemInit` literal and eight 4-byte
+  hooks on the SPI address bytes; the stub is appended at `0x08014400`. No
+  firmware byte changes: the image stays at 120,784 / 120,832 bytes. The
+  proprietary stock binary is never distributed, only the patcher and the stub
+  source. See `tools/stockpatch/README.md` and `AUDIT.md`.
+
 ### Fixed
 
 - HOP: a channel with a fixed scrambler (2600–3500 Hz) could receive without

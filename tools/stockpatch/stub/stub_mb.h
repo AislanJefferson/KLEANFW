@@ -1,0 +1,29 @@
+#ifndef STOCKPATCH_STUB_MB_H
+#define STOCKPATCH_STUB_MB_H
+
+#include <stdint.h>
+
+#include "driver/mb_flash.h"
+
+/* Bring up SPI2 in polled mode (no DMA, no interrupts) exactly as the flash
+ * driver expects it. Required before any slot access. */
+void stub_flash_init(void);
+
+/* Fill headers/status with MB_ValidateSlot() for every slot. */
+void stub_scan_slots(mb_slot_header_t *headers, uint8_t *status);
+
+/* Slot the active-state marker says is running; 0 when unknown. */
+uint8_t stub_running_slot(void);
+
+/* Bind the slot to its own config bank and reflash the internal image.
+ * Only returns on failure (success resets the MCU). `progress_line` is a
+ * 128-byte buffer used for the on-panel progress gauge. */
+uint8_t stub_restore_slot(uint8_t slot, uint8_t *progress_line);
+
+/* Resolve which config bank this boot must use and publish its base address to
+ * the SPI hooks. Requires stub_flash_init(). */
+void stub_bank_apply(void);
+
+const char *stub_slot_error(uint8_t err);
+
+#endif
