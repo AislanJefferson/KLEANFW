@@ -10,7 +10,7 @@ without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
 the F+3 frequency carry-over and the Spectrum review below. Of the 0.2.0
 Spectrum changes only two came back (reverse half-sweep, scrambler); the
 REG_43 width and the scan-range step fit did not. Image 120,796 / 120,832
-bytes (36 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
+bytes (36 bytes free); RAM 15,640 / 16,384 bytes at link time. Not tested on
 a radio yet.
 
 ### Fixed
