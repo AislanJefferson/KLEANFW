@@ -7,9 +7,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix
-below. Apart from that fix, the code is the same as in 0.2.0 for every file it
-touches. Image 120,676 / 120,832 bytes (156 bytes free); RAM 15,608 / 16,384
-bytes at link time. Not tested on a radio yet.
+and the Spectrum carrier-end watch below. Apart from those two, the code is the
+same as in 0.2.0 for every file it touches. Image 120,720 / 120,832 bytes (112
+bytes free); RAM 15,640 / 16,384 bytes at link time. Not tested on a radio yet.
 
 ### Fixed
 
@@ -96,6 +96,15 @@ bytes at link time. Not tested on a radio yet.
 
 ### Changed
 
+- Spectrum (experimental, A/B pending): after a transmission ends, the
+  Spectrum sweeps for the next one within ~45 ms instead of up to ~0.5 s,
+  with a much shorter noise tail. Between its full listen checks (every
+  ~0.4-0.5 s) it reads the RSSI alone every 32 ticks; a 10 dB drop runs the
+  full check at once, and that check still decides whether to leave. With
+  an FRS list of ~22 channels the next active channel is heard about 0.1 s
+  after the previous one ends. Listening only, VFO and MR; the fixed listen
+  (STILL) is unchanged. `LISTEN_FAST_CHECK_TICKS 0` turns it off (+44 B,
+  +32 B RAM).
 - HOP RX follows the transmitter's clock rate. From the first 8 s resync of
   an over (the second if the opening burst was stamped late), the receiver
   compares the resync interval with its own clock and scales the slot clock
