@@ -297,12 +297,8 @@ static void LoadSettings()
     // Data[0] bits 1:0 (old listenBw) are unused: the listen filter is
     // inherited from the VFO on entry.
 
-    // Data[2]: dbMax encoded as (dbMax + 130) / 5
-    if (Data[2] <= 28)
-        settings.dbMax = (int)Data[2] * 5 - 130;
-
-    // Data[3]: rssiTriggerLevel as uint8_t (0xFF = auto)
-    settings.rssiTriggerLevel = (Data[3] == 0xFF) ? RSSI_MAX_VALUE : Data[3];
+    // Data[2]/Data[3] (old dbMax/trigger) are not read: the entry
+    // calibration always replaces the scale and the trigger.
 
     // Data[5] ~ Data[7] are free (for the moment...)
 }
@@ -324,11 +320,8 @@ static void SaveSettings()
 
     Data[1] = 2u;
 
-    // Data[2]: dbMax encoded as (dbMax + 130) / 5
-    Data[2] = (uint8_t)((settings.dbMax + 130) / 5);
-
-    // Data[3]: rssiTriggerLevel as uint8_t (0xFF = auto)
-    Data[3] = (settings.rssiTriggerLevel == RSSI_MAX_VALUE) ? 0xFF : (uint8_t)settings.rssiTriggerLevel;
+    // Data[2]/Data[3] (old dbMax/trigger) keep their stored bytes: both change
+    // with every calibration, and writing them cost an erase on most exits.
 
     Data[4] = (uint8_t)settings.stepsCount;
 
@@ -605,7 +598,16 @@ static void ResetPeak()
     }
 #endif
 
-bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
+bool IsCenterMode()
+{
+#ifdef ENABLE_SCAN_RANGES
+    // A scan range always runs from its start: center mode would sweep half
+    // of it below gScanRangeStart.
+    if (gScanRangeStart)
+        return false;
+#endif
+    return settings.scanStepIndex < S_STEP_2_5kHz;
+}
 // scan step in 0.01khz
 uint16_t GetScanStep() { return scanStepValues[settings.scanStepIndex]; }
 
@@ -855,6 +857,14 @@ uint32_t GetFEnd()
 #endif
     return IsCenterMode() ? currentFreq + (GetBW() >> 1)
                           : currentFreq + GetBW();
+}
+
+// Frequency of sweep index i. GetFEnd() is the window's upper edge, one step
+// past the last sample (index N-1), so a sweep must not start from it.
+static uint32_t ScanFrequencyAt(uint16_t i)
+{
+    return spectrumChannelMode ? SpectrumChannelFrequencyAt(i)
+                               : GetFStart() + (uint32_t)i * GetScanStep();
 }
 
 uint8_t GetBWRegValueForScan(void);
@@ -1118,20 +1128,9 @@ static void InitScanPosition()
             ARRAY_SIZE(rssiHistory);
     }
 #endif
-    if (!startFromLeft && scanInfo.measurementsCount > 1)
-    {
-        scanInfo.i = scanInfo.measurementsCount - 1;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(scanInfo.i)
-                                         : GetFEnd();
-        scanForward = false;
-    }
-    else
-    {
-        scanInfo.i = 0;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(0)
-                                         : GetFStart();
-        scanForward = true;
-    }
+    scanForward = startFromLeft || scanInfo.measurementsCount <= 1;
+    scanInfo.i = scanForward ? 0 : scanInfo.measurementsCount - 1;
+    scanInfo.f = ScanFrequencyAt(scanInfo.i);
     scanReturnPending = scanInfo.measurementsCount > 1;
 }
 
@@ -1371,6 +1370,23 @@ static void RearmRuntimeState()
     redrawStatus = true;
 }
 
+// New scan step/count. currentFreq is the center below 2.5 kHz and the start
+// from 2.5 kHz: when that mode changes, keep the view's center instead of
+// jumping half a span. Then keep the window inside the band.
+static void SetScanGeometry(ScanStep step, StepsCount count)
+{
+    const bool wasCenter = IsCenterMode();
+    const uint32_t oldHalf = GetBW() >> 1;
+    settings.scanStepIndex = step;
+    settings.stepsCount = count;
+    const uint32_t half = GetBW() >> 1;
+    settings.frequencyChangeStep = half;
+    if (wasCenter != IsCenterMode())
+        currentFreq = wasCenter ? (currentFreq > half ? currentFreq - half : F_MIN)
+                                : currentFreq + oldHalf;
+    ClampVfoScanWindow();
+}
+
 // Reset spectrum runtime/config to defaults while keeping current frequency
 // context (center/range). Persist only fields that are normally saved.
 static void ResetSpectrumToDefaults()
@@ -1380,8 +1396,6 @@ static void ResetSpectrumToDefaults()
     menuState = 0;
     lockAGC = false;
 
-    settings.scanStepIndex = S_STEP_25_0kHz;
-    settings.stepsCount = STEPS_64;
     settings.listenBw = ListenBwFor(gTxVfo->CHANNEL_BANDWIDTH);
     spectrumMrBwFixed = false;
     settings.modulationType = gTxVfo->Modulation;
@@ -1390,8 +1404,7 @@ static void ResetSpectrumToDefaults()
         settings.rssiTriggerLevel = SPECTRUM_MR_MANUAL_TRIGGER_RSSI;
 
     // Keep frequency/range unchanged; recompute move step from fresh scan params.
-    settings.frequencyChangeStep = GetBW() >> 1;
-    ClampVfoScanWindow();
+    SetScanGeometry(S_STEP_25_0kHz, STEPS_64);
 
     RADIO_SetModulation(settings.modulationType);
     BK4819_SetFilterBandwidth(settings.listenBw, false);
@@ -1471,16 +1484,12 @@ static void UpdateRssiTriggerLevel(bool inc)
 
 static void UpdateScanStep(bool inc)
 {
+    ScanStep step = settings.scanStepIndex;
     if (inc)
-    {
-        settings.scanStepIndex = settings.scanStepIndex != S_STEP_100_0kHz ? settings.scanStepIndex + 1 : 0;
-    }
+        step = step != S_STEP_100_0kHz ? step + 1 : 0;
     else
-    {
-        settings.scanStepIndex = settings.scanStepIndex != 0 ? settings.scanStepIndex - 1 : S_STEP_100_0kHz;
-    }
-
-    settings.frequencyChangeStep = GetBW() >> 1;
+        step = step != 0 ? step - 1 : S_STEP_100_0kHz;
+    SetScanGeometry(step, settings.stepsCount);
     /* Scan steps below 15 kHz use a much narrower BK4819 filter than the
      * 15/20/25/50/100 kHz steps.  Crossing that boundary moves the measured
      * noise floor, so retaining the previous dbMin/dbMax makes most of the
@@ -1536,24 +1545,18 @@ static void ResumeSweepInDirection(bool forward)
 {
     ToggleRX(false);
     RestoreSpectrumScanRf(true);
-    ResetScanStats();
     ResetPeak();
     InitScanPosition();
 
-    if (forward || scanInfo.measurementsCount <= 1)
-    {
+    scanForward = forward || scanInfo.measurementsCount <= 1;
+#if SPECTRUM_INTERLACE_LARGE_SWEEPS
+    // Interlaced sweeps (>128 steps) only run from the left edge: starting at
+    // N-1 would skip phase 0 (indices 0, stride, 2*stride...) for that pass.
+    if (scanInfo.measurementsCount > ARRAY_SIZE(rssiHistory))
         scanForward = true;
-        scanInfo.i = 0;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(0)
-                                         : GetFStart();
-    }
-    else
-    {
-        scanForward = false;
-        scanInfo.i = scanInfo.measurementsCount - 1;
-        scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(scanInfo.i)
-                                         : GetFEnd();
-    }
+#endif
+    scanInfo.i = scanForward ? 0 : scanInfo.measurementsCount - 1;
+    scanInfo.f = ScanFrequencyAt(scanInfo.i);
 
     newScanStart = false;
     preventKeypress = false;
@@ -1568,7 +1571,7 @@ static void UpdateFreqChangeStep(bool inc)
     {
         settings.frequencyChangeStep += diff;
     }
-    else if (!inc && settings.frequencyChangeStep > 10000)
+    else if (!inc && settings.frequencyChangeStep >= 10000u + diff)
     {
         settings.frequencyChangeStep -= diff;
     }
@@ -1628,11 +1631,10 @@ static void ToggleListeningBW()
 
 static void ToggleStepsCount()
 {
-    settings.stepsCount = (settings.stepsCount == STEPS_2048)
-                              ? STEPS_16
-                              : (StepsCount)(settings.stepsCount + 1);
-    settings.frequencyChangeStep = GetBW() >> 1;
-    ClampVfoScanWindow();
+    SetScanGeometry(settings.scanStepIndex,
+                    (settings.stepsCount == STEPS_2048)
+                        ? STEPS_16
+                        : (StepsCount)(settings.stepsCount + 1));
     RelaunchScan();
     ResetBlacklist();
     redrawScreen = true;
@@ -1649,6 +1651,13 @@ static void ResetFreqInput()
 
 static void FreqInput()
 {
+    // Tick() does not watch the carrier while typing: close the audio, and
+    // restart the sweep as a normal release does, so EXIT does not reopen RX
+    // on the old peak if the carrier ended meanwhile. (STILL measures its
+    // peak again every tick; the second PTT uses selectedPeakFrequency.)
+    ToggleRX(false);
+    ResetPeak();
+    newScanStart = true;
     freqInputIndex = 0;
     freqInputDotIndex = 0;
     ResetFreqInput();
@@ -2469,6 +2478,8 @@ static void OnKeyDown(uint8_t key) {
             spectrumDisplayChannel = 0xFFFF;
             CacheSpectrumChannel(0);
             currentFreq = SpectrumChannelFrequencyAt(0);
+            // Leaving a reception: back to the sweep modulation/bandwidth.
+            RestoreSpectrumScanRf(true);
             RearmRuntimeState();
             // Exclusions are stored by list position: drop them with the list.
             ResetBlacklist();
@@ -2480,6 +2491,10 @@ static void OnKeyDown(uint8_t key) {
             ToggleStepsCount();
         break;
     case KEY_PTT:
+        // No peak yet (right after a reception ends, after SIDE1 or a sweep
+        // restart): peak.f 0 would tune the listen to 0 Hz.
+        if (peak.f == 0)
+            break;
         SetState(STILL);
         peakPttArmed = false;
         selectedPeakFrequency = peak.f;
@@ -2530,16 +2545,19 @@ static void OnKeyDownFreqInput(KEY_Code_t key)
             break;
         }
         SetState(previousState);
-        currentFreq = tempFreq;
         if (currentState == SPECTRUM)
         {
+            currentFreq = tempFreq;
             ClampVfoScanWindow();
             ResetBlacklist();
             RelaunchScan();
         }
         else
         {
-            SetF(currentFreq);
+            // Listen only: the sweep window stays (a scan range too), and the
+            // second PTT takes this frequency, as after UP/DOWN.
+            SetF(tempFreq);
+            selectedPeakFrequency = fMeasure;
         }
         break;
     default:
@@ -2889,8 +2907,7 @@ static bool NextScanStepInterlaced()
         {
             interlacePhase = phase;
             scanInfo.i = phase;
-            scanInfo.f = spectrumChannelMode ? SpectrumChannelFrequencyAt(phase)
-                                             : GetFStart() + (uint32_t)phase * scanInfo.scanStep;
+            scanInfo.f = ScanFrequencyAt(phase);
             return false;
         }
     }
@@ -3002,7 +3019,7 @@ static void UpdateScan()
 #endif
 
     bool atEnd = scanForward ? (scanInfo.i >= scanInfo.measurementsCount - 1)
-                             : (scanInfo.i <= 1);
+                             : (scanInfo.i == 0);
 
     if (!atEnd)
     {
@@ -3355,6 +3372,9 @@ void APP_RunSpectrum()
     PY25Q16_Flush();
 
     BackupRegisters();
+    // Spectrum listens in clear. Leaving it, VFO_CONFIGURE reapplies the
+    // channel's scrambler (RADIO_SetupRegisters -> RADIO_ApplyScramble).
+    BK4819_DisableScramble();
 
     isListening = true; // to turn off RX later
     newScanStart = true;
