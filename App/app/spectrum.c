@@ -2474,6 +2474,9 @@ static void OnKeyDown(uint8_t key) {
             CacheSpectrumChannel(0);
             currentFreq = SpectrumChannelFrequencyAt(0);
             RearmRuntimeState();
+            // Pressed while listening: sweep with the entry modulation again,
+            // not the one of the channel that was heard.
+            RestoreSpectrumScanRf(true);
             // Exclusions are stored by list position: drop them with the list.
             ResetBlacklist();
             break;
