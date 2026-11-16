@@ -212,6 +212,15 @@ static AutoSensitivityProfile autoSensitivity = AUTO_SENS_NORMAL;
 #define LISTEN_CLOSE_HYST_RSSI   4   // -2 dB below trigger to keep listening
 #define LISTEN_RELEASE_LOW_COUNT 4   // consecutive low reads before release
 #define LISTEN_DROP_EXIT_RSSI   20   // 10 dB abrupt drop => leave RX
+// Carrier-end watch between the full checks (every 320 ticks): one RSSI read
+// (listen filter, no REG_43 switch) every N ticks. A 10 dB drop below this
+// reception's best read runs the full check at once, so the next channel is
+// swept for ~45 ms after a carrier ends instead of up to ~0.5 s. The release
+// decision stays with the full check. Power of 2; 0 = off.
+#ifndef LISTEN_FAST_CHECK_TICKS
+#define LISTEN_FAST_CHECK_TICKS 32
+#endif
+static uint16_t listenFastMax;
 static uint8_t listenLowCount = 0;
 static uint16_t listenPrevRssi = RSSI_MAX_VALUE;
 static uint16_t autoNoiseFloor = RSSI_MAX_VALUE;
@@ -954,6 +963,7 @@ static void ToggleRX(bool on)
         // A transmission found lights the screen and restarts BLTime.
         BACKLIGHT_TurnOn();
         listenLowCount = 0;
+        listenFastMax = 0;
         // Seed with the RSSI that opened the squelch so the very first measure
         // can already detect an abrupt drop (quick-PTT case where the operator
         // released before listen was actually engaged).
@@ -3074,6 +3084,21 @@ static void UpdateListening()
     if (listenT)
     {
         listenT--;
+#if LISTEN_FAST_CHECK_TICKS
+        if (!(listenT & (LISTEN_FAST_CHECK_TICKS - 1)) &&
+            currentState == SPECTRUM)
+        {
+            const uint16_t rssi = BK4819_GetRSSI();
+            if (rssi > listenFastMax)
+                listenFastMax = rssi;
+            else if (rssi + LISTEN_DROP_EXIT_RSSI <= listenFastMax)
+            {
+                // Rebase so a fade the full check keeps does not repeat it.
+                listenFastMax = rssi;
+                listenT = 0;
+            }
+        }
+#endif
         SYSTEM_DelayMs(1);
         return;
     }
