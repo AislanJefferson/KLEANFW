@@ -3,23 +3,13 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
-
-### Fixed
-
-- MR Spectrum: key `4` (next list) now recalibrates the graph scale and the
-  trigger level from the first sweep of the new list, as on entry (F+5).
-  Before, the new list kept the previous list's scale, so a list on another
-  band could draw its trace on the bottom axis or above the top. +12 B; the
-  .bin is 120,796 / 120,832 bytes (36 bytes free).
-
 ## KLEANFW 0.1.2 — 2026-11-16
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
 the Spectrum carrier-end watch, the Spectrum fixes and the stock-firmware
 multiboot tooling below. Apart from those, the code is the same as in 0.2.0
-for every file it touches. Image 120,784 / 120,832 bytes (48 bytes free); RAM
+for every file it touches. Image 120,796 / 120,832 bytes (36 bytes free); RAM
 15,640 / 16,384 bytes at link time. The EEPROM layout is the same as 0.1.1.
 Tested on a radio: the stock-firmware slot (boot, backlight, keys, its own
 config bank). The firmware changes were checked by code review and builds
@@ -143,6 +133,10 @@ only.
   leaves the reception untouched (+40 B). The repeater TX offset plays no
   part: "busy" is a reception on the RX (repeater output) frequency. VOX, the
   alarm/1750 Hz tone and the Messenger-off build were not affected.
+- MR Spectrum: key `4` (next list) kept the previous list's graph scale and
+  trigger level, so a list on another band could draw its trace on the bottom
+  axis or above the top. The new list is now calibrated from its first sweep,
+  as on entry (F+5) (+12 B).
 - Spectrum, flash wear: EXIT and the second PTT wrote the scale top (dbMax)
   and the trigger level, which change with every entry calibration, so most
   VFO exits erased a flash sector. The saved values were never used either:
