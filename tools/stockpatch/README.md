@@ -1,8 +1,7 @@
 # Stock no slot — `tools/stockpatch`
 
-Gera, a partir do firmware stock da Quansheng
-(`f4hwn.stock_singleboot_v7.00.15.bin`, na raiz do repositório),
-uma imagem que roda num slot do multiboot com:
+Gera, a partir do firmware stock da Quansheng do **UV-K1** (7.03.05) ou do
+**UV-K5 V3** (7.00.15), uma imagem que roda num slot do multiboot com:
 
 - o **seletor do KLEANFW** (MENU ao ligar) embutido no próprio stock;
 - **banco de configuração próprio**: o stock no slot N usa o banco N.
@@ -66,32 +65,43 @@ Antes de devolver o controle, o stub ainda:
 ## Uso
 
 Requisitos: Docker com a imagem `uvk1-uvk5v3` (a mesma do firmware) e
-`python3`. O firmware de entrada é fixado por SHA-256: só a v7.00.15 publicada
-pela Quansheng é aceita.
+`python3`. O firmware de entrada é fixado por SHA-256, um por modelo:
+
+| Modelo | `-m` | Arquivo de entrada (raiz do repo) | Versão no bloco | Imagem gerada |
+|---|---|---|---|---|
+| UV-K1 | `k1` | `f4hwn.k1.stock_singleboot_v7.00.15.bin` | **7.03.05** | `build/stockpatch/f4hwn.k1.stock.v7.03.05.bin` |
+| UV-K5 V3 | `k5v3` (ou `k5`) | `f4hwn.k5.stock_singleboot_v7.00.15.bin` | 7.00.15 | `build/stockpatch/f4hwn.k5v3.stock.v7.00.15.bin` |
+
+O arquivo do K1 tem `v7.00.15` no nome, mas o firmware dentro dele é a 7.03.05.
+Use a imagem do modelo do rádio: o script recusa um arquivo do outro modelo e
+diz qual é o certo.
 
 ```sh
-# 1. compila o stub (stub.bin / stub.elf em build/stockpatch/)
-tools/stockpatch/build_stub.sh
+# UV-K1
+tools/stockpatch/make_multiboot.sh f4hwn.k1.stock_singleboot_v7.00.15.bin -m k1
 
-# 2. gera a imagem de slot
-python3 -I tools/stockpatch/patch_stock.py
-# -> build/stockpatch/f4hwn.stock.v7.00.15.bin
-
-# (diagnóstico) o stock sem patch como imagem de slot, e o stub sem os hooks
-python3 -I tools/stockpatch/patch_stock.py --dump-raw build/stockpatch/f4hwn.stock.v7.00.15.orig-slot.bin
-python3 -I tools/stockpatch/patch_stock.py --no-hooks -o build/stockpatch/f4hwn.stock.v7.00.15.nohooks.bin
-
-# 3. envia a imagem para um slot (UV Studio) e seleciona no MENU ao ligar
+# UV-K5 V3, com saída escolhida
+tools/stockpatch/make_multiboot.sh f4hwn.k5.stock_singleboot_v7.00.15.bin -m k5v3 -o stock-k5v3.bin
 ```
 
-Outros comandos:
+O script compila o stub, confere o arquivo contra o modelo, gera a imagem e
+mostra o resumo. Depois:
+
+1. envie a imagem para um slot de 1 a 4 (UV Studio);
+2. selecione o slot no MENU ao ligar.
+
+Na primeira subida, o banco do slot é preparado em alguns segundos: não
+desligue o rádio.
+
+Comandos de baixo nível (o `make_multiboot.sh` usa os dois primeiros):
 
 ```sh
-# confere o caminho de decifrar/reempacotar contra o arquivo original
-python3 -I tools/stockpatch/patch_stock.py --rebuild
-
-# desmonta o stock decifrado (build/stockpatch/stock.dis)
-tools/stockpatch/disasm.sh
+tools/stockpatch/build_stub.sh                                   # stub.bin / stub.elf
+python3 -I tools/stockpatch/patch_stock.py <firmware> -m k1      # imagem de slot
+python3 -I tools/stockpatch/patch_stock.py <firmware> --rebuild  # ida e volta byte a byte
+python3 -I tools/stockpatch/patch_stock.py <firmware> --dump-raw <saida>  # stock sem patch, como imagem de slot
+python3 -I tools/stockpatch/patch_stock.py <firmware> --no-hooks # diagnóstico: stub sem remap de banco
+tools/stockpatch/disasm.sh <firmware> -m k1                      # desmonta o stock decifrado
 ```
 
 ## Bancos
@@ -157,8 +167,10 @@ No rádio, o teste que fecha a fase:
 
 - **Calibração compartilhada**: o stock lê a calibração do KLEANFW em
   `0x10000`. Se bateria ou S-meter saírem errados, é o primeiro suspeito.
-- **Só a v7.00.15**: todos os endereços e bytes esperados foram verificados
-  nessa versão exata; o patcher aborta em qualquer outra.
+- **Só os dois arquivos da tabela de Uso**: todos os endereços e bytes
+  esperados foram verificados nesses arquivos exatos (o K1 é o mesmo código do
+  K5 V3 nos pontos do patch, deslocado; veja o `AUDIT.md` §15). O patcher aborta
+  em qualquer outro.
 - **Relógio**: o stub roda no relógio de reset (HSI 8 MHz) e lê o divisor do
   RCC para os próprios atrasos. Se o stock mudar a ordem de inicialização, os
   atrasos só ficam mais longos, nunca curtos.

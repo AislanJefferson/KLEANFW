@@ -22,6 +22,13 @@ tested on a radio yet.
   firmware byte changes: the image stays at 120,784 / 120,832 bytes. The
   proprietary stock binary is never distributed, only the patcher and the stub
   source. See `tools/stockpatch/README.md` and `AUDIT.md`.
+- `tools/stockpatch/make_multiboot.sh <firmware.bin> -m k1|k5v3 [-o out.bin]`:
+  one command that builds the stub, checks the firmware against the model and
+  writes the slot image. The UV-K1 stock (7.03.05, the file named
+  `…v7.00.15`) is now supported next to the UV-K5 V3 7.00.15: same boot hook,
+  same SPI driver 0x1DC lower, identical config map. A single stub serves both;
+  the patcher writes the model's SystemInit address into it. A file of the
+  other model is refused with the right `-m`.
 
 ### Fixed
 

@@ -1,6 +1,7 @@
 # Auditoria do stock v7.00.15 + stub de boot
 
-Análise estática de `K5ENG_v7.00.15_publish.bin`, feita com
+Análise estática do stock do UV-K5 V3 (`K5ENG_v7.00.15_publish.bin`, hoje
+`f4hwn.k5.stock_singleboot_v7.00.15.bin`; o UV-K1 está no §15), feita com
 `tools/stockpatch/disasm.sh` (objdump do Docker `uvk1-uvk5v3`) e com o
 decodificador de `tools/stockpatch/patch_stock.py`. Tudo o que está aqui foi
 reproduzido neste repositório; os endereços são os da imagem já decifrada.
@@ -413,3 +414,55 @@ pacote real.
 Não verificado: que a flag de chave AES faça a CPS do stock exigir
 autenticação. Isso é o comportamento da linhagem K5, mas o caminho de `uart`
 do v7.00.15 não foi seguido.
+
+## 15. UV-K1 (stock 7.03.05)
+
+O arquivo `f4hwn.k1.stock_singleboot_v7.00.15.bin` é outro build. Até o §14,
+a análise valeu para o do K5 V3, que também foi o arquivo testado no rádio do
+usuário, um K1.
+
+| Item | K5 V3 | K1 |
+|---|---|---|
+| SHA-256 | `91845f1d…608d2e` | `26d9e46b…756b6b` |
+| Arquivo / imagem | 71.790 / 71.772 B | 71.350 / 71.332 B |
+| Bloco de versão | `7.00.15` | `7.03.05` |
+| Fim da imagem | `0x0801405C` | `0x08013EA4` |
+| SP inicial = fim do ZI | `0x20002FA0` | `0x200031A0` |
+| Tabela de regiões do `__main` | `0x08014008` | `0x08013E50` |
+| `SystemInit` (literal em `0x080028E8`) | `0x080111E5` | `0x08011009` |
+| `SectorErase` | `0x0800F878` | `0x0800F69C` |
+| `SectorErase` + cache | `0x0800F8D0` | `0x0800F6F4` |
+| `Read` | `0x0800F958` | `0x0800F77C` |
+| `PageProgram` | `0x0800FBB0` | `0x0800F9D4` |
+
+Provado na análise estática:
+
+- **O hook de boot é o mesmo.** O `Reset_Handler` (`0x080028D4`: `ldr`/`blx`)
+  e o literal ficam no mesmo endereço, e o `SystemInit` do K1 tem o mesmo corpo
+  (grava `VTOR = 0x08002800`). O literal tem uma só ocorrência.
+- **O driver SPI é o mesmo código, 0x1DC abaixo.** Os 8 sites têm os bytes
+  auditados (`20 02 00 0e` / `20 04 00 0e`), com o endereço em `r4` e `lr`
+  empilhado no prólogo.
+- **O mapa de flash é idêntico.** As 42 chamadas de leitura e as 14 de gravação
+  do driver resolvem para os mesmos endereços e tamanhos nos dois builds
+  (`0x2000/207`, `0x3000/40`, `0x5000/8`, `0x6000/8`, `0x7000/144`,
+  `0x8000/56`, `0x9000/8`, `0xA000/16`, `0xB000/8`, calibração `0x100C0…`,
+  logo `0x11000…`). Os literais de endereço da SPI ≥ `0x10000` também são os
+  mesmos, inclusive os da voz (`0x100000`/`0x100800`/`0x101000`). Por isso o
+  banco, o seed, os setores apagados, a marca em `0xD000` e a limitação da voz
+  (§13–14) valem sem mudança para o K1.
+- O ZI do K1 termina em `0x200031A0`, abaixo de `BANK_WORD` (`0x20003FFC`), e
+  nada referencia essa palavra. O stub em `0x08014400` cabe depois do fim da
+  imagem.
+- Nenhum dos dois builds grava a flash interna.
+
+Implementação:
+
+- `patch_stock.py` tem uma tabela `VARIANTS` indexada pelo SHA-256, com os sites
+  gerados por `hook_sites(-0x1DC)` para o K1.
+- Uma verificação nova lê a tabela de regiões e confere que o fim do ZI é igual
+  ao SP e fica abaixo de `BANK_WORD`.
+- O stub deixou de ter o `SystemInit` fixo: `stub_entry` chama pela palavra
+  `stub_stock_system_init` (placeholder `0xFFFFFFFF`), que o patcher preenche
+  com o valor do literal que substitui e depois confere.
+- Com isso, a imagem do K5 V3 ficou byte a byte igual à anterior.

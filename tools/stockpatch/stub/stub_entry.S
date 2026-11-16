@@ -14,18 +14,25 @@
     .cpu cortex-m0plus
     .thumb
 
-    /* Stock SystemInit: sets SCB->VTOR to the stock's vector table. */
-    .equ STOCK_SYSTEM_INIT, 0x080111E5
-
     .section .text.entry, "ax", %progbits
     .global stub_entry
     .type   stub_entry, %function
     .thumb_func
 stub_entry:
     push    {lr}
-    ldr     r0, =STOCK_SYSTEM_INIT
+    ldr     r0, stub_stock_system_init
     blx     r0
     bl      stub_boot
     pop     {pc}
-    .ltorg
-    .size stub_entry, . - stub_entry
+
+/* The stock's own SystemInit (it only programs VTOR). Its address differs per
+ * model (K5 V3 0x080111E5, K1 0x08011009), so one stub serves both: the build
+ * leaves the erased-flash placeholder and patch_stock.py writes here the value
+ * it replaces in the stock's literal at 0x080028E8. */
+    .p2align 2
+    .global stub_stock_system_init
+    .type   stub_stock_system_init, %object
+stub_stock_system_init:
+    .word   0xFFFFFFFF
+    .size stub_stock_system_init, 4
+    .size stub_entry, stub_stock_system_init - stub_entry

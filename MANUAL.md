@@ -1536,9 +1536,18 @@ Permite manter até 5 firmwares no rádio: o slot **M** (0, backup do principal)
 
 ### 20.2 Firmware stock da Quansheng num slot
 
-O firmware original da Quansheng (o `K5ENG_…` publicado por ela) também pode
-ocupar um slot. Ele não é distribuído com o KLEANFW: a imagem é gerada a partir
-do seu próprio arquivo com `tools/stockpatch/` (veja o README da pasta).
+O firmware original da Quansheng também pode ocupar um slot, tanto no
+**UV-K1** (stock 7.03.05) quanto no **UV-K5 V3** (stock 7.00.15). Ele não é
+distribuído com o KLEANFW: a imagem é gerada a partir do seu próprio arquivo,
+informando o modelo do rádio:
+
+```sh
+tools/stockpatch/make_multiboot.sh <firmware_original.bin> -m k1     # UV-K1
+tools/stockpatch/make_multiboot.sh <firmware_original.bin> -m k5v3   # UV-K5 V3
+```
+
+Use sempre a imagem do modelo do rádio: o script recusa o arquivo do outro
+modelo. Detalhes no README de `tools/stockpatch/`.
 
 Com essa imagem gravada num slot:
 
