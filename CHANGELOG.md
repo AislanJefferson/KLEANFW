@@ -3,14 +3,17 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.1.2 — 2026-11-16
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
 without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
-the Spectrum carrier-end watch and the Spectrum fixes below. Apart from those,
-the code is the same as in 0.2.0 for every file it touches. Image 120,784 /
-120,832 bytes (48 bytes free); RAM 15,640 / 16,384 bytes at link time. Not
-tested on a radio yet.
+the Spectrum carrier-end watch, the Spectrum fixes and the stock-firmware
+multiboot tooling below. Apart from those, the code is the same as in 0.2.0
+for every file it touches. Image 120,784 / 120,832 bytes (48 bytes free); RAM
+15,640 / 16,384 bytes at link time. The EEPROM layout is the same as 0.1.1.
+Tested on a radio: the stock-firmware slot (boot, backlight, keys, its own
+config bank). The firmware changes were checked by code review and builds
+only.
 
 ### Added
 
