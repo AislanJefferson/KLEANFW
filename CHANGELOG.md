@@ -6,11 +6,12 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 ## Unreleased
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,
-without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix
-and the F+3 frequency carry-over below. Apart from those two, the code is the
-same as in 0.2.0 for every file it touches. Image 120,816 / 120,832 bytes
-(16 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on a radio
-yet.
+without its Spectrum and BK4829 driver-comment changes, plus the BusyCL fix,
+the F+3 frequency carry-over and the Spectrum review below. Of the 0.2.0
+Spectrum changes only two came back (reverse half-sweep, scrambler); the
+REG_43 width and the scan-range step fit did not. Image 120,812 / 120,832
+bytes (20 bytes free); RAM 15,608 / 16,384 bytes at link time. Not tested on
+a radio yet.
 
 ### Fixed
 
@@ -94,6 +95,41 @@ yet.
   leaves the reception untouched (+40 B). The repeater TX offset plays no
   part: "busy" is a reception on the RX (repeater output) frequency. VOX, the
   alarm/1750 Hz tone and the Messenger-off build were not affected.
+- Spectrum: a sweep pass that started from the right put every bin one
+  scan step high in VFO and stopped at bin 1, so bin 0 (the VFO left edge,
+  the first channel of an MR list) was measured only every other sweep. On
+  a 2-channel MR list it measured a third, nonexistent position (the entry
+  frequency), and a peak there left PTT x2 in Spectrum with the radio
+  registers already restored. Also in 0.1.0 (-32 B).
+- Spectrum: every exit from the VFO Spectrum stored the scale top and the
+  trigger level. Both are recalibrated by the first sweep of every session
+  before use, and the new values differ each time, so almost every exit
+  erased the main settings sector. They are no longer written; the scan
+  step and sample count are still saved, and only when they change (-32 B).
+- Spectrum: the entry channel's voice scrambler stayed on, so every FM
+  signal heard (VFO or MR) came out inverted. The Spectrum listens in clear;
+  the channel's scrambler is back on exit (+4 B).
+- Spectrum: PTT pressed before the sweep had a peak (right after a
+  reception ended, UP/DOWN or SIDE1) opened the fixed listen at 0 Hz. PTT
+  now waits for a peak (+4 B).
+- Spectrum VFO: DOWN with a wide span near the band bottom (for example
+  2048 points x 25 kHz, from 20 MHz) wrapped around and jumped to the top of
+  the band (1248.8 MHz). It now stops at the band bottom (+8 B).
+- Spectrum VFO: changing the scan step (keys 1/7) did not keep the span
+  inside the band, unlike key 4: at 2048 points a 100 kHz step swept past
+  the top (+4 B).
+- Spectrum VFO: a frequency typed with key 5 in the fixed listen moved the
+  sweep window (without the band check) and the second PTT still left for
+  the old peak. It now only tunes the fixed listen and becomes the PTT x2
+  frequency, as UP/DOWN there; the sweep window does not move (+16 B).
+- Spectrum scan range: with a 0.01-1 kHz step the sweep was centred on the
+  range start: 144-146 MHz at 1 kHz swept 143.0-145.0 MHz. It now sweeps the
+  range. The bottom labels keep the center layout for these steps (+12 B).
+- Spectrum MR: key 4 pressed while listening kept the heard channel's
+  modulation for the following sweep (with AM, the AM-fix gain was added to
+  every reading) (+8 B).
+- Spectrum VFO: with 50/100 kHz steps, key 8 could take the move step down
+  to 0, and UP/DOWN stopped moving the window (+4 B).
 
 ### Changed
 
@@ -142,6 +178,23 @@ matches it). None of these is changed without a radio A/B test:
   a live RX session), while the HOP seed burst turns it off. The table does
   not say whether REG_31<1> affects the FSK modem; both ends use the same
   setting today, so changing one side alone could break what works.
+
+From the Spectrum review (not changed: they need a radio test or flash):
+
+- Spectrum scan range: the point count is 16-bit. 144-146 MHz at 0.01 kHz
+  gives 200,001 points and sweeps about 34 kHz under the full axis; exactly
+  65,536 points becomes 0 and the ruler divides by 0 (stride 0, the loop
+  would not end). Moving to the first
+  step that fits costs about 76 B, which does not fit today.
+- Spectrum MR: the sweep filter (REG_43) follows the last VFO Spectrum scan
+  step, which MR neither shows nor changes (6.25k mode up to 6.25 kHz,
+  12.5k mode at 8.33-12.5 kHz, 25k mode from 15 kHz). The same list can
+  sweep with different sensitivity depending on the last VFO use.
+- Spectrum fixed listen: with the squelch closed it measures through the
+  sweep filter, open through the listen filter; the sweep switches to the
+  sweep filter before each listening measurement, the fixed listen does not.
+- Spectrum above 128 points: the interlaced sweep can open the listen at the
+  end of each phase, not only after the whole sweep.
 
 ## KLEANFW 0.1.1 — 2026-11-14
 

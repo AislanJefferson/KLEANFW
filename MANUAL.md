@@ -1421,8 +1421,8 @@ Canais criados pela busca mantêm a potência que estava em uso, ficam em **NARR
 | **SIDE1** | Ignora o pico atual (o canal ou passo que está tocando) até sair do Spectrum |
 | **SIDE2** | Luz sempre acesa → sempre apagada → automática (como **F+8**). Vale até sair do Spectrum |
 | **Segurar MENU** | Volta tudo ao padrão |
-| **PTT** | Para no pico e escuta |
-| **EXIT** | Sai. Em VFO salva o passo de varredura, o número de pontos, o topo da escala e o nível de disparo; em MR não grava nada |
+| **PTT** | Para no pico e escuta. Sem pico ainda (logo depois de uma transmissão acabar, de UP/DOWN ou de SIDE1), espera a varredura achar um sinal |
+| **EXIT** | Sai. Em VFO salva o passo de varredura e o número de pontos (só se mudaram); em MR não grava nada. O topo da escala e o nível de disparo não são gravados: cada abertura recalibra os dois na primeira varredura |
 
 Em MR, as teclas 1, 7, 2, 8, 5 e 0 ficam inativas: o gráfico mostra a lista inteira, sem uma faixa para deslocar ou digitar, e cada canal usa a própria modulação.
 
@@ -1441,6 +1441,7 @@ A lista trocada com a tecla 4 vale também para o scan de memória depois de sai
 | Tecla | Função |
 |---|---|
 | **UP/DOWN** | Ajuste fino (ou ajuste do ganho, com o menu de ganho aberto) |
+| **5** | Digitar a frequência da escuta (só em VFO). A faixa do gráfico não muda |
 | **MENU** | Percorre os ganhos LNAs → LNA → PGA |
 | **SIDE1** | Monitor |
 | **0** | Muda a modulação da escuta (só em VFO; a escuta continua abrindo com o mesmo nível de disparo) |
@@ -1453,7 +1454,7 @@ Em MR, a escuta usa a modulação e a banda do canal (ou a banda escolhida com a
 Ao sair com o segundo PTT:
 
 - **A frequência já está salva num canal MR** (o mais próximo, até meio passo de varredura e no máximo 6,25 kHz): o rádio vai para o modo MR nesse canal, com as configurações do canal.
-- **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
+- **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, ou a ajustada com UP/DOWN ou digitada com a tecla 5 na escuta, sem arredondar para o passo do VFO.
 
 A largura de banda de escuta começa igual à do VFO ou canal ativo ao apertar F+5 (W = 25k, N = 12,5k, N com SetNFM = 6,25k), e o filtro é o mesmo que o rádio usa nesses modos.
 
