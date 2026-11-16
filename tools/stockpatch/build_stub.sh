@@ -47,6 +47,7 @@ SOURCES="
 tools/stockpatch/stub/stub_entry.S
 tools/stockpatch/stub/stub_hooks.S
 tools/stockpatch/stub/stub_main.c
+tools/stockpatch/stub/stub_hw.c
 tools/stockpatch/stub/stub_shim.c
 tools/stockpatch/stub/stub_ui.c
 tools/stockpatch/stub/stub_mb.c

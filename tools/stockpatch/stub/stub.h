@@ -40,6 +40,10 @@ enum stub_key {
 void stub_boot(void);
 void stub_selector(void);
 
+/* Snapshot / restore of everything the stub reconfigures (stub_hw.c). */
+void stub_hw_save(void);
+void stub_hw_restore(void);
+
 void stub_delay_init(void);
 void stub_delay_us(uint32_t us);
 void stub_delay_ms(uint32_t ms);

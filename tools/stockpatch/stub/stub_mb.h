@@ -20,9 +20,15 @@ uint8_t stub_running_slot(void);
  * 128-byte buffer used for the on-panel progress gauge. */
 uint8_t stub_restore_slot(uint8_t slot, uint8_t *progress_line);
 
-/* Resolve which config bank this boot must use and publish its base address to
- * the SPI hooks. Requires stub_flash_init(). */
-void stub_bank_apply(void);
+/* Resolve which config bank this boot must use, publish its base address to
+ * the SPI hooks and return it. Requires stub_flash_init(). */
+uint32_t stub_bank_apply(void);
+
+/* When the bank does not carry the stock's ownership mark yet (erased, or
+ * holding another firmware's config), make it a copy of bank 0 - the Main
+ * config the unpatched stock is known to boot from - and mark it. No-op for
+ * bank 0, for a bank the stock already owns, or when bank 0 is erased. */
+void stub_bank_seed(uint32_t base);
 
 const char *stub_slot_error(uint8_t err);
 

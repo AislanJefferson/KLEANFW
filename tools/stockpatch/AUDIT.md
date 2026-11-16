@@ -54,6 +54,12 @@ Como o SP inicial é o topo da pilha e ela cresce para baixo, a faixa
 
 **Decisão para a fase 4:** `bank_base` em `0x20003FFC` (última palavra da RAM).
 
+**Confirmado pela tabela de regiões do `__main`** (`0x08014008`, lida por
+`0x0800319C`): a única cópia é de `0x2F0` B para `0x20000000`, e o único zero-init
+é de `0x2CB0` B a partir de `0x200002F0`, terminando em `0x20002FA0`. Nada do
+runtime inicializa `0x20003FFC`, então o valor gravado pelo stub chega intacto
+ao stock.
+
 ## 4. Driver SPI do stock
 
 Quatro rotinas de baixo nível, todas com o endereço em `r4` e os três bytes
@@ -244,3 +250,166 @@ SPI deve mostrar as gravações dele em `0xD0000` (banco 2) e
 3. A calibração compartilhada em `0x10000` segue como risco aberto: se bateria
    e S-meter saírem errados no stock, as leituras ≥ `0x10000` passam a ter um
    remap próprio.
+
+## 13. Stock congelando na tela de VFO (slot, banco N)
+
+Sintoma relatado: restaurado de um slot de 1 a 4, o stock mostra a tensão da
+bateria e congela na tela de VFO, sem luz e sem teclas. O mesmo arquivo, sem
+patch e gravado por USB, funciona no mesmo rádio.
+
+### Confirmado no rádio
+
+- A mesma imagem, com só o estado de hardware restaurado, travou igual. Isso
+  descarta o estado deixado pelo stub como causa única.
+- Com o banco N apagado pelo UV Studio, a mesma imagem copiou o banco 0 e
+  **subiu normalmente**. A causa é o conteúdo do banco: config de outro firmware
+  que estava ali (o `0xA000` não estava apagado, então a versão anterior do seed
+  nem rodava).
+
+### Provado na análise estática
+
+- O boot rodou no banco N: veja a tabela de regiões no §3.
+- O stock **não inicializa uma config apagada**. O factory reset (`0x080047A4`)
+  só é chamado pelo menu (`0x0800A8FC`, um `case` da tabela de itens). O loader
+  `0x080098B0` limita os campos que lê de `0x4000`, `0x5000` e `0x6000`.
+- O próprio stock **nunca grava `0xA000` nem `0xD000`**. Todos os
+  `WriteBuffer` com endereço fixo ou calculado foram decodificados:
+  - canais em `ch*16`;
+  - VFO em `ch*32 − 0x8F0` (`0x1010+`);
+  - nomes em `0xE000 + ch*16`;
+  - atributos em `0x2000 + ch`;
+  - settings em `0x3000–0x9000`, `0x7020 + n*16` e `0xB000`.
+
+  Só o caminho de programação pelo host (CPS) recebe endereço livre. O stock
+  também não lê `0xC000` nem `0xD000`.
+- O factory reset percorre `0x1000–0xF000` e pula `0x8000`, `0xA000–0xDFFF` e
+  `0xF000` (exclusões em `0x080047D6–0x0800482E`).
+- Nos bancos 1–4, o KLEANFW usa `0x0000–0xA170` e `0xB000–0xCFFF` (os setores
+  privados do GOGUFW remapeados em `py25q16.c`). Logo, `0xD000` está livre nos
+  dois layouts.
+- O SPI2 deixado ligado pelo stub não muda a configuração. Com SPE=1, o
+  `LL_SPI_Init` do stock (`0x08010A44`) retorna sem escrever, mas o struct que
+  ele monta (`0x0800FD90–0x0800FDAE`) é igual ao que o stub programou.
+
+### Não provado
+
+Qual campo da config alheia leva ao travamento. Os consumidores dessas
+leituras não foram seguidos; a correção não depende disso.
+
+### Correção
+
+1. `stub_hw.c`: na entrada de `stub_boot()`, um snapshot de:
+   - `IOPENR` e `APBENR1/2`;
+   - GPIOA/B/F: MODER, OTYPER, OSPEEDR, PUPDR, ODR e AFR;
+   - SPI1 e SPI2: CR1 e CR2;
+   - SysTick.
+
+   Na saída, SPI1 e SPI2 passam por reset no RCC (limpa SR e FIFO). Depois
+   voltam os GPIO (ODR antes do MODER), o SysTick e os clocks. Isso não era a
+   causa, mas o stock passa a começar do mesmo estado que teria sem o stub.
+2. `stub_bank_seed()` (`stub_mb.c`), só com banco ≠ 0:
+   - sem a marca `KLEANFW STOCK B3` em `banco + 0xD000`, e com o `0xA000` do
+     banco 0 gravado, o banco vira uma cópia do banco 0 (`0x0000–0xFFFF`, exceto
+     `0xD000`), e a marca é a última escrita;
+   - o setor `0x4000` fica apagado em vez de copiado. No stock ele é o bloco de
+     settings: o loader `0x080098B0` lê 16 B e limita todos os campos, e 0xFF
+     dá o default. No KLEANFW ele guarda os nomes dos canais em registros de
+     16 B preenchidos com zero (`SETTINGS_SaveChannelName`). Copiado, o byte
+     `0x400D` (tempo de luz, `[0x200025C0+29]`) lia 0, e `0x08008D70` só liga
+     PF8 com tempo ≠ 0: a luz da tela nunca acendia (relato no rádio com a
+     marca `B1`). A marca passou a `B2`, então um banco semeado pela versão
+     anterior é refeito uma vez; os setores iguais ao Main são pulados;
+   - setor de destino igual à origem é pulado; diferente e não apagado, é
+     apagado antes. Num banco vazio são 0 erases;
+   - em erro de SPI, para antes da marca, e o próximo boot retoma.
+
+   Teste no host com flash emulada (primitivas reais do stub, SPI simulado):
+
+   | Cenário | Resultado |
+   |---|---|
+   | banco vazio | cópia idêntica, 0 erases |
+   | segundo boot | nada gravado |
+   | dados que o stock gravou depois | preservados |
+   | banco alheio | 14 erases, uma vez, cópia idêntica e `0x4000` apagado |
+   | banco marcado `B1` igual ao Main | 2 erases (`0x4000` e `0xD000`) e 1 program |
+   | settings que o stock grava em `0x4000` depois | preservados |
+   | banco 0 apagado | nada |
+   | corte de energia em cada uma das 87 operações, a partir de um banco alheio | nenhuma marca com cópia incompleta; o boot seguinte completa; um terceiro boot não grava nada |
+
+### Voz
+
+Confirmado no rádio: o stock no slot não fala, e o firmware de fábrica falava.
+O pacote de voz de fábrica foi sobrescrito pelo multiboot (setores do marcador
+em `0x100000`/`0x101000`) e não há dump dele. Sem o pacote, não há correção
+possível dentro da imagem.
+
+O aviso de voz (`0x08008F64`, chamado no boot em `0x08012030`) roda quando o
+byte `0x7010` do banco é ≠ 0. Num banco apagado, o clamp põe 2 (inglês). Ele lê
+um índice de 8 B em `0x100000+8n` (chinês) ou `0x100800+8n` (inglês) e os dados
+em `0x101000+offset`, ou seja, nos marcadores A/B e nos overlays do KLEANFW.
+Hoje o índice é rejeitado pelos limites do próprio stock (offset ≤ `0xB0000`,
+len ≤ `0x19000`), porque o registro do marcador fica no início do setor e
+`0x100800` está apagado. Essa faixa continua sem remap.
+
+O `App/audio.c` do KLEANFW (herdado do F4HWN, com `ENABLE_VOICE` desligado no
+Fusion) usa o mesmo formato numa base deslocada de `+0x4C000`: índices em
+`0x14C000`/`0x14C800` e dados em `0x14D000+`. Com um pacote em mãos, um remap
+linear das leituras `≥ 0x100000` do stock para uma área livre resolveria. O
+pacote pode chegar a ~0xC9000 B (offset ≤ `0xB0000` + len ≤ `0x19000`), mais
+que os 496 KiB da reserva livre `0x162000–0x1DE000`; isso teria de ser medido no
+pacote real.
+
+## 14. Defaults de menu no slot vs. stock singleboot
+
+### Referência: o que é default no stock
+
+- O RESET do menu (`0x080047A4`) chama `0x0800A638`, que grava em RAM o valor
+  padrão de cada campo. Campo a campo, o fallback do loader `0x080098B0` para
+  byte inválido ou `0xFF` é **o mesmo valor** do RESET. Exemplos:
+
+  | Campo | Default |
+  |---|---|
+  | `0x4000`: SQL | 4 |
+  | TOT | 2 |
+  | VOX | 0, nível 5 |
+  | MIC | 2 |
+  | BAT-SAVE | 4 |
+  | luz | 5 |
+  | `0x5000`: canais de tela | 205/0/205/205/0/205/207/207 → RAM 205,205,205,205,0,0,207,207 |
+
+  Os campos de `0x7000` também batem. Um setor de settings apagado dá,
+  portanto, os defaults do stock.
+- O RESET apaga `0x1000–0x7000`, `0x9000` e `0xE000`. Depois grava:
+  - VFOs 200–206: 55,025 / 118,025 / 145,025 / 245,025 / 360,025 / 435,025 /
+    490,025 MHz (`0x080132E4`);
+  - 5 canais `CH-001…005`: 434,775 / 435,025 / 436,975 / 145,025 / 145,525
+    (`0x08012DD4`);
+  - os canais de tela.
+
+  Ele preserva `0x0000`, `0x8000`, `0xA000–0xDFFF` e `0xF000`.
+- O layout que o KLEANFW herdou do stock K1 está documentado em
+  `App/driver/eeprom_compat.c`: settings em `0xA000+` ("ex 0x004000", "ex
+  0x005000"…), nomes em `0x4000` (no stock, `0xE000`) e atributos em `0x8000`
+  (no stock, `0x2000`).
+
+### Setor por setor, com a cópia do Main
+
+| Setor | No stock | No Main do KLEANFW | Na imagem |
+|---|---|---|---|
+| `0x0000` | canais 0–199 | freq. dos canais, mesmo formato | copiado. Fica invisível porque os atributos em `0x2000` estão em 0xFF |
+| `0x1000+` | VFOs 200–206 | apagado | fallback do stock. Só o RESET grava a tabela |
+| `0x2000`, `0x3000`, `0x5000–0x7000`, `0xB000`, `0xE000`, `0xF000` | atributos, FM, tela, voz, PONMSG, menu oculto, nomes | apagados | defaults do stock |
+| `0x4000` | SQL, TOT, VOX, MIC, luz… | nomes dos canais com zeros (luz = 0) | **apagado** |
+| `0x8000` | ANI-ID, UPCODE, DWCODE + 2 códigos DTMF (validados por `0x08004DF0`: `0-9`, `A-D`, `*`, `#`) | atributos (2 B/canal) | **apagado**: `123`, `ABCD9`, `9DCBA`, `12345`, `54321` |
+| `0x9000` | scan list; canais prioritários em `[2,3,5,6]` **sem clamp** | VFOs | **apagado** (0xFF = nenhum, como no RESET) |
+| `0xA000` | chave AES (16 B → `0x20002858`; uma palavra ≠ FFFFFFFF liga `[0x2000011C]`) | settings | **apagado** (sem chave, como na fábrica) |
+
+### Fora do alcance da imagem
+
+- **Voz:** o clamp dá 2 (ENG). O RESET preserva o valor anterior.
+- **VFOs e canais de exemplo:** ficam no fallback do stock até um **RESET → ALL**
+  no menu, que grava as tabelas acima.
+
+Não verificado: que a flag de chave AES faça a CPS do stock exigir
+autenticação. Isso é o comportamento da linhagem K5, mas o caminho de `uart`
+do v7.00.15 não foi seguido.

@@ -1,7 +1,7 @@
 #include "stub.h"
 #include "stub_mb.h"
 
-void stub_boot(void)
+static void stub_boot_body(void)
 {
     stub_gpio_init();
     stub_delay_init();
@@ -10,23 +10,29 @@ void stub_boot(void)
      * which happens right after we return. Cheap: 24 bytes of SPI (the marker)
      * plus a CRC over the internal image. */
     stub_flash_init();
-    stub_bank_apply();
+    const uint32_t base = stub_bank_apply();
 
     /*
      * Fast path: the overwhelmingly common boot pays nothing more. A single
      * sample is enough to rule the selector out, so no 20 ms delay is added.
+     * Same rule as BOOT_GetMode(): MENU again 20 ms later, no PTT.
      */
-    if (stub_key_poll() != STUB_KEY_MENU)
-        return;
+    if (stub_key_poll() == STUB_KEY_MENU) {
+        stub_delay_ms(20);
+        if (stub_key_poll() == STUB_KEY_MENU && !stub_ptt_pressed())
+            stub_selector(); /* returns on EXIT; a restore resets the MCU */
+    }
 
-    /* Same rule as BOOT_GetMode(): MENU again 20 ms later, no PTT. */
-    stub_delay_ms(20);
+    /* After the selector, not before: a restore chosen there must not pay for
+     * (or be blocked by) a seed of the bank it is leaving. */
+    stub_bank_seed(base);
+}
 
-    if (stub_key_poll() != STUB_KEY_MENU || stub_ptt_pressed())
-        return;
-
-    stub_selector();
-
-    /* EXIT from the selector: leave the panel as it is and let the stock boot.
-     * Its own __main and display init take over from here. */
+void stub_boot(void)
+{
+    stub_hw_save();
+    stub_boot_body();
+    /* Every peripheral, pin and clock the stub touched goes back to the state
+     * the stock would have found without the stub. */
+    stub_hw_restore();
 }

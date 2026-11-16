@@ -9,6 +9,7 @@
 
 #include "stub_mb.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "py32f071_ll_bus.h"
@@ -162,7 +163,7 @@ uint8_t stub_restore_slot(uint8_t slot, uint8_t *progress_line)
  * stack pointer (0x20002FA0); the stock never reads or writes it. */
 #define BANK_WORD (*(volatile uint32_t *)0x20003FFCu)
 
-void stub_bank_apply(void)
+uint32_t stub_bank_apply(void)
 {
     mb_state_t state;
     uint32_t base = 0;
@@ -175,6 +176,251 @@ void stub_bank_apply(void)
         base = MB_BankBase(state.config_bank);
 
     BANK_WORD = base;
+    return base;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Taking ownership of a config bank                                          */
+/*                                                                            */
+/* The stock cannot boot from a config it did not write: on a bank holding    */
+/* another firmware's settings it freezes on the VFO screen (confirmed on the */
+/* radio: same image, bank erased by hand -> boots). It has no automatic      */
+/* initialisation either: its factory reset is only reachable from its menu.  */
+/* The one state it is known to boot from is the Main config at bank 0 (stock */
+/* flashed by USB, no remap).                                                 */
+/*                                                                            */
+/* So a bank the stock does not own yet receives a copy of bank 0, and then   */
+/* the ownership mark at SEED_MARK. 0xD000 is free in both layouts: the stock */
+/* never reads or writes it (its factory reset skips 0xA000-0xDFFF too), and  */
+/* KLEANFW banks use 0x0000-0xA170 and 0xB000-0xCFFF only. The mark is the    */
+/* last write, so a power loss mid-copy restarts it on the next boot; sectors */
+/* already equal to the source are skipped, never erased again.               */
+/* -------------------------------------------------------------------------- */
+
+#define SEED_MAIN_PROBE 0xA000u /* KLEANFW always writes its settings here */
+#define SEED_MARK       0xD000u
+/*
+ * Sectors left erased instead of copied: same address, different meaning in
+ * the two layouts, and an erased sector is exactly what the stock itself
+ * produces (its loader's fallback for 0xFF equals its RESET default).
+ *
+ *   0x4000  stock settings (SQL, TOT, VOX, MIC, backlight...); KLEANFW keeps
+ *           zero-padded channel names here, read as backlight time 0.
+ *   0x8000  stock DTMF codes (ANI-ID, UP/DW codes), validated as DTMF text;
+ *           KLEANFW keeps channel attributes here.
+ *   0x9000  stock scan list, priority channels unclamped; KLEANFW VFOs.
+ *   0xA000  stock custom AES key (any word != 0xFFFFFFFF sets the flag);
+ *           KLEANFW settings.
+ */
+static bool seed_skip(uint32_t off)
+{
+    return off == 0x4000u || off == 0x8000u || off == 0x9000u || off == 0xA000u;
+}
+#define SEED_SECTOR     0x1000u
+#define SEED_PAGE       0x100u
+#define SPI_TIMEOUT     20000u
+#define WIP_TIMEOUT     5000000u
+#define FLASH_CS        LL_GPIO_PIN_3
+
+static uint8_t seed_page[SEED_PAGE];
+static uint8_t seed_dst[SEED_PAGE];
+static bool seed_err;
+
+static uint8_t seed_spi(uint8_t v)
+{
+    uint32_t to = SPI_TIMEOUT;
+
+    while (!LL_SPI_IsActiveFlag_TXE(SPI2))
+        if (!--to) {
+            seed_err = true;
+            return 0xFF;
+        }
+    LL_SPI_TransmitData8(SPI2, v);
+    to = SPI_TIMEOUT;
+    while (!LL_SPI_IsActiveFlag_RXNE(SPI2))
+        if (!--to) {
+            seed_err = true;
+            return 0xFF;
+        }
+    return LL_SPI_ReceiveData8(SPI2);
+}
+
+static void seed_cmd_addr(uint8_t cmd, uint32_t addr)
+{
+    LL_GPIO_ResetOutputPin(GPIOA, FLASH_CS);
+    seed_spi(cmd);
+    seed_spi((uint8_t)(addr >> 16));
+    seed_spi((uint8_t)(addr >> 8));
+    seed_spi((uint8_t)addr);
+}
+
+static void seed_cs_high(void)
+{
+    LL_GPIO_SetOutputPin(GPIOA, FLASH_CS);
+}
+
+static void seed_read(uint32_t addr, uint8_t *buf, uint32_t len)
+{
+    seed_cmd_addr(0x03, addr);
+    while (len-- && !seed_err)
+        *buf++ = seed_spi(0xFF);
+    seed_cs_high();
+}
+
+static bool seed_blank(const uint8_t *buf, uint32_t len)
+{
+    while (len--)
+        if (*buf++ != 0xFF)
+            return false;
+    return true;
+}
+
+static bool seed_wait_wip(void)
+{
+    for (uint32_t i = 0; i < WIP_TIMEOUT && !seed_err; i++) {
+        LL_GPIO_ResetOutputPin(GPIOA, FLASH_CS);
+        seed_spi(0x05);
+        const uint8_t status = seed_spi(0xFF);
+        seed_cs_high();
+        if (!(status & 1u))
+            return !seed_err;
+    }
+    seed_err = true;
+    return false;
+}
+
+static void seed_wren(void)
+{
+    LL_GPIO_ResetOutputPin(GPIOA, FLASH_CS);
+    seed_spi(0x06);
+    seed_cs_high();
+}
+
+static bool seed_erase(uint32_t addr)
+{
+    seed_wren();
+    seed_cmd_addr(0x20, addr);
+    seed_cs_high();
+    return seed_wait_wip();
+}
+
+static bool seed_program(uint32_t addr, const uint8_t *buf)
+{
+    seed_wren();
+    seed_cmd_addr(0x02, addr);
+    for (uint32_t i = 0; i < SEED_PAGE && !seed_err; i++)
+        seed_spi(buf[i]);
+    seed_cs_high();
+    return seed_wait_wip();
+}
+
+static bool seed_equal(const uint8_t *a, const uint8_t *b, uint32_t len)
+{
+    while (len--)
+        if (*a++ != *b++)
+            return false;
+    return true;
+}
+
+/* Make bank sector `off` byte-identical to the same sector of bank 0.
+ *
+ * A sector is erased only when it holds data that differs from the source -
+ * leftovers of a stock boot on the erased bank. A sector an interrupted seed
+ * already copied compares equal and costs nothing; an erased one is only
+ * programmed. */
+static bool seed_sector(uint32_t base, uint32_t off)
+{
+    const uint32_t dst = base + off;
+    bool erase = false;
+
+    for (uint32_t page = 0; page < SEED_SECTOR && !erase; page += SEED_PAGE) {
+        seed_read(off + page, seed_page, SEED_PAGE);
+        seed_read(dst + page, seed_dst, SEED_PAGE);
+        if (seed_err)
+            return false;
+        if (!seed_equal(seed_page, seed_dst, SEED_PAGE) && !seed_blank(seed_dst, SEED_PAGE))
+            erase = true;
+    }
+
+    if (erase && !seed_erase(dst))
+        return false;
+
+    for (uint32_t page = 0; page < SEED_SECTOR; page += SEED_PAGE) {
+        seed_read(off + page, seed_page, SEED_PAGE);
+        if (seed_err)
+            return false;
+        if (seed_blank(seed_page, SEED_PAGE))
+            continue;
+        if (!erase) {
+            seed_read(dst + page, seed_dst, SEED_PAGE);
+            if (seed_err)
+                return false;
+            if (seed_equal(seed_page, seed_dst, SEED_PAGE))
+                continue;
+        }
+        if (!seed_program(dst + page, seed_page))
+            return false;
+    }
+    return !seed_err;
+}
+
+static const uint8_t seed_magic[16] = {
+    'K', 'L', 'E', 'A', 'N', 'F', 'W', ' ', 'S', 'T', 'O', 'C', 'K', ' ', 'B', '3',
+};
+
+/* Leave bank sector `dst` erased, erasing it only if it is not. */
+static bool seed_clear(uint32_t dst)
+{
+    bool blank = true;
+
+    for (uint32_t page = 0; page < SEED_SECTOR && blank; page += SEED_PAGE) {
+        seed_read(dst + page, seed_dst, SEED_PAGE);
+        if (seed_err)
+            return false;
+        blank = seed_blank(seed_dst, SEED_PAGE);
+    }
+    return blank || seed_erase(dst);
+}
+
+/* Erase the mark sector if needed and write the ownership record. */
+static bool seed_mark(uint32_t base)
+{
+    const uint32_t dst = base + SEED_MARK;
+
+    if (!seed_clear(dst))
+        return false;
+
+    memset(seed_page, 0xFF, SEED_PAGE);
+    memcpy(seed_page, seed_magic, sizeof(seed_magic));
+    return seed_program(dst, seed_page);
+}
+
+void stub_bank_seed(uint32_t base)
+{
+    if (base == 0)
+        return;
+
+    seed_err = false;
+
+    /* Already owned by the stock: whatever it saved there is its own. */
+    seed_read(base + SEED_MARK, seed_page, sizeof(seed_magic));
+    if (seed_err || seed_equal(seed_page, seed_magic, sizeof(seed_magic)))
+        return;
+
+    /* Nothing proven-good to copy: keep the stock's own behaviour. */
+    seed_read(SEED_MAIN_PROBE, seed_page, 16);
+    if (seed_err || seed_blank(seed_page, 16))
+        return;
+
+    for (uint32_t off = 0; off < MB_BANK_SIZE; off += SEED_SECTOR) {
+        if (off == SEED_MARK)
+            continue;
+        const bool ok = seed_skip(off) ? seed_clear(base + off) : seed_sector(base, off);
+        if (!ok)
+            return; /* no mark: retried on the next boot */
+    }
+
+    (void)seed_mark(base);
 }
 
 const char *stub_slot_error(uint8_t err)

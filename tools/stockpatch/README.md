@@ -1,6 +1,7 @@
 # Stock no slot — `tools/stockpatch`
 
-Gera, a partir do firmware stock da Quansheng (`K5ENG_v7.00.15_publish.bin`),
+Gera, a partir do firmware stock da Quansheng
+(`f4hwn.stock_singleboot_v7.00.15.bin`, na raiz do repositório),
 uma imagem que roda num slot do multiboot com:
 
 - o **seletor do KLEANFW** (MENU ao ligar) embutido no próprio stock;
@@ -42,6 +43,26 @@ realmente for a daquele slot (`MB_InternalMatchesState`). Sem marcador válido �
 stock gravado direto por USB — o banco é 0 e o stock se comporta exatamente
 como o original.
 
+Antes de devolver o controle, o stub ainda:
+
+- **toma posse do banco**: se o banco N ainda não tem a marca do stock
+  (`KLEANFW STOCK B3` em `banco + 0xD000`), o stub copia o banco 0 (config do
+  Main) por cima dele e grava a marca por último. Os setores `0x4000`
+  (settings), `0x8000` (códigos DTMF), `0x9000` (scan list) e `0xA000` (chave
+  AES) ficam apagados em vez de copiados: no KLEANFW eles guardam outra coisa
+  (nomes, atributos, VFOs, settings), e apagados dão exatamente os defaults do
+  stock. Veja o `AUDIT.md` §14. O stock trava na tela de VFO
+  com a config de outro firmware (confirmado no rádio), não inicializa sozinho
+  uma config apagada (o factory reset dele só sai pelo menu), e o banco 0 é o
+  único conteúdo com que ele comprovadamente sobe. A config antiga daquele banco
+  se perde. A cópia leva alguns segundos, uma única vez, com a tela ainda
+  apagada: **não desligue**. Num banco vazio ela não apaga nenhum setor; num
+  banco com dados, apaga só os setores que diferem do Main. Uma queda de energia
+  no meio refaz a cópia no boot seguinte, pulando o que já foi copiado;
+- **devolve o hardware como encontrou**: GPIOA/B/F (ODR incluso), SPI1/SPI2
+  (reset pelo RCC), SysTick e os enables de clock voltam ao estado de entrada,
+  então o stock começa do mesmo estado que teria sem o stub.
+
 ## Uso
 
 Requisitos: Docker com a imagem `uvk1-uvk5v3` (a mesma do firmware) e
@@ -55,6 +76,10 @@ tools/stockpatch/build_stub.sh
 # 2. gera a imagem de slot
 python3 -I tools/stockpatch/patch_stock.py
 # -> build/stockpatch/f4hwn.stock.v7.00.15.bin
+
+# (diagnóstico) o stock sem patch como imagem de slot, e o stub sem os hooks
+python3 -I tools/stockpatch/patch_stock.py --dump-raw build/stockpatch/f4hwn.stock.v7.00.15.orig-slot.bin
+python3 -I tools/stockpatch/patch_stock.py --no-hooks -o build/stockpatch/f4hwn.stock.v7.00.15.nohooks.bin
 
 # 3. envia a imagem para um slot (UV Studio) e seleciona no MENU ao ligar
 ```
@@ -107,8 +132,8 @@ tem o que este stub injeta.
 
 Estática, depois de `build_stub.sh` e `patch_stock.py`:
 
-- o stub fica em 7.952 B (`.text` 7.032 + copiador RAM 920) e a imagem em
-  80.656 B, dentro do limite de 120.832 B por slot;
+- o stub fica em 9.328 B (`.text` 8.408 + copiador RAM 920) e a imagem em
+  82.032 B, dentro do limite de 120.832 B por slot;
 - `cmake/check_mb_ramfunc.cmake` passa no copiador RAM (nenhuma referência
   externa);
 - o diff contra o stock original toca só os 2 bytes do literal de boot, os
@@ -117,11 +142,16 @@ Estática, depois de `build_stub.sh` e `patch_stock.py`:
 
 No rádio, o teste que fecha a fase:
 
-1. Suba o stock a partir do slot 2 e mexa em alguma configuração.
-2. Dump antes/depois: as gravações devem aparecer a partir de `0xD0000`
+1. Suba o stock a partir do slot 2. No primeiro boot há uma pausa de alguns
+   segundos com a tela apagada (a cópia do banco 0); nos seguintes, não.
+2. Confirme que a luz acende e as teclas respondem; mexa em alguma
+   configuração, desligue e ligue: ela persiste.
+3. Dump antes/depois: as gravações devem aparecer a partir de `0xD0000`
    (banco 2) e `0x000000–0x010000` (Main do KLEANFW) deve ficar idêntico.
-3. Ligue segurando MENU no stock: o seletor abre, e escolher **M** volta ao
+4. Ligue segurando MENU no stock: o seletor abre, e escolher **M** volta ao
    KLEANFW.
+5. Se o stock ainda travar, grave `…orig-slot.bin` no mesmo slot: se ele também
+   travar, o problema está no caminho de restore do slot, não nesta imagem.
 
 ## Limitações conhecidas
 
@@ -134,3 +164,16 @@ No rádio, o teste que fecha a fase:
   atrasos só ficam mais longos, nunca curtos.
 - **Regravar o slot com outro firmware** não deixa o banco inconsistente: o
   marcador é reescrito no próprio restore.
+- **Posse do banco**: qualquer banco sem a marca do stock é sobrescrito com a
+  cópia do Main na primeira subida, inclusive um banco de outro slot escolhido
+  pelo **SetCfg**. Só o banco 0 nunca é tocado. Se a CPS do stock gravar algo em
+  `0xD000` do banco, a marca some e o próximo boot copia o Main de novo.
+- **Sem voz falada**: o pacote de voz de fábrica fica na SPI em
+  `0x100000–~0x1CA000` (índice CHI em `0x100000`, ENG em `0x100800`, áudio em
+  `0x101000+`). No KLEANFW essa faixa é dos marcadores do multiboot
+  (`0x100000`/`0x101000`, regravados a cada troca de slot) e dos apps overlay
+  (`0x102000–0x162000`), então o pacote some na primeira troca de slot. O stock
+  rejeita o índice pelo próprio teste de limites e fica mudo; não trava. Para
+  ter voz seria preciso um dump do pacote (de um rádio com o firmware de
+  fábrica), uma área livre que o comporte e um remap dessas leituras nos
+  trampolins.

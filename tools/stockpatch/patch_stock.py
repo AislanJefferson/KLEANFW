@@ -24,7 +24,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 
-INPUT = REPO / "K5ENG_v7.00.15_publish.bin"
+INPUT = REPO / "f4hwn.stock_singleboot_v7.00.15.bin"
 STUB = REPO / "build/stockpatch/stub.bin"
 OUTPUT = REPO / "build/stockpatch/f4hwn.stock.v7.00.15.bin"
 
@@ -279,6 +279,8 @@ def main():
     parser.add_argument("-o", "--output", type=Path, default=OUTPUT, help="slot image to write (default: %(default)s)")
     parser.add_argument("--rebuild", action="store_true", help="only check the decode/encode round trip")
     parser.add_argument("--dump-raw", type=Path, metavar="PATH", help="write the decoded stock image and stop")
+    parser.add_argument("--no-hooks", action="store_true",
+                        help="diagnostic: keep the 8 SPI sites original (stub runs, no bank remap)")
     args = parser.parse_args()
 
     raw, decoded, image, version, trailer = load_stock(args.input)
@@ -321,7 +323,8 @@ def main():
     patched = bytearray(image)
     struct.pack_into("<I", patched, BOOT_LITERAL - IMAGE_BASE, STUB_BASE | 1)
 
-    for addr, _expected, symbol in HOOK_SITES:
+    hook_sites = () if args.no_hooks else HOOK_SITES
+    for addr, _expected, symbol in hook_sites:
         target = trampolines[symbol]
         bl = thumb_bl(addr, target)
         if decode_thumb_bl(addr, bl) != target:
@@ -342,7 +345,7 @@ def main():
     # the tail is exactly the erased gap plus the stub.
     lit = BOOT_LITERAL - IMAGE_BASE
     allowed = set(range(lit, lit + 4))
-    for addr, _expected, _symbol in HOOK_SITES:
+    for addr, _expected, _symbol in hook_sites:
         allowed.update(range(addr - IMAGE_BASE, addr - IMAGE_BASE + 4))
     diff = {i for i in range(len(image)) if image[i] != patched[i]}
     if not diff or not diff <= allowed:

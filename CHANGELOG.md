@@ -25,6 +25,24 @@ tested on a radio yet.
 
 ### Fixed
 
+- `tools/stockpatch`: the stock restored from a slot froze on the VFO screen
+  (no backlight, no keys) when its config bank held another firmware's
+  settings. Confirmed on the radio: the same image boots once the bank is
+  erased. The stock has no automatic initialisation of a config either. A bank
+  without the stock's ownership mark (`0xD000`, unused by both layouts) now
+  receives a copy of bank 0, the Main config the unpatched stock is known to
+  boot from, and is marked last. The copy runs once and takes a few seconds; it
+  erases only sectors that differ, and a power loss resumes it. The old
+  contents of that bank are lost. The stub also restores every register it
+  touched before returning. The stock's settings sector (`0x4000`) is left
+  erased instead of copied: KLEANFW keeps zero-padded channel names there,
+  which the stock read as backlight time 0 (backlight never on); erased, every
+  field takes the stock's default. The same applies to `0x8000` (stock DTMF
+  codes; KLEANFW channel attributes), `0x9000` (stock scan list, priority
+  channels unclamped; KLEANFW VFOs) and `0xA000` (stock custom AES key, set by
+  any non-erased word; KLEANFW settings): all left erased, so every menu field
+  starts at the same default as a singleboot stock. Tested on the radio only
+  up to the copy without the erased sectors.
 - HOP: a channel with a fixed scrambler (2600–3500 Hz) could receive without
   descrambling. When a HOP reception ended (2 s hang) after a channel change
   or a Dual Watch switch to that channel, the end of the HOP session turned

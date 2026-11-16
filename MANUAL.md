@@ -1559,6 +1559,21 @@ O banco é definido pelo **SetCfg** (seção 20.1), então o stock respeita a
 mesma associação que o KLEANFW. Calibração, logo de boot e área de apps
 continuam compartilhados entre todos os slots.
 
+Na primeira vez que o stock sobe num banco, esse banco recebe uma **cópia da
+configuração do Main** (banco 0), e a config que estava nele **se perde**: o
+stock trava com a config de outro firmware e não sabe inicializar uma config
+apagada. A cópia leva alguns segundos, com a tela ainda apagada, e acontece uma
+única vez (**não desligue o rádio nesse intervalo**). A partir daí o banco é do
+stock e ele grava só nele. Os ajustes do menu do stock (luz da tela, squelch,
+códigos DTMF, scan list etc.) começam nos defaults dele, não nos do KLEANFW.
+Para deixar também os VFOs e os canais de exemplo iguais aos de um stock
+singleboot, rode uma vez **MENU → RESET → ALL** no stock.
+
+O stock no slot **não fala** (menu VOICE): o pacote de voz de fábrica ficava na
+mesma área da memória que o multiboot usa para o marcador e para os apps, e é
+apagado na primeira troca de slot. Deixe VOICE em OFF. Se você já gravou o stock direto por
+USB, ele rodou sobre a config do Main e pode tê-la alterado.
+
 > [!WARNING]
 > Faça um dump completo da SPI (config, calibração e logo) e guarde uma imagem
 > **DFU** antes de usar o stock num slot. O stock não tem seletor próprio: o
