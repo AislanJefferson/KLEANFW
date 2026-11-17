@@ -5,7 +5,7 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ## Unreleased
 
-Image 120,828 / 120,832 bytes (4 bytes free); RAM 15,640 / 16,384 bytes at
+Image 120,808 / 120,832 bytes (24 bytes free); RAM 15,640 / 16,384 bytes at
 link time. Tested on a radio: the tic is gone while listening from the graph.
 The cause had been confirmed there first: the tic was absent in the fixed
 listen (STILL), which reads the RSSI without switching the filter. The MR
@@ -21,13 +21,24 @@ seek below is not yet tested on a radio.
   dotted line) and, after the far edge, goes on from the other edge to the
   far edge again. With no other signal the cycle ends there and the next
   sweep counts the skipped channel again (it reopens if still active); it
-  also counts again once the reception the seek opened ends. Lists over 128
+  also counts again once the reception the seek opened ends (SIDE1 on that
+  reception excludes it and the seek goes on, skip included). Lists over 128
   channels seek in list order too. VFO and UP/DOWN without a reception are
-  unchanged. A second press while a seek has not found a signal yet restarts
-  a normal sweep (keeping the skip cost 8 bytes). Cost +36 bytes: the seek
-  takes 104 bytes, paid by sharing the interlaced phase end with the
-  half-sweep end (-52 B, same behavior) and keeping `GetDirection()` out of
-  line (-16 B).
+  unchanged. UP/DOWN while a seek has not found a signal yet is ignored, so a
+  held key goes from signal to signal (a press there used to restart a
+  normal sweep, which reopened the channel just left). A seek that stops on
+  a channel after reading only part of the list leaves the graph scale and
+  the automatic trigger as they were: from that part alone (maybe the found
+  channel only) the scale floor jumped to the carrier, the trigger rose up to
+  2 dB per seek, and that rise, applied before the open test, could stop the
+  seek on a channel near the line without opening it (PTT into STILL from
+  such a reception then keeps the trigger fixed). Cost +16 bytes over
+  the build before the seek (120,792): the seek takes 104 bytes and ignoring
+  UP/DOWN during it 20, paid by sharing the interlaced phase end with the
+  half-sweep end (-52 B, same behavior), the skip index in the padding of
+  `scanInfo` (-32 B, same RAM), keeping `GetDirection()` out of line
+  (-16 B), one counter reset for the partial pass (-4 B) and a duplicate
+  `rssiMin` reset dropped from `RelaunchScan()` (-4 B).
 
 ### Fixed
 
