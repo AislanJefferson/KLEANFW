@@ -3,6 +3,29 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+Menu audit: every entry of the M menu was checked against its limits,
+load/save, drawing and run-time consumer. None is orphaned; the fixes below
+come from that review. Image 120,464 / 120,832 bytes. Checked by code review
+and builds only (Fusion and RDSProbe).
+
+### Fixed
+
+- SetCtr/SetInv: leaving the menu with the submenu open (menu timeout, PTT,
+  a popup) kept the previewed contrast or inversion on the LCD until the next
+  TX. The saved value is restored when the menu screen is left.
+- D Prel: the menu, the manual and the CHIRP module offered 30-190 ms, but
+  the radio never waits less than 200 ms, so those values all acted as
+  200 ms. The range is now 200-990 ms; a stored lower value still acts as
+  200 ms.
+
+### Changed
+
+- Menu code: the old in-place drawing of the ChName/CllSgn editor (never
+  reached since the unified editor) and other dead menu code were removed;
+  CryKey is drawn once. 348 bytes of flash freed.
+
 ## KLEANFW 0.1.3 — 2026-11-17
 
 Spectrum only: the MR UP/DOWN seek and the listen tic fix below. Image
