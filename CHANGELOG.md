@@ -6,9 +6,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 ## Unreleased
 
 Image 120,792 / 120,832 bytes (40 bytes free); RAM 15,640 / 16,384 bytes at
-link time. Checked by code review and builds. On a radio only the cause was
-confirmed: the tic is absent in the fixed listen (STILL), which reads the RSSI
-without switching the filter.
+link time. Tested on a radio: the tic is gone while listening from the graph.
+The cause had been confirmed there first: the tic was absent in the fixed
+listen (STILL), which reads the RSSI without switching the filter.
 
 ### Fixed
 
