@@ -3023,6 +3023,7 @@ static void UpdateScan()
     const bool interlaced = UseInterlacedSweep();
 #else
     const bool interlaced = false;
+    const uint16_t interlaceStride = 1;
 #endif
     // MR seek: the first channel over the open level ends the half-sweep and
     // opens below. Every earlier read of the seek was under it, so this read
