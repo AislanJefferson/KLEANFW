@@ -643,7 +643,11 @@ static const uint8_t CatPower[]   = {
     MENU_SET_SAV,
 #endif
 };
-static const uint8_t CatDisplay[] = { MENU_MDF, MENU_ABR, MENU_ABR_MIN, MENU_ABR_MAX, MENU_ABR_ON_TX_RX, MENU_SET_CTR, MENU_SET_INV, MENU_SET_MET, MENU_SET_GUI, MENU_VOL };
+static const uint8_t CatDisplay[] = { MENU_MDF, MENU_ABR, MENU_ABR_MIN, MENU_ABR_MAX, MENU_ABR_ON_TX_RX, MENU_SET_CTR, MENU_SET_INV, MENU_SET_MET, MENU_SET_GUI,
+#ifndef ENABLE_FEAT_F4HWN
+    MENU_VOL,
+#endif
+};
 static const uint8_t CatTimers[]  = { MENU_TOT, MENU_SET_TOT, MENU_SET_EOT, MENU_SET_TMR };
 static const uint8_t CatAudio[]   = {
     MENU_MIC, MENU_MIC_BAR, MENU_BEEP,
@@ -658,7 +662,11 @@ static const uint8_t CatAudio[]   = {
 #endif
 };
 static const uint8_t CatRadio[]   = { MENU_SQL, MENU_STE, MENU_RP_STE, MENU_ROGER, MENU_VOX, MENU_TDR };
-static const uint8_t CatDtmf[]    = { MENU_UPCODE, MENU_DWCODE, MENU_D_ST, MENU_D_PRE, MENU_D_LIVE_DEC };
+static const uint8_t CatDtmf[]    = { MENU_UPCODE, MENU_DWCODE, MENU_D_ST, MENU_D_PRE,
+#ifdef ENABLE_GOGUFW_DTMF_LIVE
+    MENU_D_LIVE_DEC,
+#endif
+};
 #ifdef ENABLE_MESSENGER
 static const uint8_t CatMsg[]     = { MENU_MSG_RX, MENU_MSG_ACK, MENU_MSG_BEEP, MENU_MSG_LED, MENU_MSG_CSG,
 #ifdef ENABLE_GOGUFW_CRYPTO
@@ -1229,54 +1237,19 @@ void UI_DisplayMenu(void)
                 edit_index = -1;
             CRYPTO_ReadText(String);
             UI_PrintString(String[0] ? String : "--", menu_item_x1, menu_item_x2, 2, 8);
+            already_printed = true;
             break;
         #endif
 
         #ifdef ENABLE_MESSENGER
         case MENU_MSG_CSG:
+            /* Editing is drawn by UI_MENU_DrawUnifiedTextEditor(). */
             MSG_STORE_Init();
             if (!gIsInSubMenu)
                 edit_index = -1;
-            if (edit_index < 0)
-            {
-                strncpy(String, gMessengerConfig.callsign, MSG_CALLSIGN_EDIT_LEN + 1);
-                String[MSG_CALLSIGN_EDIT_LEN] = 0;
-                UI_PrintString(String[0] ? String : "--", menu_item_x1, menu_item_x2, 2, 8);
-            }
-            else
-            {
-                UI_PrintString(edit, menu_item_x1, menu_item_x2, 2, 8);
-                if (edit_index < MSG_CALLSIGN_EDIT_LEN)
-                {
-                    /* UI_PrintString() centers the editable 6-char callsign between
-                     * menu_item_x1..menu_item_x2.  The underline/cursor must use
-                     * the same calculated X origin, otherwise the guides stay at
-                     * the left edge while the text is centered. */
-                    const uint8_t edit_len = MSG_CALLSIGN_EDIT_LEN;
-                    uint8_t x = menu_item_x1;
-                    if (menu_item_x2 > menu_item_x1)
-                    {
-                        x = menu_item_x1 + (uint8_t)((((menu_item_x2 - menu_item_x1) - (edit_len * 8)) + 1) / 2);
-                    }
-                    if (x > 0) x--;
-
-                    for (uint8_t i = 0; i < edit_len; i++)
-                    {
-                        if (i != edit_index)
-                        {
-                            if (edit[i] != 'g' && edit[i] != 'j')
-                                UI_DrawLineBuffer(gFrameBuffer, x, 29, x + 6, 29, 1);
-                        }
-                        else
-                        {
-                            UI_DrawLineBuffer(gFrameBuffer, x + 2, 30, x + 4, 30, 1);
-                            UI_DrawPixelBuffer(gFrameBuffer, x + 3, 29, 1);
-                        }
-                        x += 8;
-                    }
-                    UI_PrintStringSmallNormal(edit_is_uppercase ? "ABC" : "abc", 77, 0, 4);
-                }
-            }
+            strncpy(String, gMessengerConfig.callsign, MSG_CALLSIGN_EDIT_LEN + 1);
+            String[MSG_CALLSIGN_EDIT_LEN] = 0;
+            UI_PrintString(String[0] ? String : "--", menu_item_x1, menu_item_x2, 2, 8);
             already_printed = true;
             break;
         #endif
@@ -1405,42 +1378,11 @@ void UI_DisplayMenu(void)
             {
                 const uint32_t frequency = SETTINGS_FetchChannelFrequency(gSubMenuSelection);
 
-                //if (!gIsInSubMenu || edit_index < 0)
                 if (!gIsInSubMenu)
                     edit_index = -1;
-                if (edit_index < 0)
-                {   // show the channel name
-                    SETTINGS_FetchChannelName(String, gSubMenuSelection);
-                    char *pPrintStr = String[0] ? String : "--";
-                    UI_PrintString(pPrintStr, menu_item_x1, menu_item_x2, 2, 8);
-                }
-                else
-                {   // show the channel name being edited
-                    //UI_PrintString(edit, menu_item_x1, 0, 2, 8);
-                    UI_PrintString(edit, menu_item_x1, menu_item_x2, 2, 8);
-                    if (edit_index < 10) {
-                        // UI_PrintString("^", menu_item_x1 - 1 + (8 * edit_index),0, 4, 8); // show the cursor
-                        uint8_t x = menu_item_x1 - 1;
-                        for (uint8_t i = 0; i < 10; i++) 
-                        {
-                            if (i != edit_index) 
-                            {
-                                if (edit[i] != 'g' && edit[i] != 'j')
-                                {
-                                    UI_DrawLineBuffer(gFrameBuffer, x, 29, x + 6, 29, 1);
-                                }
-                            }
-                            else 
-                            {
-                                UI_DrawLineBuffer(gFrameBuffer, x + 2, 30, x + 4, 30, 1);
-                                UI_DrawPixelBuffer(gFrameBuffer, x + 3, 29, 1);
-                            }
-                            x += 8;
-                        }
-                        
-                        UI_PrintStringSmallNormal(edit_is_uppercase ? "ABC" : "abc", 77, 0, 4);
-                    }
-                }
+                // show the channel name; editing is drawn by UI_MENU_DrawUnifiedTextEditor()
+                SETTINGS_FetchChannelName(String, gSubMenuSelection);
+                UI_PrintString(String[0] ? String : "--", menu_item_x1, menu_item_x2, 2, 8);
 
                 if (!gAskForConfirmation)
                 {   // show the frequency so that the user knows the channels frequency
@@ -1867,11 +1809,6 @@ void UI_DisplayMenu(void)
                 y += small ? 1 : 2;
             }
         }
-    }
-
-    if (m == MENU_S_PRI_CH_1 || m == MENU_S_PRI_CH_2)
-    {
-
     }
 
     if ((m == MENU_R_CTCS || m == MENU_R_DCS) && gCssBackgroundScan)

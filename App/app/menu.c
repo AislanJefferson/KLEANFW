@@ -340,7 +340,7 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_S_PRI_CH_1:
         case MENU_S_PRI_CH_2:
             //*pMin = 0;
-            *pMax = MR_CHANNEL_LAST + 2;
+            *pMax = MR_CHANNELS_MAX;   // last channel + "None"
             break;
 
         case MENU_MIC:
@@ -1404,8 +1404,6 @@ void MENU_ShowCurrentSetting(void)
     }
 }
 
-static KEY_Code_t edit_last_key = 255;
-static uint8_t edit_char_index = 0;
 static TEXT_INPUT_Editor_t s_menuTextEditor;
 uint8_t gMenuTextEditorMode; /* 0=B, 1=b, 2=2; displayed by UI menu editor */
 uint8_t gMenuTextEditorCursor;
@@ -1479,7 +1477,6 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         gMenuTextEditorMode = s_menuTextEditor.mode;
         edit_index = s_menuTextEditor.cursor;
         gMenuTextEditorCursor = TEXT_INPUT_GetDisplayCursor(&s_menuTextEditor);
-        edit_last_key = 255;
         gRequestDisplayScreen = DISPLAY_MENU;
         return;
     }
@@ -1682,7 +1679,6 @@ static void MENU_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
          * EXIT presses for CH-NAME/MSGCSG. */
         memcpy(edit, edit_original, sizeof(edit));
         edit_index          = -1;
-        edit_last_key       = 255;
         gAskForConfirmation = 0;
         gIsInSubMenu        = false;
         gInputBoxIndex      = 0;
@@ -1878,8 +1874,6 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
             }
 
             edit_index = 0;  // 'edit_index' is going to be used as the cursor position
-            edit_last_key = 255;
-            edit_char_index = 0;
             edit_is_uppercase = true;
             /* Use the shared multi-tap editor for every menu text field. */
             {
@@ -1901,7 +1895,6 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
         else
         if (edit_index >= 0)
         {   // finish editing text characters
-            edit_last_key = 255;
             TEXT_INPUT_Commit(&s_menuTextEditor);
             edit_index = edit_max_len;
 
@@ -2031,7 +2024,6 @@ static void MENU_Key_STAR(const bool bKeyPressed, const bool bKeyHeld)
             edit_index = s_menuTextEditor.cursor;
             gMenuTextEditorCursor = TEXT_INPUT_GetDisplayCursor(&s_menuTextEditor);
         }
-        edit_last_key = 255;
         gRequestDisplayScreen = DISPLAY_MENU;
         return;
     }
@@ -2274,7 +2266,6 @@ void MENU_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 gMenuTextEditorMode = s_menuTextEditor.mode;
                 edit_index = s_menuTextEditor.cursor;
                 gMenuTextEditorCursor = TEXT_INPUT_GetDisplayCursor(&s_menuTextEditor);
-                edit_last_key = 255;
                 gRequestDisplayScreen = DISPLAY_MENU;
                 break;
             }
