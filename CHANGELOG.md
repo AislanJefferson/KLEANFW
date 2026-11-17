@@ -7,7 +7,7 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
-come from that review. Image 120,464 / 120,832 bytes. Checked by code review
+come from that review. Image 120,480 / 120,832 bytes. Checked by code review
 and builds only (Fusion and RDSProbe).
 
 ### Fixed

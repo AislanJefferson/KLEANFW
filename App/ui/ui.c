@@ -116,8 +116,11 @@ void GUI_SelectNextDisplay(GUI_DisplayType_t Display)
             PY25Q16_FlushSoon();
 #if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
             /* SetCtr/SetInv preview the submenu choice on the LCD; leaving
-             * the menu any way (timeout, PTT, popup) restores the saved one. */
-            ST7565_ContrastAndInv();
+             * the menu with that submenu open (timeout, PTT, popup) restores
+             * the saved one. Only then: the call soft-resets the LCD. */
+            const int m = UI_MENU_GetCurrentMenuId();
+            if (gIsInSubMenu && (m == MENU_SET_CTR || m == MENU_SET_INV))
+                ST7565_ContrastAndInv();
 #endif
         }
 
