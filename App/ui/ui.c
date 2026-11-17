@@ -112,7 +112,14 @@ void GUI_SelectNextDisplay(GUI_DisplayType_t Display)
         /* Leaving the menu: commit its changes on the next idle tick, so a
          * power-off right after does not lose them. */
         if (gScreenToDisplay == DISPLAY_MENU)
+        {
             PY25Q16_FlushSoon();
+#if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
+            /* SetCtr/SetInv preview the submenu choice on the LCD; leaving
+             * the menu any way (timeout, PTT, popup) restores the saved one. */
+            ST7565_ContrastAndInv();
+#endif
+        }
 
         DTMF_clear_input_box();
 
