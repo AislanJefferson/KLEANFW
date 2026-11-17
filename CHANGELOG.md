@@ -3,6 +3,43 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+Image 120,792 / 120,832 bytes (40 bytes free); RAM 15,640 / 16,384 bytes at
+link time. Checked by code review and builds. On a radio only the cause was
+confirmed: the tic is absent in the fixed listen (STILL), which reads the RSSI
+without switching the filter.
+
+### Fixed
+
+- Spectrum: a faint tic every ~0.5–1 s while listening to a signal the graph
+  found (absent in MR/VFO and in STILL). Every full listen check (320 ticks)
+  switched REG_43 to the sweep filter to read the RSSI, with the audio open:
+  at 15 kHz+ steps a 4.0 kHz IF against W's 7.0 kHz, and another BW mode with
+  N/N+. The check now reads on the listen filter first and decides on that
+  read alone only when it shows the carrier: at or over the close level
+  (trigger − 2 dB) and less than 10 dB under the sweep read that opened the
+  reception. REG_43 then stays put, as in MR/VFO RX, with W, N or N+ at any
+  step. Otherwise the sweep filter is switched in for one read, as before,
+  and the same rules decide on it, so a reception never closes earlier than
+  before and no abrupt drop comes from comparing two filters. The abrupt-drop
+  reference of a graph reception stays at its opening read (a W read could
+  raise it above the strongest sweep read). Differences, all toward keeping
+  the reception: a check cleared by the listen read no longer counts a low
+  read or an abrupt drop only the sweep read would show (a strong reception
+  that fades 10 dB under its best but stays over the trigger and within
+  10 dB of its opening read now continues); with the trigger lowered to under
+  ~8 dB over the noise, the end of a weak reception can take up to 4 checks;
+  STILL entered with PTT during a graph reception starts from the opening
+  read. The status-bar `M` number and the listened column show the listen
+  read on checks without the switch, as in STILL (with N/N+ at 15 kHz+ steps,
+  a few dB under the old value). The switch, and its tic, remain only on
+  checks where the listen read does not show the carrier: the end of a
+  transmission (the audio closes in the same check), a signal under the
+  trigger in the listen filter, or an N/N+ listen reading much lower than the
+  sweep filter. `IsListeningSignalPresent()` now compares in int instead of
+  clamping, with the same result (−4 B in all).
+
 ## KLEANFW 0.1.2 — 2026-11-16
 
 The HOP, Messenger, USB/serial, menu and radio fixes of the withdrawn 0.2.0,

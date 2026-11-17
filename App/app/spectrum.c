@@ -213,7 +213,7 @@ static AutoSensitivityProfile autoSensitivity = AUTO_SENS_NORMAL;
 #define LISTEN_RELEASE_LOW_COUNT 4   // consecutive low reads before release
 #define LISTEN_DROP_EXIT_RSSI   20   // 10 dB abrupt drop => leave RX
 // Carrier-end watch between the full checks (every 320 ticks): one RSSI read
-// (listen filter, no REG_43 switch) every N ticks. A 10 dB drop below this
+// (listen filter, never a REG_43 switch) every N ticks. A 10 dB drop below this
 // reception's best read runs the full check at once, so the next channel is
 // swept for ~45 ms after a carrier ends instead of up to ~0.5 s. The release
 // decision stays with the full check. Power of 2; 0 = off.
@@ -558,12 +558,11 @@ static bool IsPeakOverOpenLevel()
     return peak.rssi >= GetOpenLevel();
 }
 
+// rssi >= trigger - LISTEN_CLOSE_HYST_RSSI (0 for a lower trigger), in int
+// arithmetic so no clamp is needed.
 static bool IsListeningSignalPresent(uint16_t rssi)
 {
-    uint16_t closeLevel = (settings.rssiTriggerLevel > LISTEN_CLOSE_HYST_RSSI)
-                              ? (uint16_t)(settings.rssiTriggerLevel - LISTEN_CLOSE_HYST_RSSI)
-                              : 0;
-    return rssi >= closeLevel;
+    return rssi + LISTEN_CLOSE_HYST_RSSI >= settings.rssiTriggerLevel;
 }
 
 static void ResetPeak()
@@ -3088,7 +3087,8 @@ static void UpdateListening()
 {
     preventKeypress = false;
 
-    // listenT counts down with 1ms delay per tick — no SPI during this phase.
+    // listenT counts down with a 1 ms delay per tick; the carrier-end watch
+    // is the only SPI access in this phase.
     if (listenT)
     {
         listenT--;
@@ -3111,9 +3111,8 @@ static void UpdateListening()
         return;
     }
 
-    // --- Single SPI burst: all BK4819 accesses happen here, once per
-    // listenT expiry (every 320 ms).  SPI repeats at ~3 Hz — below the
-    // audible range.  Between bursts the bus is completely silent.
+    // --- Full check, once per listenT expiry (320 ticks, or at once after a
+    // carrier-end drop): CSS tail, then the RSSI read and the release rules.
 
 #ifdef ENABLE_FEAT_F4HWN_SPECTRUM
     bool tailFound = checkIfTailFound();
@@ -3130,27 +3129,52 @@ static void UpdateListening()
     }
 #endif
 
+#ifndef ENABLE_FEAT_F4HWN_SPECTRUM
+    if (currentState == STILL)
+    {
+        ToggleRX(false);
+        ResetScanStats();
+        ResetPeak();
+        RequestAutoTriggerRecalibration();
+        newScanStart = true;
+        redrawStatus = true;
+        return;
+    }
+#endif
+
+    // Read on the listen filter first. Switching the sweep filter in on
+    // every check, with the audio open, clipped the demodulated audio into a
+    // tic each time (MR/VFO RX never touches REG_43). The release levels come
+    // from the sweep filter, and the listen filter can read more (W) or less
+    // (N/N+ on a 15 kHz+ step), so this read decides alone only when it shows
+    // the carrier: at or over the close level and less than 10 dB under the
+    // read that opened the reception. Then REG_43 stays put. Otherwise the
+    // sweep filter is switched in for one read, as before, and the rules
+    // below decide on it: a reception never closes earlier than with the swap
+    // on every check. STILL never switches: its rules run on this read.
+    //
+    // Drop reference: compared with it rather than with the preceding read,
+    // a gradual AGC fall after carrier loss also releases. STILL raises it to
+    // its strongest read. SPECTRUM keeps the sweep read that opened the
+    // reception (ToggleRX), never above the strongest sweep read, so a drop
+    // seen here is one the sweep filter shows too. A listen read must not
+    // raise it: W reads at least as much as the sweep filter.
+    Measure();
     if (currentState == SPECTRUM)
     {
-        BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-        Measure();
-        BK4819_SetFilterBandwidth(settings.listenBw, false);
-    }
-    else
-    {
-#ifndef ENABLE_FEAT_F4HWN_SPECTRUM
-        if (currentState == STILL)
+        if (!IsListeningSignalPresent(scanInfo.rssi) ||
+            scanInfo.rssi + LISTEN_DROP_EXIT_RSSI <= listenPrevRssi)
         {
-            ToggleRX(false);
-            ResetScanStats();
-            ResetPeak();
-            RequestAutoTriggerRecalibration();
-            newScanStart = true;
-            redrawStatus = true;
-            return;
+            BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+            Measure();
+            BK4819_SetFilterBandwidth(settings.listenBw, false);
         }
-#endif
-        Measure();
+    }
+    else if (scanInfo.rssi > listenPrevRssi)
+    {
+        // Raised before the drop test below: a new strongest read is no drop
+        // either way.
+        listenPrevRssi = scanInfo.rssi;
     }
 
     peak.rssi = scanInfo.rssi;
@@ -3159,12 +3183,8 @@ static void UpdateListening()
     redrawScreen = true;
     redrawStatus = true;
 
-    // Compare with the strongest listening sample, not only the immediately
-    // preceding one, so a gradual AGC fall after carrier loss also releases.
     bool abruptDrop = !monitorMode && listenPrevRssi != RSSI_MAX_VALUE &&
         scanInfo.rssi + LISTEN_DROP_EXIT_RSSI <= listenPrevRssi;
-    if (scanInfo.rssi > listenPrevRssi)
-        listenPrevRssi = scanInfo.rssi;
 
     bool keepListening = monitorMode;
     if (!keepListening)
