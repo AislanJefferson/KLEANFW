@@ -1422,7 +1422,7 @@ O Spectrum escuta sempre **sem scrambler**, mesmo que o canal ou VFO de onde ele
 | **5** | Digitar uma frequência (\* = ponto decimal, MENU confirma). Se estiver escutando, o áudio fecha, e EXIT sem digitar recomeça a varredura |
 | **0** | Muda a modulação (só em VFO) |
 | **6** | Largura de banda de escuta 25k / 12,5k / 6,25k, aplicada na hora. Em MR vale para todos os canais, no gráfico e na escuta, até sair ou segurar MENU; antes dela, cada canal usa a própria banda. O canal não muda |
-| **UP/DOWN** | Desloca a faixa / retoma a varredura |
+| **UP/DOWN** | Desloca a faixa / retoma a varredura. Em MR, escutando um canal: pula esse canal e sintoniza o próximo com sinal no sentido da tecla (veja abaixo) |
 | **SIDE1** | Ignora o pico atual (o canal ou passo que está tocando) até sair do Spectrum |
 | **SIDE2** | Luz sempre acesa → sempre apagada → automática (como **F+8**). Vale até sair do Spectrum |
 | **Segurar MENU** | Volta tudo ao padrão |
@@ -1433,6 +1433,8 @@ Em MR, as teclas 1, 7, 2, 8, 5 e 0 ficam inativas: o gráfico mostra a lista int
 
 **Luz de fundo:** segue o `BLTime`. Qualquer tecla acende a luz e reinicia o tempo, e **EXIT** com a tela apagada só acende. Quando uma transmissão é encontrada, a luz acende e o tempo recomeça. O fim da transmissão não muda a luz. Com `BLTime = OFF` a luz fica no `BLMin`; com `ON` fica sempre acesa.
 - **Luz fixa (SIDE2):** o 1º toque deixa a luz sempre acesa e o 2º sempre apagada, mesmo com teclas e transmissões; o 3º volta ao `BLTime`. A barra de status mostra a lâmpada do **F+8** ao lado da bateria (cheia = acesa, vazia = apagada); com ela, um nome de canal de 10 letras perde a última. Com a luz apagada fixa, **EXIT** sai direto. Ao sair do Spectrum a luz fixa é cancelada, inclusive a que vinha do **F+8**.
+
+**Pular para o próximo sinal (MR, UP/DOWN escutando):** o áudio do canal atual fecha e a busca anda pela lista a partir dele, no sentido da tecla (**UP** = canais seguintes). O primeiro canal acima da linha pontilhada é sintonizado. Depois do último canal, a busca continua do primeiro (e, com **DOWN**, do último). O canal pulado fica de fora só durante essa busca: se nenhum outro canal tiver sinal, depois de uma volta pela lista ele é ouvido de novo, se ainda estiver transmitindo; e, quando a recepção encontrada termina, ele volta a valer como qualquer outro. Um novo toque durante a busca, antes de ela achar sinal, recomeça a varredura normal.
 
 **Ignorar um canal (SIDE1):** funciona como excluir no scan, mas só vale enquanto o Spectrum está aberto e não grava nada na flash. O canal ou passo some do gráfico (a coluna fica vazia), deixa de ser medido, e a varredura continua.
 - Sem pico ainda, por exemplo logo depois de outra exclusão, o SIDE1 não faz nada. Espere a varredura achar o próximo sinal.

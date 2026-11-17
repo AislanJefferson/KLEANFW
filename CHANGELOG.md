@@ -5,10 +5,29 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ## Unreleased
 
-Image 120,792 / 120,832 bytes (40 bytes free); RAM 15,640 / 16,384 bytes at
+Image 120,828 / 120,832 bytes (4 bytes free); RAM 15,640 / 16,384 bytes at
 link time. Tested on a radio: the tic is gone while listening from the graph.
 The cause had been confirmed there first: the tic was absent in the fixed
-listen (STILL), which reads the RSSI without switching the filter.
+listen (STILL), which reads the RSSI without switching the filter. The MR
+seek below is not yet tested on a radio.
+
+### Added
+
+- Spectrum MR: UP/DOWN while a channel is heard skips it and tunes the next
+  channel with a signal in the key's direction (list order, wrapping around
+  the list). Before, the key restarted the sweep, which opened the strongest
+  channel again: the one just left. The skip lasts one seek: it starts at the
+  channel heard, opens the first channel at or over the open level (the
+  dotted line) and, after the far edge, goes on from the other edge to the
+  far edge again. With no other signal the cycle ends there and the next
+  sweep counts the skipped channel again (it reopens if still active); it
+  also counts again once the reception the seek opened ends. Lists over 128
+  channels seek in list order too. VFO and UP/DOWN without a reception are
+  unchanged. A second press while a seek has not found a signal yet restarts
+  a normal sweep (keeping the skip cost 8 bytes). Cost +36 bytes: the seek
+  takes 104 bytes, paid by sharing the interlaced phase end with the
+  half-sweep end (-52 B, same behavior) and keeping `GetDirection()` out of
+  line (-16 B).
 
 ### Fixed
 
