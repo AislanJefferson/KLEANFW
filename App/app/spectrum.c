@@ -157,6 +157,9 @@ static bool scanForward = true;
 static bool scanStartFromLeft = true;
 // True until the opposite half-sweep is completed.
 static bool scanReturnPending = true;
+// MR seek (UP/DOWN during a reception): list position + 1 of the channel
+// heard, left out of the sweep until the next sweep start; 0 = no seek.
+static uint16_t seekSkip;
 
 // Optional interlaced progression for large scans (>128 steps).
 // 1 = enabled, 0 = disabled.
@@ -1118,6 +1121,8 @@ static void InitScanPosition()
 {
     ResetScanStats();
     memset(sweepSlotSeen, 0, sizeof(sweepSlotSeen));
+    // Every sweep restart ends a seek: the skipped channel counts again.
+    seekSkip = 0;
     scanInfo.scanStep = GetScanStep();
     scanInfo.measurementsCount = GetStepsCount();
     bool startFromLeft = scanStartFromLeft;
@@ -1548,6 +1553,11 @@ static void UpdateCurrentFreqStill(bool inc)
 
 static void ResumeSweepInDirection(bool forward)
 {
+    // MR reception: seek. The channel heard (TuneToPeak left it in peak.i,
+    // which ResetPeak clears) is skipped and the sweep starts there, in the
+    // key's direction; UpdateScan opens the first channel over the open level.
+    const uint16_t heard = (spectrumChannelMode && isListening) ? peak.i + 1 : 0;
+
     ToggleRX(false);
     RestoreSpectrumScanRf(true);
     ResetPeak();
@@ -1561,6 +1571,16 @@ static void ResumeSweepInDirection(bool forward)
         scanForward = true;
 #endif
     scanInfo.i = scanForward ? 0 : scanInfo.measurementsCount - 1;
+    if (heard)
+    {
+        seekSkip = heard;
+        scanForward = forward;
+        scanInfo.i = heard - 1;
+#if SPECTRUM_INTERLACE_LARGE_SWEEPS
+        // In list order, also over 128 channels: next channel, not next phase.
+        interlaceStride = 1;
+#endif
+    }
     scanInfo.f = ScanFrequencyAt(scanInfo.i);
 
     newScanStart = false;
@@ -2385,7 +2405,8 @@ static void DrawArrow(uint8_t x)
     }
 }
 
-static bool GetDirection(KEY_Code_t key) {
+// noinline: inlined into its 2 callers it costs 16 B more (measured).
+__attribute__((noinline)) static bool GetDirection(KEY_Code_t key) {
     return (key == KEY_UP) ? gEeprom.SET_NAV : !gEeprom.SET_NAV;
 }
 
@@ -2441,14 +2462,10 @@ static void OnKeyDown(uint8_t key) {
         break;
     case KEY_UP:
     case KEY_DOWN:
-        // If the spectrum is currently receiving (green LED on),
-        // force-stop RX and restart sweep in the requested direction.
-        if (isListening) {
-            ResumeSweepInDirection(GetDirection(key));
-            break;
-        }
-        if (spectrumChannelMode)
-        {
+        // Receiving (green LED on) or MR: stop RX and restart the sweep in
+        // the requested direction. An MR reception seeks the next channel
+        // with a signal that way (ResumeSweepInDirection).
+        if (isListening || spectrumChannelMode) {
             ResumeSweepInDirection(GetDirection(key));
             break;
         }
@@ -2863,11 +2880,12 @@ static void Scan()
     // With more steps than history slots, one slot covers several indices:
     // a blacklisted slot must not stop its neighbours from being measured, so
     // only the per-index blacklist decides there.
-    const bool skip = IsBlacklisted(scanInfo.i) ||
+    const bool skip = scanInfo.i + 1 == seekSkip || IsBlacklisted(scanInfo.i) ||
         (scanInfo.measurementsCount <= ARRAY_SIZE(rssiHistory) &&
          rssiHistory[GetHistorySlot(scanInfo.i)] == RSSI_MAX_VALUE);
 #else
-    const bool skip = rssiHistory[GetHistorySlot(scanInfo.i)] == RSSI_MAX_VALUE;
+    const bool skip = scanInfo.i + 1 == seekSkip ||
+        rssiHistory[GetHistorySlot(scanInfo.i)] == RSSI_MAX_VALUE;
 #endif
 
     if (!skip)
@@ -3001,17 +3019,24 @@ static void UpdateScan()
     Scan();
 
 #if SPECTRUM_INTERLACE_LARGE_SWEEPS
-    if (UseInterlacedSweep())
+    // Interlaced: the end of each phase decides like a half-sweep end.
+    const bool interlaced = UseInterlacedSweep();
+#else
+    const bool interlaced = false;
+#endif
+    // MR seek: the first channel over the open level ends the half-sweep and
+    // opens below. Every earlier read of the seek was under it, so this read
+    // is the sweep max (iPeak/fPeak). A skipped channel keeps the previous
+    // read (0 on the first step). A seek never runs interlaced.
+    bool atEnd = interlaced
+        ? (scanInfo.i + interlaceStride >= scanInfo.measurementsCount)
+        : (seekSkip && scanInfo.rssi >= GetOpenLevel()) ||
+          (scanForward ? (scanInfo.i >= scanInfo.measurementsCount - 1)
+                       : (scanInfo.i == 0));
+
+    if (atEnd)
     {
-        bool atEnd = (scanInfo.i + interlaceStride >= scanInfo.measurementsCount);
-
-        if (!atEnd)
-        {
-            ++peak.t;
-            (void)NextScanStepInterlaced();
-            return;
-        }
-
+        // End of half-sweep: unlock keypad; Render() fires on its own timer.
         preventKeypress = initialCalibrationPending;
 
         UpdateCompletedSweepScale();
@@ -3022,18 +3047,18 @@ static void UpdateScan()
             TuneToPeak();
             return;
         }
+    }
 
+#if SPECTRUM_INTERLACE_LARGE_SWEEPS
+    if (interlaced)
+    {
+        // Inside a phase the next step never ends the pass.
         ++peak.t;
-        if (!NextScanStepInterlaced())
-            return;
-
-        FinalizeCompletedSweep();
+        if (NextScanStepInterlaced())
+            FinalizeCompletedSweep();
         return;
     }
 #endif
-
-    bool atEnd = scanForward ? (scanInfo.i >= scanInfo.measurementsCount - 1)
-                             : (scanInfo.i == 0);
 
     if (!atEnd)
     {
@@ -3041,23 +3066,16 @@ static void UpdateScan()
         return;
     }
 
-    // End of half-sweep: unlock keypad; Render() fires on its own timer.
-    preventKeypress = initialCalibrationPending;
-
-    UpdateCompletedSweepScale();
-    UpdatePeakInfo();
-    if (!initialCalibrationPending && IsPeakOverOpenLevel())
-    {
-        ToggleRX(true);
-        TuneToPeak();
-        return;
-    }
-
     if (scanReturnPending)
     {
         // Finish the opposite half-sweep before finalizing this cycle.
         scanReturnPending = false;
-        scanForward = !scanForward;
+        // A seek wraps: same direction from the opposite edge, past the
+        // skipped channel to the far edge, where the cycle ends.
+        if (seekSkip)
+            scanInfo.i = scanForward ? (uint16_t)-1 : scanInfo.measurementsCount;
+        else
+            scanForward = !scanForward;
         NextScanStep();
         return;
     }
