@@ -170,6 +170,10 @@ typedef struct ScanInfo
 {
     uint16_t rssi, rssiMin, rssiMax;
     uint16_t i, iPeak;
+    // MR seek (UP/DOWN during a reception): list position + 1 of the channel
+    // heard, left out of the sweep until the next sweep start; 0 = no seek.
+    // Here it fills the padding before f and shares the scanInfo base.
+    uint16_t seekSkip;
     uint32_t f, fPeak;
     uint16_t scanStep;
     uint16_t measurementsCount;

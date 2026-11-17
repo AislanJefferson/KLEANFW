@@ -157,9 +157,6 @@ static bool scanForward = true;
 static bool scanStartFromLeft = true;
 // True until the opposite half-sweep is completed.
 static bool scanReturnPending = true;
-// MR seek (UP/DOWN during a reception): list position + 1 of the channel
-// heard, left out of the sweep until the next sweep start; 0 = no seek.
-static uint16_t seekSkip;
 
 // Optional interlaced progression for large scans (>128 steps).
 // 1 = enabled, 0 = disabled.
@@ -1122,7 +1119,7 @@ static void InitScanPosition()
     ResetScanStats();
     memset(sweepSlotSeen, 0, sizeof(sweepSlotSeen));
     // Every sweep restart ends a seek: the skipped channel counts again.
-    seekSkip = 0;
+    scanInfo.seekSkip = 0;
     scanInfo.scanStep = GetScanStep();
     scanInfo.measurementsCount = GetStepsCount();
     bool startFromLeft = scanStartFromLeft;
@@ -1186,7 +1183,6 @@ static void RelaunchScan()
         settings.rssiTriggerLevel = RSSI_MAX_VALUE;
 #endif
     preventKeypress = true;
-    scanInfo.rssiMin = RSSI_MAX_VALUE;
     memset(peakHoldY,   PEAK_HOLD_INIT, sizeof(peakHoldY));
     memset(peakHoldAge, 0,              sizeof(peakHoldAge));
 
@@ -1210,8 +1206,9 @@ static void UpdateScanInfo()
 
 static void UpdateCompletedSweepScale()
 {
-    if (initialCalibrationPending || manualSetFlag ||
-        scanInfo.rssiMin == RSSI_MAX_VALUE)
+    // No read counted: what rssiMin == RSSI_MAX_VALUE meant (no real read
+    // is RSSI_MAX_VALUE), and also a seek hit, which drops its partial count.
+    if (initialCalibrationPending || manualSetFlag || sweepRssiCount == 0)
         return;
 
     // AUTO may adapt once per completed pass. MANUAL never changes its scale
@@ -1573,7 +1570,7 @@ static void ResumeSweepInDirection(bool forward)
     scanInfo.i = scanForward ? 0 : scanInfo.measurementsCount - 1;
     if (heard)
     {
-        seekSkip = heard;
+        scanInfo.seekSkip = heard;
         scanForward = forward;
         scanInfo.i = heard - 1;
 #if SPECTRUM_INTERLACE_LARGE_SWEEPS
@@ -2464,9 +2461,11 @@ static void OnKeyDown(uint8_t key) {
     case KEY_DOWN:
         // Receiving (green LED on) or MR: stop RX and restart the sweep in
         // the requested direction. An MR reception seeks the next channel
-        // with a signal that way (ResumeSweepInDirection).
+        // with a signal that way (ResumeSweepInDirection); a seek still
+        // looking ignores the key, so a held key goes signal to signal.
         if (isListening || spectrumChannelMode) {
-            ResumeSweepInDirection(GetDirection(key));
+            if (isListening || !scanInfo.seekSkip)
+                ResumeSweepInDirection(GetDirection(key));
             break;
         }
 #ifdef ENABLE_SCAN_RANGES
@@ -2880,11 +2879,11 @@ static void Scan()
     // With more steps than history slots, one slot covers several indices:
     // a blacklisted slot must not stop its neighbours from being measured, so
     // only the per-index blacklist decides there.
-    const bool skip = scanInfo.i + 1 == seekSkip || IsBlacklisted(scanInfo.i) ||
+    const bool skip = scanInfo.i + 1 == scanInfo.seekSkip || IsBlacklisted(scanInfo.i) ||
         (scanInfo.measurementsCount <= ARRAY_SIZE(rssiHistory) &&
          rssiHistory[GetHistorySlot(scanInfo.i)] == RSSI_MAX_VALUE);
 #else
-    const bool skip = scanInfo.i + 1 == seekSkip ||
+    const bool skip = scanInfo.i + 1 == scanInfo.seekSkip ||
         rssiHistory[GetHistorySlot(scanInfo.i)] == RSSI_MAX_VALUE;
 #endif
 
@@ -3029,9 +3028,13 @@ static void UpdateScan()
     // opens below. Every earlier read of the seek was under it, so this read
     // is the sweep max (iPeak/fPeak). A skipped channel keeps the previous
     // read (0 on the first step). A seek never runs interlaced.
+    // The pass is partial (maybe this channel alone): a count of 0 keeps
+    // scale and trigger as they were, so the open test below runs on the
+    // level that stopped the seek.
     bool atEnd = interlaced
         ? (scanInfo.i + interlaceStride >= scanInfo.measurementsCount)
-        : (seekSkip && scanInfo.rssi >= GetOpenLevel()) ||
+        : (scanInfo.seekSkip && scanInfo.rssi >= GetOpenLevel() &&
+           (sweepRssiCount = 0, true)) ||
           (scanForward ? (scanInfo.i >= scanInfo.measurementsCount - 1)
                        : (scanInfo.i == 0));
 
@@ -3073,7 +3076,7 @@ static void UpdateScan()
         scanReturnPending = false;
         // A seek wraps: same direction from the opposite edge, past the
         // skipped channel to the far edge, where the cycle ends.
-        if (seekSkip)
+        if (scanInfo.seekSkip)
             scanInfo.i = scanForward ? (uint16_t)-1 : scanInfo.measurementsCount;
         else
             scanForward = !scanForward;
