@@ -3,13 +3,15 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.1.3 — 2026-11-17
 
-Image 120,808 / 120,832 bytes (24 bytes free); RAM 15,640 / 16,384 bytes at
-link time. Tested on a radio: the tic is gone while listening from the graph.
-The cause had been confirmed there first: the tic was absent in the fixed
-listen (STILL), which reads the RSSI without switching the filter. The MR
-seek below is not yet tested on a radio.
+Spectrum only: the MR UP/DOWN seek and the listen tic fix below. Image
+120,808 / 120,832 bytes (24 bytes free); RAM 15,640 / 16,384 bytes at link
+time. The EEPROM layout is the same as 0.1.2, and the apps are built from the
+same sources. Tested on a radio: the tic is gone while listening from the
+graph. The cause had been confirmed there first: the tic was absent in the
+fixed listen (STILL), which reads the RSSI without switching the filter. The
+MR seek was checked by code review and builds only.
 
 ### Added
 
