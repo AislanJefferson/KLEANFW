@@ -2558,8 +2558,10 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         d_hold_setting.set_doc('D Hold: DTMF auto reset time')
 
         # D Prel
-        tmpval = min_max_def(_mem.dtmf.preload_time * 10, 30, 990, 300)
-        val = RadioSettingValueInteger(30, 990, tmpval, 10)
+        # The firmware never waits less than 200 ms (30-190 acted as 200).
+        tmpval = max(200, min_max_def(_mem.dtmf.preload_time * 10,
+                                      30, 990, 300))
+        val = RadioSettingValueInteger(200, 990, tmpval, 10)
         d_prel_setting = RadioSetting("dtmf_preload_time",
                                       "Pre-Load Time (ms) (D Prel)", val)
         d_prel_setting.set_doc('D Prel: DTMF pre-load time')

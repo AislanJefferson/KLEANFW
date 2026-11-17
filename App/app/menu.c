@@ -359,7 +359,7 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             break;
 
         case MENU_D_PRE:
-            *pMin = 3;
+            *pMin = 20;   // DTMF_Reply() never waits less than 200 ms
             *pMax = 99;
             break;
 

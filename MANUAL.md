@@ -913,7 +913,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 |---|---|---|---|
 | **UPCode / DWCode** | Só leitura no rádio | 12345 / 54321 | Códigos do PTT ID |
 | **D ST** | OFF, ON | ON | Ouvir os tons DTMF enviados |
-| **D Prel** | 30–990 ms | 300 ms | Pré-carga antes do DTMF |
+| **D Prel** | 200–990 ms | 300 ms | Pré-carga antes do DTMF |
 
 #### `UPCode` / `DWCode`: códigos DTMF do PTT ID
 
@@ -933,7 +933,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 #### `D Prel`: pré-carga do DTMF
 
 - **O que faz**: define quanto tempo o rádio transmite antes de começar os tons DTMF. Isso dá tempo para a repetidora ou o receptor abrir.
-- **Opções**: de 30 a 990 ms, em passos de 10 ms.
+- **Opções**: de 200 a 990 ms, em passos de 10 ms. O rádio nunca espera menos de 200 ms.
 - **Padrão**: 300 ms.
 - **Quando mudar**: aumente se o outro lado perde o primeiro dígito.
 
