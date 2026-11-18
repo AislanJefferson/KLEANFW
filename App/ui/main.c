@@ -26,6 +26,7 @@
 #include "app/chFrScanner.h"
 #include "app/dtmf.h"
 #include "app/main.h"
+#include "app/scr_hop.h"
 
 #ifdef ENABLE_FEAT_F4HWN_BEAM
     #include "app/beam.h"
@@ -2456,9 +2457,19 @@ void UI_DisplayMain(void)
 #ifdef ENABLE_GOGUFW_SCRAMBLER
             if (vfoInfo->SCRAMBLING_TYPE > 0 && gSetting_ScrambleEnable &&
                 vfoInfo->Modulation == MODULATION_FM)   // shown only where it applies
+            {
+#ifdef ENABLE_GOGUFW_CRYPTO
+                /* Inverted while a HOP session runs on this VFO: its seed
+                 * burst was received (RX) or sent (TX). */
+                const bool hop = gScrHop.active &&
+                                 vfoInfo == (gScrHop.rx ? gRxVfo : gCurrentVfo);
+#else
+                const bool hop = false;
+#endif
                 memcpy(policyLine + (gSetting_set_gui ? VFO_CLASSIC_SCR_ICON_X
                                                       : VFO_TINY_SCR_ICON_X),
-                       BITMAP_Scrambler, sizeof(BITMAP_Scrambler));
+                       BITMAP_Scrambler[hop], sizeof(BITMAP_Scrambler[0]));
+            }
 #endif
 
             /* FSK and Roger policy flags exist only on memory channels. */

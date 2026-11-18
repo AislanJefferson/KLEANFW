@@ -118,6 +118,7 @@ static void start(uint32_t seed, uint32_t anchor, uint32_t base, bool rx)
     gScrHop.idx     = 0;
     gScrHop.rx      = rx;
     gScrHop.active  = 1;
+    gUpdateDisplay  = true;   // the scrambler icon shows the session
     SCR_HOP_Apply(!rx);
 }
 
@@ -266,6 +267,7 @@ void SCR_HOP_Stop(void)
 
     gScrHop.active  = 0;
     gScrHop.rx_wait = 0;
+    gUpdateDisplay  = true;   // back to the plain scrambler icon
     /* The RX VFO may already be a fixed-scrambler channel (channel change or
      * DW within the hang): restore its state instead of forcing REG_31<1> off. */
     if (rx_session)

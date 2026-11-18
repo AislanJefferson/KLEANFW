@@ -194,15 +194,26 @@ const uint8_t BITMAP_VFO_Lock[7] =
     0b00111100,
 };
 
-/* Double wave (approx. sign): the channel's voice scrambler is on. */
-const uint8_t BITMAP_Scrambler[6] =
+/* Double wave (approx. sign): the channel's voice scrambler is on.
+ * [1] is the same sign inverted: a HOP session is active. */
+const uint8_t BITMAP_Scrambler[2][6] =
 {
-    0b00100100,
-    0b00010010,
-    0b00010010,
-    0b00100100,
-    0b00100100,
-    0b00010010,
+    {
+        0b00100100,
+        0b00010010,
+        0b00010010,
+        0b00100100,
+        0b00100100,
+        0b00010010,
+    },
+    {
+        0b11011011,
+        0b11101101,
+        0b11101101,
+        0b11011011,
+        0b11011011,
+        0b11101101,
+    },
 };
 
 /* Compact FSK policy mark from the supplied 5x5 pixel reference. */
