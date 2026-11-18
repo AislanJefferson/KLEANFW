@@ -10,7 +10,7 @@ load/save, drawing and run-time consumer. None is orphaned; the fixes below
 come from that review, plus the F+3 frequency carry-over, the power key
 fix and the Spectrum PTT×2 change below. Image 120,604 / 120,832 bytes
 (228 bytes free); RAM 15,640 / 16,384 bytes at link time. All of it was
-tested on a radio, except the Spectrum PTT×2 change.
+tested on a radio.
 
 ### Fixed
 
