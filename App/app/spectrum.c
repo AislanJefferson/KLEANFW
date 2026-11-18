@@ -1001,34 +1001,11 @@ static void ToggleRX(bool on)
     }
 }
 
-// Closest valid MR channel stored within half a scan step (capped at
-// 6.25 kHz) of f, or 0xFFFF when the peak is not a saved channel.
-static uint16_t FindMrChannelNear(uint32_t f)
-{
-    uint32_t tol = GetScanStep() / 2;
-    if (tol > 625)
-        tol = 625;
-
-    uint16_t best = 0xFFFF;
-    for (uint16_t channel = MR_CHANNEL_FIRST; IS_MR_CHANNEL(channel); channel++)
-    {
-        if (!RADIO_CheckValidChannel(channel, false, 0))
-            continue;
-        const uint32_t chF = SETTINGS_FetchChannelFrequency(channel);
-        const uint32_t diff = chF > f ? chF - f : f - chF;
-        if (diff <= tol)
-        {
-            tol = diff;
-            best = channel;
-        }
-    }
-    return best;
-}
-
 // Called only after the second PTT has physically been released, preventing
 // the main radio screen from interpreting the held key as a transmit request.
-// A peak that matches a saved MR channel opens that channel; any other
-// frequency lands in the VFO exactly as if it had been typed on the keypad.
+// Spectrum leaves in the mode it was opened in: an MR sweep opens the peak
+// channel; a VFO sweep always lands in the VFO, exactly as if the frequency
+// had been typed on the keypad, even when it is stored in an MR channel.
 static void ExitToSpectrumPeak()
 {
     if (selectedPeakFrequency == 0)
@@ -1036,21 +1013,18 @@ static void ExitToSpectrumPeak()
 
     const uint8_t targetVfo = gEeprom.TX_VFO;
     const uint32_t f = NormalizeScanFrequency(selectedPeakFrequency);
-    const uint16_t channel = spectrumChannelMode ? SpectrumChannelAt(selectedPeakIndex)
-                                                 : FindMrChannelNear(f);
     ToggleRX(false);
     RestoreRegisters();
 
-    if (IS_MR_CHANNEL(channel))
+    if (spectrumChannelMode)
     {
+        const uint16_t channel = SpectrumChannelAt(selectedPeakIndex);
+        if (!IS_MR_CHANNEL(channel))
+            return;
         gEeprom.MrChannel[targetVfo] = channel;
         gEeprom.ScreenChannel[targetVfo] = channel;
         gRequestSaveVFO = true;
         gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
-    }
-    else if (spectrumChannelMode)
-    {
-        return;
     }
     else
     {
