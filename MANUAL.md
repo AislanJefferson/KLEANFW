@@ -1280,7 +1280,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 **Como funciona:**
 
 - Enquanto o HOP está ativo, o canal opera sempre em **WIDE** (25 kHz) no TX e no RX, seja qual for o `W/N` do canal ou o `SetNFM`. Assim os dois lados sempre usam o mesmo filtro. Na tela aparece `W`. O `W/N` gravado não muda e volta a valer quando o HOP é desligado. A ação **WIDE NARROW** dá bipe duplo num canal HOP. As mensagens do Messenger e o burst continuam saindo com o desvio estreito de sempre.
-- A cada PTT, o rádio envia um curto **burst FSK** (cerca de 0,25 s) com a semente. O microfone fica mudo nesse intervalo: **espere um instante depois de apertar o PTT antes de falar**.
+- A cada PTT, o rádio envia a semente num curto **burst FSK** (cerca de 0,25 s) e o repete 0,5 s depois, porque o receptor FSK do UV-K1 às vezes perde um quadro isolado. Quem perdeu o primeiro sincroniza no segundo. O microfone fica mudo até o fim do segundo burst: **espere cerca de 1 s depois de apertar o PTT antes de falar**.
 - A portadora salta entre **8 valores de 2600 a 3500 Hz** (128,6 Hz entre eles), a faixa inteira que o chip permite.
 - A ordem é escolhida para ficar longe de um scrambler fixo: dentro de cada bloco de 8 s, cada valor sai 2 vezes, e a portadora seguinte fica a pelo menos 386 Hz da anterior (257 Hz dois slots depois). Um rádio com scrambler fixo, em qualquer valor, passa a pegar em geral só trechos curtos e soltos de fala, em vez dos longos trechos quase claros de antes.
 - A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
@@ -1802,7 +1802,7 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 
 - Combine a mesma **CryKey** em todos os rádios do grupo **antes** da atividade e confira trocando uma mensagem.
 - Lembre que indicativo, ACK, PING/PONG e tensão da bateria vão **em claro**.
-- **HOP**: aperte o PTT, espere cerca de meio segundo e só então fale. Em câmbios longos, espere a pausa curta a cada 8 s.
+- **HOP**: aperte o PTT, espere cerca de 1 s e só então fale. Em câmbios longos, espere a pausa curta a cada 8 s.
 - Quem entra no meio de um câmbio HOP ouve embaralhado por até 8 s: isso é normal.
 - Com **scrambler fixo** em N/N+, portadoras altas (como 3200 Hz) cortam os graves da voz: prefira as mais baixas ou use Wide. O **HOP** não tem esse problema, porque opera sempre em Wide, mas ocupa um canal de 25 kHz mesmo num canal programado como N/N+.
 
@@ -1885,7 +1885,7 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
 | HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
 | HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, firmware de versão anterior em um dos rádios (outra sequência de HOP), ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey, a mesma versão do firmware e Scramb = HOP no canal de RX |
-| Início da fala cortado no HOP | Mic mudo durante o burst | Espere meio segundo após o PTT |
+| Início da fala cortado no HOP | Mic mudo durante os dois bursts do início | Espere cerca de 1 s após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |
 | F+4 / F+\* só dão bipe duplo | Falta `Search.app` | Instale-o |
 | `APP ERROR` ao abrir um app | App da API antiga ou que precisa de recurso ausente (ex.: Beam) | Instale a versão compatível |
