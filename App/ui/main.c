@@ -62,13 +62,15 @@
 center_line_t center_line = CENTER_LINE_NONE;
 
 #ifdef ENABLE_FEAT_F4HWN
+// VFO info-line x positions. SetGUI (gSetting_set_gui): 0 = TINY (3x5 font,
+// WIDE/NAR/NAR+), 1 = CLASSIC (small font, W/N/N+).
 enum
 {
-    VFO_CLASSIC_BANDWIDTH_X  = 88,
-    VFO_CLASSIC_SCR_ICON_X   = 104,  // after "NAR+" (ends at x=102)
-    VFO_CLASSIC_FSK_ICON_X   = 111,
-    VFO_TINY_SCR_ICON_X      = 97,   // after "N+" (ends at x=93)
-    VFO_TINY_FSK_ICON_X      = 106,
+    VFO_TINY_BANDWIDTH_X     = 88,
+    VFO_TINY_SCR_ICON_X      = 104,  // after "NAR+" (ends at x=102)
+    VFO_TINY_FSK_ICON_X      = 111,
+    VFO_CLASSIC_SCR_ICON_X   = 97,   // after "N+" (ends at x=93)
+    VFO_CLASSIC_FSK_ICON_X   = 106,
     VFO_ROGER_ICON_X         = 121,
 };
 #endif
@@ -2157,7 +2159,9 @@ void UI_DisplayMain(void)
                 }
                 */
 
-                uint8_t currentPower = gRxVfo->OUTPUT_POWER;
+                // The VFO drawn here (the one transmitting), not gRxVfo: in
+                // CROSS BAND with Dual Watch off gRxVfo is the other VFO.
+                uint8_t currentPower = displayVfo->OUTPUT_POWER;
 
                 if(currentPower == OUTPUT_POWER_USER)
                     Level = gSetting_set_pwr;
@@ -2193,10 +2197,12 @@ void UI_DisplayMain(void)
         const char * t = "";
 #endif
         const ModulationMode_t mod = vfoInfo->Modulation;
+        const FREQ_Config_t *pConfig = (mode == VFO_MODE_TX) ? vfoInfo->pTX : vfoInfo->pRX;
+        // CTCSS/DCS only work in FM (RX setup and TX are FM-only): in AM/USB
+        // there is no CT/DC label and the step is shown, as with no code.
+        const unsigned int code_type = (mod == MODULATION_FM) ? pConfig->CodeType : CODE_TYPE_OFF;
         switch (mod){
             case MODULATION_FM: {
-                const FREQ_Config_t *pConfig = (mode == VFO_MODE_TX) ? vfoInfo->pTX : vfoInfo->pRX;
-                const unsigned int code_type = pConfig->CodeType;
 #ifdef ENABLE_FEAT_F4HWN
                 const char *code_list[] = {"", "CT", "DC", "DC"};
 #else
@@ -2216,10 +2222,9 @@ void UI_DisplayMain(void)
         }
 
 #if ENABLE_FEAT_F4HWN
-        const FREQ_Config_t *pConfig = (mode == VFO_MODE_TX) ? vfoInfo->pTX : vfoInfo->pRX;
         int8_t shift = 0;
 
-        switch((int)pConfig->CodeType)
+        switch(code_type)
         {
             case 1:
             sprintf(String, "%u.%u", CTCSS_Options[pConfig->Code] / 10, CTCSS_Options[pConfig->Code] % 10);
@@ -2227,7 +2232,7 @@ void UI_DisplayMain(void)
 
             case 2:
             case 3:
-            sprintf(String, (int)pConfig->CodeType == 2 ? "%03oN" : "%03oI", DCS_Options[pConfig->Code]);
+            sprintf(String, code_type == 2 ? "%03oN" : "%03oI", DCS_Options[pConfig->Code]);
             break;
 
             default:
@@ -2309,6 +2314,11 @@ void UI_DisplayMain(void)
                 //sprintf(String, "%s", pwr_long[currentPower]);
                 //GUI_DisplaySmallest(String, 24, line == 0 ? 17 : 49, false, true);
                 GUI_DisplaySmallest(pwr_long[currentPower], 24, line == 0 ? 17 : 49, false, true);
+
+                // The arrow (x=19..21) would cover the 7th TX power bar
+                // (x=20..21), so it is left out on the VFO that is transmitting.
+                if (mode == VFO_MODE_TX)
+                    userPower = false;
             }
 
             if(userPower == true)
@@ -2397,7 +2407,7 @@ void UI_DisplayMain(void)
             else
             {
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
-                GUI_DisplaySmallest(bandWidthNames[displayBandwidth + narrower], VFO_CLASSIC_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(bandWidthNames[displayBandwidth + narrower], VFO_TINY_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
             }
         #else
             if (gSetting_set_gui)
@@ -2408,7 +2418,7 @@ void UI_DisplayMain(void)
             else
             {
                 const char *bandWidthNames[] = {"WIDE", "NAR"};
-                GUI_DisplaySmallest(bandWidthNames[displayBandwidth], VFO_CLASSIC_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(bandWidthNames[displayBandwidth], VFO_TINY_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
             }
         #endif
 #else
@@ -2445,14 +2455,14 @@ void UI_DisplayMain(void)
         else
         {
             const uint8_t fskIconX = gSetting_set_gui
-                                   ? VFO_TINY_FSK_ICON_X
-                                   : VFO_CLASSIC_FSK_ICON_X;
+                                   ? VFO_CLASSIC_FSK_ICON_X
+                                   : VFO_TINY_FSK_ICON_X;
 
 #ifdef ENABLE_GOGUFW_SCRAMBLER
             if (vfoInfo->SCRAMBLING_TYPE > 0 && gSetting_ScrambleEnable &&
                 vfoInfo->Modulation == MODULATION_FM)   // shown only where it applies
-                memcpy(policyLine + (gSetting_set_gui ? VFO_TINY_SCR_ICON_X
-                                                      : VFO_CLASSIC_SCR_ICON_X),
+                memcpy(policyLine + (gSetting_set_gui ? VFO_CLASSIC_SCR_ICON_X
+                                                      : VFO_TINY_SCR_ICON_X),
                        BITMAP_Scrambler, sizeof(BITMAP_Scrambler));
 #endif
 
@@ -2552,11 +2562,10 @@ void UI_DisplayMain(void)
 
 #ifdef ENABLE_RSSI_BAR
         if (rx) {
+            // No line clear here: the frame was cleared at the top, and the
+            // Triple/Quad Watch line is never drawn during RX. A clear only
+            // erased UNLOCK KEYBOARD in the FULL RX modes.
             center_line = CENTER_LINE_RSSI;
-#ifdef ENABLE_FEAT_F4HWN_FULL_WATCH
-            if (gEeprom.DUAL_WATCH == DUAL_WATCH_FULL)
-                memset(gFrameBuffer[3], 0, LCD_WIDTH);
-#endif
             DisplayRSSIBar(false);
         }
         else
