@@ -8,13 +8,12 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
 come from that review, plus the F+3 frequency carry-over, the power key
-fix and the Spectrum PTT×2 change below, all tested on a radio.
+fix and the Spectrum PTT×2 change below.
 Main screen audit: every field of the VFO screen was mapped in SetGUI and
 SetMet TINY/CLASSIC across the six RxModes; the four "Main screen" fixes
-below come from it and are checked by code review and builds only, not yet
-on a radio. SetMet only changes how the bars look and needed no fix. Image
-120,564 / 120,832 bytes (268 bytes free); RAM 15,640 / 16,384 bytes at link
-time.
+below come from it. SetMet only changes how the bars look and needed no
+fix. Image 120,564 / 120,832 bytes (268 bytes free); RAM 15,640 / 16,384
+bytes at link time. All of it was tested on a radio.
 
 ### Fixed
 
