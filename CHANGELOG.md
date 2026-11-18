@@ -7,10 +7,10 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
-come from that review, plus the F+3 frequency carry-over below. Image
-120,688 / 120,832 bytes (144 bytes free); RAM 15,640 / 16,384 bytes at link
-time. Checked by code review and builds only (Fusion and RDSProbe); not tested
-on a radio yet.
+come from that review, plus the F+3 frequency carry-over and the power key
+fix below. Image 120,708 / 120,832 bytes (124 bytes free); RAM 15,640 /
+16,384 bytes at link time. The menu audit and F+3 were tested on a radio; the
+power key fix is checked by code review and builds only.
 
 ### Fixed
 
@@ -21,6 +21,11 @@ on a radio yet.
   the radio never waits less than 200 ms, so those values all acted as
   200 ms. The range is now 200-990 ms; a stored lower value still acts as
   200 ms.
+- Power key (F+6, or a side key set to POWER): every press briefly cut the
+  received audio, because the change retuned the whole receiver. The power
+  level is now applied to TX only, so the reception goes on. As before, a VFO
+  keeps the new level after power-off, while an MR channel goes back to its
+  stored level when it is reloaded (power-off, channel change) (+20 B).
 
 ### Changed
 
