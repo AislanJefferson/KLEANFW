@@ -12,12 +12,30 @@ fix and the Spectrum PTT×2 change below.
 Main screen audit: every field of the VFO screen was mapped in SetGUI and
 SetMet TINY/CLASSIC across the six RxModes; the four "Main screen" fixes
 below come from it. SetMet only changes how the bars look and needed no
-fix. HOP: a HOP channel always runs Wide, and the carriers now hop far
-apart across 2600-3500 Hz. Image 120,536 / 120,832 bytes (296 bytes
-free); RAM 15,640 / 16,384 bytes at link time. All of it was tested on a
-radio except the two HOP changes, which are not radio-tested yet.
+fix. HOP: a HOP channel always runs Wide, the carriers now hop far apart
+across 2600-3500 Hz, the seed burst no longer goes out with the TX mute
+on, and the scrambler icon shows an active HOP session. The first
+two-radio HOP test (scrambled from start to end) led to the burst fix.
+Image 120,628 / 120,832 bytes (204 bytes free); RAM 15,640 / 16,384 bytes
+at link time. All of it was tested on a radio except the HOP changes,
+which are not radio-tested yet.
+
+### Added
+
+- HOP: the scrambler icon on the VFO line is drawn inverted while a HOP
+  session runs on that VFO (seed burst received on RX, sent on TX). A plain
+  icon means HOP is set but not in step (+64 B).
 
 ### Fixed
+
+- HOP: the seed and resync bursts were transmitted with the AF TX mute
+  (REG_50<15>) on, unlike every other FSK and tone TX in the firmware
+  (Messenger, AirCopy, MDC, DTMF, roger), which go on air with the mute off
+  and keep the mic out through REG_30. In the first two-radio test the
+  receiver never opened a HOP session, although the Messenger and the fixed
+  scrambler worked between the same radios. The burst now follows the same
+  pattern as the other tones: mic off, mute off while it is sent (+28 B).
+  Not radio-tested yet.
 
 - SetCtr/SetInv: leaving the menu with the submenu open (menu timeout, PTT,
   a popup) kept the previewed contrast or inversion on the LCD until the next

@@ -1261,7 +1261,7 @@ Com uma CryKey definida, **todo** texto do Messenger sai cifrado (XTEA-CTR, salt
 - **Menu**: `Channels → Scramb` (por canal).
 - **Tecla lateral**: ação **SCRAMBLE** (liga/desliga e lembra o último tipo; padrão HOP).
 - **CHIRP**: coluna `Scrambler`.
-- Quando ligado, aparece um ícone de **onda dupla** na linha do VFO.
+- Quando ligado, aparece um ícone de **onda dupla** na linha do VFO. Com HOP, ele fica invertido enquanto o rádio está sincronizado (seção 12.3).
 
 > [!IMPORTANT]
 > O scrambler (fixo e HOP) só funciona em **FM**, no TX e no RX. Num canal AM/USB o ajuste fica guardado, mas não inverte o áudio, o ícone não aparece, a prévia do menu não toca e o atalho **SCRAMBLE** dá bipe duplo (mudo com `Beep` OFF) sem mudar nada.
@@ -1286,6 +1286,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
+- **Sincronismo na tela**: o ícone de onda dupla fica **invertido** enquanto a sessão HOP está ativa naquele VFO. No RX isso significa que o burst foi recebido e conferido; no TX, que foi enviado. Com o ícone normal num câmbio HOP, o receptor não sincronizou: confira os requisitos abaixo e espere o próximo resync (8 s).
 - Em câmbios longos, a partir do primeiro resync (8 s) o receptor mede a diferença de relógio para o transmissor e passa a acompanhá-la entre os resyncs.
 - Num canal HOP o receptor não entra em economia de bateria (BatSav), para não perder o burst.
 
