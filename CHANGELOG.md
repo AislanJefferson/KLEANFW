@@ -12,8 +12,10 @@ fix and the Spectrum PTT×2 change below.
 Main screen audit: every field of the VFO screen was mapped in SetGUI and
 SetMet TINY/CLASSIC across the six RxModes; the four "Main screen" fixes
 below come from it. SetMet only changes how the bars look and needed no
-fix. Image 120,564 / 120,832 bytes (268 bytes free); RAM 15,640 / 16,384
-bytes at link time. All of it was tested on a radio.
+fix. HOP: a HOP channel always runs Wide, and the carriers now hop far
+apart across 2600-3500 Hz. Image 120,536 / 120,832 bytes (296 bytes
+free); RAM 15,640 / 16,384 bytes at link time. All of it was tested on a
+radio except the two HOP changes, which are not radio-tested yet.
 
 ### Fixed
 
@@ -65,6 +67,24 @@ bytes at link time. All of it was tested on a radio.
 
 ### Changed
 
+- HOP always runs Wide. While a channel's scrambler is HOP (FM), TX and RX
+  use the Wide filter whatever its W/N or SetNFM, so both ends of a HOP
+  link always match. The screen shows W. The stored W/N is not changed and
+  applies again when HOP is turned off. The W/N side key gives the double
+  beep on a HOP channel (silent with Beep OFF). Messenger frames and the
+  HOP seed burst still go out with the narrow deviation (+4 B).
+- HOP carriers hop far apart. They were 16 carriers 33 Hz apart in a
+  500 Hz window per bandwidth, drawn at random every slot. Now there are 8
+  carriers over the whole 2600-3500 Hz the chip allows. In each 8 s block
+  every carrier is used twice, and the next carrier is at least 386 Hz
+  away (257 Hz two slots later). A radio with a fixed scrambler near a HOP
+  carrier used to hear long stretches nearly clear. Simulation with an
+  assumed intelligibility curve (clear up to 50 Hz off, lost from 300 Hz),
+  best fixed setting: mean intelligibility about 0.65 → 0.34, time with 1 s
+  of clear speech in a row 48 % → about 1 %. **Not compatible with earlier
+  versions**: the burst check changed, so a radio with older firmware
+  rejects the burst like a wrong CryKey. Every radio of a group needs this
+  version (-32 B).
 - Spectrum PTT×2 leaves in the mode Spectrum was opened in. From the VFO the
   peak always lands in the VFO like a typed frequency, even when it is stored
   in an MR channel (no channel settings are applied); from MR it still opens

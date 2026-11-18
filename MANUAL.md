@@ -411,7 +411,9 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
   - `NARROW`: 12,5 kHz, ou 6,25 kHz se `SetNFM = NARROWER`.
 - **Padrão**: NARROW.
 - **Quando mudar**: use a mesma largura dos outros rádios da conversa. Com largura diferente, a voz fica baixa e distorcida (larga demais) ou estoura (estreita demais).
-- **Atenção**: a tabela completa de filtros está na seção 13. A ação lateral **WIDE NARROW** troca a largura temporariamente.
+- **Atenção**:
+  - A tabela completa de filtros está na seção 13. A ação lateral **WIDE NARROW** troca a largura temporariamente.
+  - Num canal com `Scramb = HOP` (em FM), o rádio usa sempre **WIDE** no TX e no RX, e a tela mostra `W`. O valor de `W/N` continua gravado e volta a valer quando o HOP é desligado (seção 12.3).
 
 #### `SetNFM`: significado de "Narrow"
 
@@ -427,7 +429,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Opções**:
   - `OFF`;
   - `2600Hz` a `3500Hz` (passos de 100 Hz): scrambler fixo, compatível com outros rádios Quansheng;
-  - `HOP`: a portadora muda a cada 500 ms (seção 12).
+  - `HOP`: a portadora muda a cada 500 ms, e o canal opera sempre em WIDE (seção 12).
 - **Padrão**: OFF.
 - **Quando mudar**: para conversas reservadas entre rádios configurados igualmente. Os dois lados precisam usar o mesmo valor.
 - **Atenção**:
@@ -1036,7 +1038,7 @@ Configure em **Keys → F1Shrt, F1Long, F2Shrt, F2Long, M Long** (ou pelo CHIRP)
 | **RX MODE** | Percorre os 6 modos de RxMode |
 | **MAIN ONLY** | Liga/desliga "só principal" (guarda e restaura Dual Watch/Cross Band) |
 | **PTT MODE** | Alterna CLASSIC/ONEPUSH na sessão (não transmite e não salva) |
-| **WIDE NARROW** | Alterna a banda do VFO atual, temporariamente |
+| **WIDE NARROW** | Alterna a banda do VFO atual, temporariamente. Num canal HOP (sempre WIDE) dá bipe duplo, mudo com `Beep` OFF, e não muda nada |
 | **MUTE** | Silencia/libera o áudio de RX |
 | **RxA** | Avança o perfil de áudio de RX |
 | **MESSENGER** | Abre o Messenger (de novo, na tela inicial do Messenger, volta ao rádio) |
@@ -1277,10 +1279,10 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 
 **Como funciona:**
 
+- Enquanto o HOP está ativo, o canal opera sempre em **WIDE** (25 kHz) no TX e no RX, seja qual for o `W/N` do canal ou o `SetNFM`. Assim os dois lados sempre usam o mesmo filtro. Na tela aparece `W`. O `W/N` gravado não muda e volta a valer quando o HOP é desligado. A ação **WIDE NARROW** dá bipe duplo num canal HOP. As mensagens do Messenger e o burst continuam saindo com o desvio estreito de sempre.
 - A cada PTT, o rádio envia um curto **burst FSK** (cerca de 0,25 s) com a semente. O microfone fica mudo nesse intervalo: **espere um instante depois de apertar o PTT antes de falar**.
-- A portadora salta entre 16 valores:
-  - N / N+: 2600–3100 Hz;
-  - Wide: 2900–3400 Hz.
+- A portadora salta entre **8 valores de 2600 a 3500 Hz** (128,6 Hz entre eles), a faixa inteira que o chip permite.
+- A ordem é escolhida para ficar longe de um scrambler fixo: dentro de cada bloco de 8 s, cada valor sai 2 vezes, e a portadora seguinte fica a pelo menos 386 Hz da anterior (257 Hz dois slots depois). Um rádio com scrambler fixo, em qualquer valor, passa a pegar em geral só trechos curtos e soltos de fala, em vez dos longos trechos quase claros de antes.
 - A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
@@ -1292,6 +1294,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - canal de RX também em **Scramb = HOP**;
 - **MsgRx = ON** e **VOX = OFF**;
 - mesma CryKey (ou nenhuma nos dois);
+- **mesma versão do HOP**: rádios com firmware anterior a esta mudança usam outra sequência e não decodificam (o burst é recusado como CryKey diferente);
 - não estar em scan.
 
 **Se o receptor perder o burst** (entrou no meio do câmbio ou chave diferente), ouve áudio embaralhado até o próximo ressincronismo, em até 8 s.
@@ -1316,6 +1319,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - Na tela: `W` / `N` / `N+` (GUI CLASSIC) ou `WIDE` / `NAR` / `NAR+` (GUI TINY).
 - **Padrões**: canais e VFOs novos em FM ficam em **Narrow**; AM fica em Wide. O Reset deixa `SetNFM = NARROW`.
 - N e N+ usam o mesmo filtro para sinal fraco, então **N+ não aumenta o alcance** e reduz o desvio de TX.
+- **Exceção, HOP**: num canal com `Scramb = HOP` (em FM), TX e RX usam sempre Wide, e a tela mostra `W`. O `W/N` gravado volta a valer quando o HOP é desligado (seção 12.3).
 
 ---
 
@@ -1799,7 +1803,7 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 - Lembre que indicativo, ACK, PING/PONG e tensão da bateria vão **em claro**.
 - **HOP**: aperte o PTT, espere cerca de meio segundo e só então fale. Em câmbios longos, espere a pausa curta a cada 8 s.
 - Quem entra no meio de um câmbio HOP ouve embaralhado por até 8 s: isso é normal.
-- Prefira **Narrow** com HOP e scrambler fixo: em N/N+, portadoras fixas altas (como 3200 Hz) cortam os graves da voz; o HOP já ajusta a janela à banda.
+- Com **scrambler fixo** em N/N+, portadoras altas (como 3200 Hz) cortam os graves da voz: prefira as mais baixas ou use Wide. O **HOP** não tem esse problema, porque opera sempre em Wide, mas ocupa um canal de 25 kHz mesmo num canal programado como N/N+.
 
 ### Operação geral
 
@@ -1879,7 +1883,7 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Áudio picota e o LED verde apaga num sinal forte de repetidora | `STE` ON detectando em falso o fim de transmissão | Use `STE` OFF nesse canal (e `RP STE` para a cauda da repetidora) |
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
 | HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
-| HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey e Scramb = HOP no canal de RX |
+| HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, firmware de versão anterior em um dos rádios (outra sequência de HOP), ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey, a mesma versão do firmware e Scramb = HOP no canal de RX |
 | Início da fala cortado no HOP | Mic mudo durante o burst | Espere meio segundo após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |
 | F+4 / F+\* só dão bipe duplo | Falta `Search.app` | Instale-o |
