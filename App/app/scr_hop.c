@@ -31,14 +31,15 @@
 #include "settings.h"
 
 #define HOP_MAGIC      0x47u     /* word0 = 'G' << 8 | resync index */
-/* Burst check salt. 0x48505352 is the 8-far-carrier order: radios with the
- * older 16-carrier HOP (0x48505351) reject its bursts as a wrong CryKey
- * instead of hopping on a different sequence. */
-#define HOP_CHECK_N    0x48505352u
+/* Burst check salt, bumped with each incompatible change so radios with an
+ * older HOP reject the burst as a wrong CryKey instead of hopping wrongly:
+ * 0x48505351 16 carriers, 0x48505352 8 far carriers, 0x48505353 adds the
+ * slot-1 repeat (resync_ms()). */
+#define HOP_CHECK_N    0x48505353u
 #define HOP_SLOT_MS    500u
-/* A burst (initial idx 0, then one every HOP_RESYNC_MS) ends its 8th byte at
- * t0 + idx * HOP_RESYNC_MS + HOP_POS_MS: mid-slot, away from hop boundaries.
- * The TX never moves t0, so a receiver that misses a resync stays aligned. */
+/* Burst idx ends its 8th byte at t0 + resync_ms(idx) + HOP_POS_MS: mid-slot,
+ * away from hop boundaries. The TX never moves t0, so a receiver that misses
+ * a resync stays aligned. */
 #define HOP_RESYNC_MS  8000u
 #define HOP_POS_MS     290u
 /* RX keeps hopping through fades: stop only after this long without RX. */
@@ -64,6 +65,15 @@ SCR_HOP_State_t gScrHop __attribute__((section(".noncacheable")));
 void SCR_HOP_Reset(void)
 {
     memset(&gScrHop, 0, sizeof(gScrHop));
+}
+
+/* Resync k starts at resync_ms(k) on the TX slot clock: the seed burst is
+ * repeated at slot 1 (the UV-K1 FSK RX can miss a lone frame, as the
+ * Messenger PING repeat notes), so a receiver that missed the first one
+ * still joins before the voice; then every HOP_RESYNC_MS as before. */
+static uint32_t resync_ms(uint32_t k)
+{
+    return k < 2u ? k * HOP_SLOT_MS : (k - 1u) * HOP_RESYNC_MS;
 }
 
 static uint16_t carrier(uint32_t seed, uint32_t slot)
@@ -175,7 +185,7 @@ void SCR_HOP_TxBurst(uint16_t idx)
      * one is skipped: it would re-anchor every receiver to the wrong time. */
     bool send = true;
     if (idx) {
-        const uint32_t target = idx * HOP_RESYNC_MS + HOP_POS_MS - HOP_ANCHOR_MS;
+        const uint32_t target = resync_ms(idx) + HOP_POS_MS - HOP_ANCHOR_MS;
         wait_until(target);
         send = elapsed() - target <= 2u;
     }
@@ -227,19 +237,19 @@ bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms, bool precise)
         gScrHop.adj    = 0;
         gScrHop.ref_ok = 0;
     }
-    /* Bursts idx apart were sent exactly idx * HOP_RESYNC_MS apart on the TX
+    /* Bursts idx and ref_idx were sent exactly n ms apart on the TX
      * clock: compare with the local interval from the first precise stamp.
      * A constant RX latency cancels out; late (imprecise) stamps are skipped. */
     if (precise) {
         const uint8_t span = (uint8_t)(idx - gScrHop.ref_idx);
         if (gScrHop.ref_ok && span - 1u < HOP_DRIFT_SPAN) {
-            const uint32_t n   = span * HOP_RESYNC_MS;
+            const uint32_t n   = resync_ms(idx) - resync_ms(gScrHop.ref_idx);
             const uint32_t m   = stamp_ms - gScrHop.ref_stamp;
             const int32_t  err = (int32_t)(n - m);
             const uint32_t a   = err < 0 ? (uint32_t)-err : (uint32_t)err;
             if (a <= HOP_DRIFT_DEAD_MS)
                 gScrHop.adj = 0;
-            else if (a <= n / 32u)
+            else if (n > HOP_SLOT_MS && a <= n / 32u)   // not the 0.5 s repeat pair
                 gScrHop.adj = (int16_t)((err * 65536) / (int32_t)m);
         } else {
             gScrHop.ref_stamp = stamp_ms;
@@ -247,7 +257,7 @@ bool SCR_HOP_RxStart(const uint16_t *words, uint32_t stamp_ms, bool precise)
             gScrHop.ref_ok    = 1;
         }
     }
-    start(seed, stamp_ms, idx * HOP_RESYNC_MS + HOP_POS_MS, true);
+    start(seed, stamp_ms, resync_ms(idx) + HOP_POS_MS, true);
     return true;
 }
 
@@ -313,7 +323,7 @@ void SCR_HOP_Tick(void)
     } else if (gCurrentFunction != FUNCTION_TRANSMIT) {
         SCR_HOP_Stop();
         return;
-    } else if (elapsed() >= (gScrHop.idx + 1u) * HOP_RESYNC_MS) {
+    } else if (elapsed() >= resync_ms(gScrHop.idx + 1u)) {
         SCR_HOP_TxBurst(++gScrHop.idx);   // resync for late/faded receivers
         return;
     }
