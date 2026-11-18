@@ -138,12 +138,13 @@ void SCR_HOP_TxBurst(uint16_t idx)
         (uint16_t)CRYPTO_Word(seed, HOP_CHECK_N ^ word0),
     };
     const uint16_t irq_mask = BK4819_ReadRegister(BK4819_REG_3F);
+    const uint16_t reg30    = BK4819_ReadRegister(BK4819_REG_30);   // voice TX link, mic on
 
     if (!idx) {
         gScrHop.active = 0;
         gScrHop.adj    = 0;
     }
-    BK4819_EnterTxMute();
+    BK4819_EnterTxMute();   // silent setup, as the tone routines do
     BK4819_DisableScramble();
     /* HOP voice always runs Wide (RADIO_GetFmBandwidth). Same narrow-lock as
      * Messenger FSK TX: the burst goes out with Narrow (N+: Narrower)
@@ -156,6 +157,9 @@ void SCR_HOP_TxBurst(uint16_t idx)
 #endif
     BK4819_SetFilterBandwidth(bw, false);
     BK4819_SetupAircopy();
+    /* TX DSP on, mic ADC off: the burst carries the FSK tone only. This, not
+     * the AF TX mute, is how every tone in the firmware leaves the mic out. */
+    BK4819_EnableTXLink();
     SYSTEM_DelayMs(30);                            // same settle as Messenger TX
     BK4819_WriteRegister(BK4819_REG_5D, (sizeof(words) - 1u) << 8);
     BK4819_WriteRegister(BK4819_REG_3F, BK4819_REG_3F_FSK_TX_FINISHED);
@@ -174,6 +178,11 @@ void SCR_HOP_TxBurst(uint16_t idx)
         wait_until(target);
         send = elapsed() - target <= 2u;
     }
+    /* Every FSK and tone TX in the firmware (Messenger, AirCopy, MDC, DTMF,
+     * roger, BK4819_PlayToneRaw) goes on air with the AF TX mute off, so the
+     * mute is taken to silence the tone generator too: the burst is never
+     * sent muted. The mic stays out through EnableTXLink(). */
+    BK4819_ExitTxMute();
     const uint32_t t_start = SCHEDULER_GetMs();
     if (send) {
         BK4819_WriteRegister(BK4819_REG_59, 0x28F8);   // start FSK TX
@@ -182,6 +191,7 @@ void SCR_HOP_TxBurst(uint16_t idx)
         for (uint8_t n = 0; n < 20u && !(BK4819_ReadRegister(BK4819_REG_0C) & 1u); n++)
             SYSTEM_DelayMs(5);
     }
+    BK4819_EnterTxMute();
 
     /* Back to voice without BK4819_ResetFSK(): it would idle REG_30 (TX off). */
     BK4819_WriteRegister(BK4819_REG_02, 0);
@@ -189,6 +199,7 @@ void SCR_HOP_TxBurst(uint16_t idx)
     BK4819_WriteRegister(BK4819_REG_70, 0);
     BK4819_WriteRegister(BK4819_REG_58, 0);
     BK4819_WriteRegister(BK4819_REG_3F, irq_mask);
+    BK4819_WriteRegister(BK4819_REG_30, reg30);    // mic back for the voice
 
     BK4819_SetFilterBandwidth(RADIO_GetFmBandwidth(gCurrentVfo, true), false);
 
