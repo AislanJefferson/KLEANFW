@@ -787,6 +787,26 @@ BK4819_FilterBandwidth_t RADIO_GetAMFilterBandwidth(const VFO_Info_t *pVfo)
     return (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE) ? BK4819_FILTER_BW_WIDE : BK4819_FILTER_BW_AM;
 }
 
+BK4819_FilterBandwidth_t RADIO_GetFmBandwidth(const VFO_Info_t *pVfo, bool tx)
+{
+#ifdef ENABLE_GOGUFW_CRYPTO
+    /* The stored W/N is kept for when HOP is off. The RX never defers to the
+     * narrow-lock: RADIO_SetupRegisters() drops the lock without re-applying
+     * the filter, which would leave a HOP receiver narrow. */
+    if (SCR_HOP_VfoUsesHop(pVfo) && !(tx && MSG_RF_NarrowLockActive()))
+        return BK4819_FILTER_BW_WIDE;
+#else
+    (void)tx;
+#endif
+    BK4819_FilterBandwidth_t Bandwidth = pVfo->CHANNEL_BANDWIDTH;
+
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    if (Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
+        Bandwidth = BK4819_FILTER_BW_NARROWER;
+#endif
+    return Bandwidth;
+}
+
 void RADIO_ApplyScramble(const VFO_Info_t *pVfo, bool tx)
 {
 #if !defined(ENABLE_FEAT_F4HWN) || defined(ENABLE_GOGUFW_SCRAMBLER)
@@ -812,14 +832,7 @@ void RADIO_ApplyScramble(const VFO_Info_t *pVfo, bool tx)
 
 void RADIO_SetupRegisters(bool switchToForeground)
 {
-    BK4819_FilterBandwidth_t Bandwidth = gRxVfo->CHANNEL_BANDWIDTH;
-
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if(Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
-        {
-            Bandwidth = BK4819_FILTER_BW_NARROWER;
-        }
-    #endif
+    BK4819_FilterBandwidth_t Bandwidth = RADIO_GetFmBandwidth(gRxVfo, false);
 
     AUDIO_AudioPathOff();
 
@@ -1046,19 +1059,12 @@ void RADIO_SetupRegisters(bool switchToForeground)
 
 static void RADIO_SetTxParametersEx(bool fm)
 {
-    BK4819_FilterBandwidth_t Bandwidth = gCurrentVfo->CHANNEL_BANDWIDTH;
+    BK4819_FilterBandwidth_t Bandwidth = RADIO_GetFmBandwidth(gCurrentVfo, true);
 
     /* Every TX mode starts clean.  Voice TX reapplies the channel scrambler
      * after its clear DTMF/Apollo signalling; FSK, alarm and tone TX stay
      * unscrambled. */
     BK4819_DisableScramble();
-
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if(Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
-        {
-            Bandwidth = BK4819_FILTER_BW_NARROWER;
-        }
-    #endif
 
     AUDIO_AudioPathOff();
 
@@ -1454,16 +1460,10 @@ void RADIO_SendCssTail(void)
 
 void RADIO_SendEndOfTransmission(void)
 {
-    BK4819_FilterBandwidth_t Bandwidth = gCurrentVfo->CHANNEL_BANDWIDTH;
+    const BK4819_FilterBandwidth_t Bandwidth = RADIO_GetFmBandwidth(gCurrentVfo, false);
 
     /* Roger/MDC, DTMF and the CSS tail are protocol signalling, not voice. */
     BK4819_DisableScramble();
-
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (Bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1) {
-        Bandwidth = BK4819_FILTER_BW_NARROWER;
-    }
-#endif
 
     /* CALLTX already consists entirely of an alert melody.  Its shared TX
      * shutdown path must still send DTMF/CSS tails and restore RX, but must

@@ -137,18 +137,16 @@ void SCR_HOP_TxBurst(uint16_t idx)
     }
     BK4819_EnterTxMute();
     BK4819_DisableScramble();
-    /* Same narrow-lock as Messenger FSK TX: a Wide channel sends the burst
-     * with Narrow (N+: Narrower) deviation, the proven decode path for
-     * Wide, Narrow and Narrower receivers alike. */
-    const bool wide = gCurrentVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE;
-    if (wide) {
-        BK4819_FilterBandwidth_t bw = BK4819_FILTER_BW_NARROW;
+    /* HOP voice always runs Wide (RADIO_GetFmBandwidth). Same narrow-lock as
+     * Messenger FSK TX: the burst goes out with Narrow (N+: Narrower)
+     * deviation, the proven decode path for Wide, Narrow and Narrower
+     * receivers alike. */
+    BK4819_FilterBandwidth_t bw = BK4819_FILTER_BW_NARROW;
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if (gSetting_set_nfm == 1)
-            bw = BK4819_FILTER_BW_NARROWER;
+    if (gSetting_set_nfm == 1)
+        bw = BK4819_FILTER_BW_NARROWER;
 #endif
-        BK4819_SetFilterBandwidth(bw, false);
-    }
+    BK4819_SetFilterBandwidth(bw, false);
     BK4819_SetupAircopy();
     SYSTEM_DelayMs(30);                            // same settle as Messenger TX
     BK4819_WriteRegister(BK4819_REG_5D, (sizeof(words) - 1u) << 8);
@@ -184,8 +182,7 @@ void SCR_HOP_TxBurst(uint16_t idx)
     BK4819_WriteRegister(BK4819_REG_58, 0);
     BK4819_WriteRegister(BK4819_REG_3F, irq_mask);
 
-    if (wide)
-        BK4819_SetFilterBandwidth(BK4819_FILTER_BW_WIDE, false);
+    BK4819_SetFilterBandwidth(RADIO_GetFmBandwidth(gCurrentVfo, true), false);
 
     if (idx) {
         /* A late tick runs the resync before the slot switch: catch up. */

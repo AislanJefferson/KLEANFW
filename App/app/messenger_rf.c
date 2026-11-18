@@ -539,6 +539,11 @@ bool MSG_RF_RxChannelLockActive(void)
     return s_rx_channel_lock_active;
 }
 
+bool MSG_RF_NarrowLockActive(void)
+{
+    return s_bw_lock_active;
+}
+
 bool MSG_RF_TransactionActive(void)
 {
     if (!gMessengerConfig.msg_rx) return false;
