@@ -269,7 +269,17 @@ void ACTION_Power(void)
     if (++gTxVfo->OUTPUT_POWER > OUTPUT_POWER_HIGH)
         gTxVfo->OUTPUT_POWER = OUTPUT_POWER_LOW1;
 
-    gRequestSaveChannel = 1;
+    /* TX-only setting: save it and recompute TXP in place.  gRequestSaveChannel
+     * would end in VFO_CONFIGURE -> RADIO_SetupRegisters(), which turns the
+     * audio path off and retunes the RX, cutting the received audio on every
+     * press.  Mode 1 writes only VFO records; an MR channel keeps its stored
+     * power (the change lives in RAM until the channel is reloaded). */
+    SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_VFO, gTxVfo, 1);
+#ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
+    if (gPowerHigh) // same override RADIO_ConfigureChannel() applies
+        gTxVfo->OUTPUT_POWER = OUTPUT_POWER_HIGH;
+#endif
+    RADIO_ConfigureSquelchAndOutputPower(gTxVfo);
 
     gRequestDisplayScreen = gScreenToDisplay;
 
