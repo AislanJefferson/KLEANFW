@@ -135,11 +135,16 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 | Envelope | Há mensagem não lida no Inbox |
 | Elo de corrente | Resultado do AUTO CHECK (fixo = PONG recebido; piscando = sem resposta) |
 | VOX | VOX ligado (tem prioridade sobre o ícone do AUTO CHECK) |
-| `HOLD` | O Messenger está segurando o RX num canal (ACK/PONG em andamento) |
-| `FWR` / `DWR` | Full Watch / Dual Watch ativo |
+| `MO` | RxMode `MAIN ONLY` |
+| `XB` | RxMode `CROSS BAND` |
+| `DWR` / `DW` | Dual Watch alternando os VFOs: `DUAL RX RESPOND` / `MAIN TX DUAL RX` |
+| `FWR` / `FW` | Full Watch alternando os canais: `FULL RX RESPOND` / `MAIN TX FULL RX` |
+| `><` (HOLD) | Dual/Full Watch em pausa (durante e logo após uma recepção ou transmissão), ou o Messenger segurando o RX num canal (ACK/PONG em andamento) |
 | `MENU` ou nome da categoria | Você está no menu |
 | Lista de scan (`ALL`, nome, `+`) | Lista ativa durante a varredura (`+` = prioridade ligada) |
 | Bateria | Nível, tensão ou porcentagem (conforme `BatTxt`) |
+
+Com `SetTmr = ON` (padrão), o cronômetro de RX/TX ocupa o lugar de `MO`/`XB`/`DWR`/`FWR`/`><` enquanto o rádio recebe ou transmite; o indicador volta quando a recepção ou a transmissão termina (com Dual/Full Watch, primeiro como `><` durante a pausa).
 
 ---
 
@@ -447,7 +452,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Opções**: `OFF`, `TX` (só comprime), `RX` (só expande), `TX/RX` (os dois).
 - **Padrão**: OFF.
 - **Quando mudar**: só quando **todos** os rádios da conversa usam o compander. Se só um lado usar, o áudio fica com volume irregular.
-- **Atenção**: com o compander de RX ligado, `SetRxG` fica fixo em `ON (COMPND)`. Na tela aparece um pequeno ícone.
+- **Atenção**: com o compander de RX ligado, `SetRxG` fica fixo em `ON (COMPND)`. A tela principal não mostra ícone de compander.
 
 #### `Mode`: modulação *(canal)*
 
@@ -458,7 +463,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
   - `USB`: banda lateral superior.
 - **Padrão**: FM.
 - **Quando mudar**: para ouvir aviação (AM, 118–137 MHz) ou sinais em SSB.
-- **Atenção**: só há TX em **FM**. Em AM/USB o PTT mostra `TX DISABLE`. Scrambler, Messenger e HOP também exigem FM. A ação lateral **MODE** alterna FM → AM → USB.
+- **Atenção**: só há TX em **FM**. Em AM/USB o PTT mostra `TX DISABLE`. Scrambler, Messenger, HOP e CTCSS/DCS também exigem FM: em AM/USB, onde a tela mostra o tom (`SetGUI` TINY, ou CLASSIC em MAIN ONLY), ela mostra o passo; o tom gravado volta a valer (e a aparecer) em FM. A ação lateral **MODE** alterna FM → AM → USB.
 
 #### `TXLock`: respeitar o F Lock *(canal)*
 
@@ -722,18 +727,19 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 
 #### `SetMet`: estilo do S-meter
 
-- **O que faz**: escolhe o desenho da barra de sinal durante a recepção.
-- **Opções**: `TINY` (compacto), `CLASSIC`.
+- **O que faz**: escolhe o desenho das barras de sinal durante a recepção e da barra do microfone (`MicBar`) durante a transmissão. Só o desenho muda; a posição das barras é a mesma.
+- **Opções**: `TINY` (barras baixas, todas da mesma altura), `CLASSIC` (barras que crescem de altura).
 - **Padrão**: CLASSIC.
 
 #### `SetGUI`: estilo da tela principal
 
 - **O que faz**: escolhe a fonte da linha de informações do VFO (modulação, tom, potência, largura).
 - **Opções**:
-  - `TINY`: fonte 3x5 com textos longos, como `LOW1` e `NAR+`;
-  - `CLASSIC`: fonte maior com textos curtos, como `L1` e `N+`. No modo MAIN ONLY, mostra também o tom e o passo na linha de baixo.
+  - `TINY`: fonte 3x5 com textos longos, como `LOW1` e `NAR+`. Mostra o valor do tom (ou o passo, sem tom) em todos os RxModes;
+  - `CLASSIC`: fonte maior com textos curtos, como `L1` e `N+`. Com dois VFOs na tela, mostra só o tipo do tom (`CT`/`DC`), sem o valor nem o passo; no modo MAIN ONLY, o tom e o passo aparecem na linha de baixo.
 - **Padrão**: CLASSIC.
-- **Atenção**: a seção 13 mostra como a largura de banda aparece em cada estilo.
+- **Também muda**: as barras de potência no TX (todas iguais no TINY, crescentes no CLASSIC) e o valor do sinal na recepção (`-93 dBm` na fonte 3x5 no TINY, `-93` na fonte maior no CLASSIC).
+- **Atenção**: a seção 13 mostra como a largura de banda aparece em cada estilo. No TINY, a seta da potência `USER` não aparece no VFO que está transmitindo: ali ficam as barras de potência do TX.
 
 ### 6.8 Timers
 

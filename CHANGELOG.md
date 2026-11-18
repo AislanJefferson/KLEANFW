@@ -8,9 +8,13 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
 come from that review, plus the F+3 frequency carry-over, the power key
-fix and the Spectrum PTT×2 change below. Image 120,604 / 120,832 bytes
-(228 bytes free); RAM 15,640 / 16,384 bytes at link time. All of it was
-tested on a radio.
+fix and the Spectrum PTT×2 change below, all tested on a radio.
+Main screen audit: every field of the VFO screen was mapped in SetGUI and
+SetMet TINY/CLASSIC across the six RxModes; the four "Main screen" fixes
+below come from it and are checked by code review and builds only, not yet
+on a radio. SetMet only changes how the bars look and needed no fix. Image
+120,564 / 120,832 bytes (268 bytes free); RAM 15,640 / 16,384 bytes at link
+time.
 
 ### Fixed
 
@@ -26,6 +30,39 @@ tested on a radio.
   level is now applied to TX only, so the reception goes on. As before, a VFO
   keeps the new level after power-off, while an MR channel goes back to its
   stored level when it is reloaded (power-off, channel change) (+20 B).
+- Main screen, CROSS BAND: while transmitting, the power bars showed the
+  level of the other (receiving) VFO, next to the right label of the
+  transmitting one (A on HIGH and B on LOW1 gave one bar beside `HIGH`). The
+  bars now read the VFO drawn there, in both SetGUI styles. In the other
+  RxModes that VFO was already the one in `gRxVfo`, so nothing changes there.
+  Inherited from upstream (-4 B).
+- Main screen, FULL RX RESPOND and MAIN TX FULL RX: during a reception a key
+  press on a locked keypad did not show `UNLOCK KEYBOARD`. The middle line
+  was cleared before the S-meter, and the S-meter stays off while the notice
+  is up, so the line was left blank. The clear was redundant (the frame is
+  cleared first and the Triple/Quad Watch line is never drawn during RX) and
+  is gone. Inherited from upstream, GOGUFW 3.1.0 (-20 B).
+- Main screen, AM/USB: a CTCSS/DCS code stored on the channel was shown in
+  place of the step (TINY info line; bottom line of CLASSIC in MAIN ONLY),
+  although tones only work in FM and the `CT`/`DC` label was already hidden.
+  The step is shown now, as without a code; back in FM the code shows again.
+  The tone type is read once for both fields. Inherited from upstream
+  (-16 B).
+- Main screen, SetGUI TINY: with the power on `USER` set to HIGH, the `USER`
+  arrow covered the 7th TX power bar, so the transmitting VFO looked like MID.
+  The arrow is left out on the VFO that is transmitting and comes back after
+  TX; CLASSIC is unchanged. Inherited from upstream (0 B).
+- `App/ui/main.c`: the TINY and CLASSIC x-position constants had each other's
+  names (`VFO_CLASSIC_*` was used by TINY). They are renamed; the binary is
+  identical apart from the build time.
+- MANUAL: the status bar table (3.3) lists `MO`, `XB`, `DWR`/`DW`,
+  `FWR`/`FW` and the `><` (HOLD) pause icon, which also shows while Dual/Full
+  Watch pauses after RX/TX, and says that the RX/TX timer takes that slot
+  during RX/TX with `SetTmr = ON`. `SetMet` also styles the `MicBar`. `SetGUI` says
+  what CLASSIC leaves out with two VFOs and what else it styles. `Mode` notes
+  that CTCSS/DCS are FM-only. `Compnd` no longer promises a screen icon: it
+  went away with the compander in GOGUFW 3.1.0 and did not come back with it
+  in 3.2.0.
 
 ### Changed
 
