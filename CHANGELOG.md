@@ -9,8 +9,7 @@ Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
 come from that review, plus the F+3 frequency carry-over and the power key
 fix below. Image 120,708 / 120,832 bytes (124 bytes free); RAM 15,640 /
-16,384 bytes at link time. The menu audit and F+3 were tested on a radio; the
-power key fix is checked by code review and builds only.
+16,384 bytes at link time. All of it was tested on a radio.
 
 ### Fixed
 
