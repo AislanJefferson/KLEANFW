@@ -31,7 +31,10 @@
 #include "settings.h"
 
 #define HOP_MAGIC      0x47u     /* word0 = 'G' << 8 | resync index */
-#define HOP_CHECK_N    0x48505351u
+/* Burst check salt. 0x48505352 is the 8-far-carrier order: radios with the
+ * older 16-carrier HOP (0x48505351) reject its bursts as a wrong CryKey
+ * instead of hopping on a different sequence. */
+#define HOP_CHECK_N    0x48505352u
 #define HOP_SLOT_MS    500u
 /* A burst (initial idx 0, then one every HOP_RESYNC_MS) ends its 8th byte at
  * t0 + idx * HOP_RESYNC_MS + HOP_POS_MS: mid-slot, away from hop boundaries.
@@ -65,16 +68,21 @@ void SCR_HOP_Reset(void)
 
 static uint16_t carrier(uint32_t seed, uint32_t slot)
 {
-    /* 16 carriers in a 500 Hz window (REG_71: 1032 units = 100 Hz), chosen so
-     * the inverted voice fits the TX audio band: N/N+ (LPF 2.5 kHz)
-     * 2600..3100 Hz, Wide (LPF 3 kHz) 2900..3400 Hz. Seed bit 0 = Wide. */
-    return (uint16_t)(0x68DCu + ((seed & 1u) ? 3096u : 0u) +
-                      (CRYPTO_Word(seed, slot) & 15u) * 344u);
-}
-
-static uint32_t tx_wide(void)
-{
-    return gCurrentVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE;
+    /* 8 carriers over the whole 2600..3500 Hz the BK4819 note allows, 128.6 Hz
+     * apart (REG_71: 1032 units = 100 Hz). HOP always runs Wide (TX LPF 3 kHz),
+     * so even the top carrier keeps the voice above 500 Hz.
+     *
+     * A fixed-carrier scrambler understands the slots near its own carrier,
+     * so hops must land far apart. Each block of 16 slots (one resync
+     * interval, so a late receiver joins at a block start) takes the carriers
+     * in the order D + S * slot (mod 8), with D and the stride S (3 or 5)
+     * from XTEA(CryKey, seed || block). Within a block every carrier is used
+     * twice, and the carrier 1, 2 and 3 slots later is at least 3, 2 and
+     * 1 carriers away (386, 257 and 129 Hz). The jump into a new block is
+     * free, but that slot carries little voice: the resync burst mutes its
+     * first ~0.3 s. */
+    const uint32_t r = CRYPTO_Word(seed, slot >> 4);
+    return (uint16_t)(0x68DCu + ((r + (3u + ((r >> 2) & 2u)) * slot) & 7u) * 1327u);
 }
 
 /* Slot clock in TX ms. RX scales the time since the anchor by the measured
@@ -97,7 +105,7 @@ void SCR_HOP_Apply(bool tx)
     }
     BK4819_EnableScramble(0);
     BK4819_WriteRegister(BK4819_REG_71, gScrHop.active ? carrier(gScrHop.seed, gScrHop.slot)
-                                                       : carrier(tx_wide(), 0xFFFFFFFFu));
+                                                       : carrier(0, 0xFFFFFFFFu));
 }
 
 static void start(uint32_t seed, uint32_t anchor, uint32_t base, bool rx)
@@ -122,8 +130,8 @@ void SCR_HOP_TxBurst(uint16_t idx)
 {
     /* idx 0 starts a new over with a fresh seed; later ones resend it. */
     const uint32_t seed = idx ? gScrHop.seed
-                              : (CRYPTO_Word(((uint32_t)BK4819_ReadRegister(BK4819_REG_67) << 16) ^
-                                             SysTick->VAL, SCHEDULER_GetMs()) & ~1u) | tx_wide();
+                              : CRYPTO_Word(((uint32_t)BK4819_ReadRegister(BK4819_REG_67) << 16) ^
+                                            SysTick->VAL, SCHEDULER_GetMs());
     const uint16_t word0 = (HOP_MAGIC << 8) | (idx & 0xFFu);
     const uint16_t words[4] = {
         word0, (uint16_t)seed, (uint16_t)(seed >> 16),
