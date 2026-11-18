@@ -1453,14 +1453,14 @@ Em MR, as teclas 1, 7, 2, 8, 5 e 0 ficam inativas: o gráfico mostra a lista int
 | **0** | Muda a modulação da escuta (só em VFO; a escuta continua abrindo com o mesmo nível de disparo) |
 | **6** | Largura de banda de escuta (em MR continua valendo depois do EXIT, para todos os canais; o canal não muda) |
 | **EXIT** | Fecha o menu de ganho / volta ao gráfico |
-| **PTT** de novo | Leva o pico para o canal MR ou para o VFO ativo e sai, **sem transmitir** |
+| **PTT** de novo | Leva o pico para o modo em que o Spectrum foi aberto (canal MR ou VFO ativo) e sai, **sem transmitir** |
 
 Em MR, a escuta usa a modulação e a banda do canal (ou a banda escolhida com a tecla 6), e continua com elas quando o sinal cai e volta.
 
 Ao sair com o segundo PTT:
 
-- **A frequência já está salva num canal MR** (o mais próximo, até meio passo de varredura e no máximo 6,25 kHz): o rádio vai para o modo MR nesse canal, com as configurações do canal.
-- **Não há canal**: o rádio vai para o VFO como se a frequência tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
+- **Spectrum aberto em MR**: o rádio vai para o canal do pico, com as configurações do canal.
+- **Spectrum aberto em VFO**: o rádio fica no VFO, mesmo que a frequência esteja salva num canal MR (nada do canal é aplicado). A frequência entra como se tivesse sido digitada, mas com a largura de banda da escuta do Spectrum: 25k vira **W**, 12,5k vira **N** e 6,25k vira **N+**. Como N+ é a opção global **SetNFM**, ela é ligada ou desligada para bater com o Spectrum, o que vale para todos os canais Narrow. Modulação, passo e potência são os do VFO. Tons, offset e reverse são zerados. A frequência é a do pico, sem arredondar para o passo do VFO.
 
 A largura de banda de escuta começa igual à do VFO ou canal ativo ao apertar F+5 (W = 25k, N = 12,5k, N com SetNFM = 6,25k), e o filtro é o mesmo que o rádio usa nesses modos.
 

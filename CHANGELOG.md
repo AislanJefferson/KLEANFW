@@ -7,9 +7,10 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
-come from that review, plus the F+3 frequency carry-over and the power key
-fix below. Image 120,708 / 120,832 bytes (124 bytes free); RAM 15,640 /
-16,384 bytes at link time. All of it was tested on a radio.
+come from that review, plus the F+3 frequency carry-over, the power key
+fix and the Spectrum PTT×2 change below. Image 120,604 / 120,832 bytes
+(228 bytes free); RAM 15,640 / 16,384 bytes at link time. All of it was
+tested on a radio, except the Spectrum PTT×2 change.
 
 ### Fixed
 
@@ -27,6 +28,11 @@ fix below. Image 120,708 / 120,832 bytes (124 bytes free); RAM 15,640 /
   stored level when it is reloaded (power-off, channel change) (+20 B).
 
 ### Changed
+
+- Spectrum PTT×2 leaves in the mode Spectrum was opened in. From the VFO the
+  peak always lands in the VFO like a typed frequency, even when it is stored
+  in an MR channel (no channel settings are applied); from MR it still opens
+  the peak channel (-104 B).
 
 - F+3 (VFO/MR) carries the frequency across. MR→VFO puts only the active
   channel's exact frequency in that band's VFO: CTCSS/DCS, offset direction
