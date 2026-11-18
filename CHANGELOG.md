@@ -7,8 +7,10 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
-come from that review. Image 120,480 / 120,832 bytes. Checked by code review
-and builds only (Fusion and RDSProbe).
+come from that review, plus the F+3 frequency carry-over below. Image
+120,688 / 120,832 bytes (144 bytes free); RAM 15,640 / 16,384 bytes at link
+time. Checked by code review and builds only (Fusion and RDSProbe); not tested
+on a radio yet.
 
 ### Fixed
 
@@ -22,6 +24,17 @@ and builds only (Fusion and RDSProbe).
 
 ### Changed
 
+- F+3 (VFO/MR) carries the frequency across. MR→VFO puts only the active
+  channel's exact frequency in that band's VFO: CTCSS/DCS, offset direction
+  and value, Reverse and the scrambler (HOP too) are cleared, while
+  modulation, bandwidth, power, BusyCL, TX lock and PTT-ID come from the
+  band's saved VFO. The step does too, unless the frequency is off its grid:
+  then the VFO takes the channel's step (or 0.01 kHz when that does not fit
+  either), and that step stays saved. The VFO record is written at once (at
+  most one erase of the VFO sector, and only when it changes); this also
+  applies during an MR scan. VFO→MR goes to the stored channel with the VFO
+  frequency, searching from the last MR channel, and falls back to the last
+  MR channel as before. Full Watch C/D is unchanged (+208 B).
 - Menu code: the old in-place drawing of the ChName/CllSgn editor (never
   reached since the unified editor) and other dead menu code were removed;
   CryKey is drawn once. 348 bytes of flash freed.

@@ -124,7 +124,7 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 
 - **VFO**: você digita/sintoniza qualquer frequência.
 - **MR** (memória): você navega pelos 1024 canais gravados.
-- **F+3** alterna entre VFO e MR. **F+2** alterna entre o VFO A e o B.
+- **F+3** alterna entre VFO e MR, levando a frequência junto (veja 5.1). **F+2** alterna entre o VFO A e o B.
 
 ### 3.3 Barra de status (topo da tela)
 
@@ -153,7 +153,7 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 | **F + 0** | **Rádio FM** (precisa de `FMVFO.app` e `FMMemory.app`) |
 | **F + 1** | VFO: próxima banda · MR: copia o canal para o VFO |
 | **F + 2** | Alterna VFO A / B (com Full Watch: A → B → C → D) |
-| **F + 3** | Alterna VFO / MR |
+| **F + 3** | Alterna VFO / MR (MR→VFO: leva só a frequência · VFO→MR: canal com a mesma frequência) |
 | **F + 4** | **Search Frequency** (precisa de `Search.app`) |
 | **F + 5** | **Spectrum** |
 | **F + 6** | Potência de TX (LOW1 → … → HIGH) |
@@ -194,7 +194,8 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 - **Em MR**: digite até 4 dígitos do canal. Com 4 dígitos confirma na hora; senão confirma em cerca de 2 s (ou com **MENU**).
 - **EXIT** apaga o último dígito; com todos apagados, restaura o VFO anterior.
 - **Frequência digitada entra em simplex limpo**: ao digitar uma frequência no VFO, CTCSS/DCS (RX e TX), direção e valor do offset e Reverse voltam para OFF. Potência, largura de banda, passo, modulação e scrambler são mantidos. Para usar uma repetidora no VFO, configure `TxODir`, `TxOffs` e os tons **depois** de digitar a frequência, ou copie um canal gravado com **F+1**. Cancelar com EXIT restaura os valores anteriores.
-- **F+3** de MR para VFO volta ao último estado salvo do VFO (cada banda guarda os próprios parâmetros); ele não copia o canal de memória.
+- **F+3 de MR para VFO** leva ao VFO **só a frequência** do canal ativo, exata. CTCSS/DCS (RX e TX), direção e valor do offset, Reverse e scrambler (HOP incluído) ficam OFF. Modulação, largura de banda, potência, BusyCL, TX lock e PTT-ID vêm do VFO salvo daquela banda. O passo também, exceto quando a frequência não cai na grade dele: aí o VFO daquela banda passa a usar o passo do canal (ou 0,01 kHz, se nem esse servir), e esse passo fica salvo. O VFO é gravado na hora, mas a flash só é apagada se o conteúdo mudar. Isso vale também durante uma varredura MR (vai a frequência do canal em que ela está). Para copiar o canal inteiro (tons, offset etc.), use **F+1**.
+- **F+3 de VFO para MR** vai ao canal gravado com a mesma frequência do VFO, procurando a partir do último canal MR usado (com canais repetidos, MR→VFO→MR volta ao canal de origem). Sem nenhum canal com essa frequência, vai ao último canal MR, como antes.
 
 ### 5.2 Teclas sem F
 
