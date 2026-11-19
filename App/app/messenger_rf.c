@@ -847,14 +847,9 @@ void MSG_RF_OnVoxModeChanged(bool enabled)
     if (enabled) {
         /* Entering VOX: completely leave Messenger FSK/data mode and restore
          * the stock voice/VOX receive path once. Do not re-arm Messenger while
-         * VOX remains enabled. */
-        MSG_RF_RestoreFskAudioMute();
-        MSG_RF_NarrowLockEnd();
-        MSG_RF_DisarmSidecarNoRadioReset();
-        BK4819_ResetFSK();
-        MSG_RF_RestoreFskCleanupSnapshot();
-        RADIO_SelectVfos();
-        RADIO_SetupRegisters(true);
+         * VOX remains enabled. The hard restore is this very sequence plus
+         * PA/LED off, which RADIO_SetupRegisters() repeats right after. */
+        MSG_RF_HardRestoreVoicePath();
         s_rearm_delay_ticks = 0u;
     } else {
         /* Leaving VOX: allow the normal idle path to arm Messenger again. */
