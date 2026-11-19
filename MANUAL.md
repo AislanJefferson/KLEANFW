@@ -1283,10 +1283,10 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - A cada PTT, o rádio envia a semente num curto **burst FSK** (cerca de 0,25 s) e o repete 0,5 s depois, porque o receptor FSK do UV-K1 às vezes perde um quadro isolado. Quem perdeu o primeiro sincroniza no segundo. O microfone fica mudo até o fim do segundo burst: **espere cerca de 1 s depois de apertar o PTT antes de falar**.
 - A portadora salta entre **8 valores de 2600 a 3500 Hz** (128,6 Hz entre eles), a faixa inteira que o chip permite.
 - A ordem é escolhida para ficar longe de um scrambler fixo: dentro de cada bloco de 8 s, cada valor sai 2 vezes, e a portadora seguinte fica a pelo menos 386 Hz da anterior (257 Hz dois slots depois). Um rádio com scrambler fixo, em qualquer valor, passa a pegar em geral só trechos curtos e soltos de fala, em vez dos longos trechos quase claros de antes.
-- A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um, e o receptor fica em silêncio nesse instante (em vez de tocar o tom de dados).
+- Aos **8 s** de TX e depois a cada **16 s** (24 s, 40 s…), um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um, e o receptor fica em silêncio nesse instante (em vez de tocar o tom de dados).
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
-- **Sincronismo na tela**: o ícone de onda dupla fica **invertido** enquanto a sessão HOP está ativa naquele VFO. No RX isso significa que o burst foi recebido e conferido; no TX, que foi enviado. Com o ícone normal num câmbio HOP, o receptor não sincronizou: confira os requisitos abaixo e espere o próximo resync (8 s).
+- **Sincronismo na tela**: o ícone de onda dupla fica **invertido** enquanto a sessão HOP está ativa naquele VFO. No RX isso significa que o burst foi recebido e conferido; no TX, que foi enviado. Com o ícone normal num câmbio HOP, o receptor não sincronizou: confira os requisitos abaixo e espere o próximo resync (até 16 s).
 - Em câmbios longos, a partir do primeiro resync (8 s) o receptor mede a diferença de relógio para o transmissor e passa a acompanhá-la entre os resyncs.
 - Num canal HOP o receptor não entra em economia de bateria (BatSav), para não perder o burst.
 
@@ -1298,7 +1298,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - **mesma versão do HOP**: rádios com firmware anterior a esta mudança usam outra sequência e não decodificam (o burst é recusado como CryKey diferente);
 - não estar em scan.
 
-**Se o receptor perder o burst** (entrou no meio do câmbio ou chave diferente), ouve áudio embaralhado até o próximo ressincronismo, em até 8 s.
+**Se o receptor perder o burst** (entrou no meio do câmbio ou chave diferente), ouve áudio embaralhado até o próximo ressincronismo, em até 16 s.
 
 **Outros detalhes:**
 
@@ -1802,8 +1802,8 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 
 - Combine a mesma **CryKey** em todos os rádios do grupo **antes** da atividade e confira trocando uma mensagem.
 - Lembre que indicativo, ACK, PING/PONG e tensão da bateria vão **em claro**.
-- **HOP**: aperte o PTT, espere cerca de 1 s e só então fale. Em câmbios longos, espere a pausa curta a cada 8 s.
-- Quem entra no meio de um câmbio HOP ouve embaralhado por até 8 s: isso é normal.
+- **HOP**: aperte o PTT, espere cerca de 1 s e só então fale. Em câmbios longos, espere a pausa curta aos 8 s e depois a cada 16 s.
+- Quem entra no meio de um câmbio HOP ouve embaralhado por até 16 s: isso é normal.
 - Com **scrambler fixo** em N/N+, portadoras altas (como 3200 Hz) cortam os graves da voz: prefira as mais baixas ou use Wide. O **HOP** não tem esse problema, porque opera sempre em Wide, mas ocupa um canal de 25 kHz mesmo num canal programado como N/N+.
 
 ### Operação geral
@@ -1883,7 +1883,7 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Última configuração não ficou salva | Rádio desligado menos de 2 s após a mudança | Espere cerca de 2 s antes de desligar |
 | Áudio picota e o LED verde apaga num sinal forte de repetidora | `STE` ON detectando em falso o fim de transmissão | Use `STE` OFF nesse canal (e `RP STE` para a cauda da repetidora) |
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
-| HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (8 s) |
+| HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (até 16 s) |
 | HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, firmware de versão anterior em um dos rádios (outra sequência de HOP), ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey, a mesma versão do firmware e Scramb = HOP no canal de RX |
 | Início da fala cortado no HOP | Mic mudo durante os dois bursts do início | Espere cerca de 1 s após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |

@@ -16,7 +16,7 @@ fix. HOP: a HOP channel always runs Wide, the carriers now hop far apart
 across 2600-3500 Hz, the seed burst no longer goes out with the TX mute
 on and is repeated 0.5 s later, and the scrambler icon shows an active
 HOP session. The two-radio HOP tests led to the burst fixes.
-Image 120,732 / 120,832 bytes (100 bytes free); RAM 15,640 / 16,384 bytes
+Image 120,748 / 120,832 bytes (84 bytes free); RAM 15,640 / 16,384 bytes
 at link time. All of it was tested on a radio except the HOP changes,
 which are not radio-tested yet.
 
@@ -47,6 +47,12 @@ which are not radio-tested yet.
   Messenger muted it. The receiver now mutes its audio output for the first
   320 ms of each resync slot (0.5 s, 8 s, 16 s...), while the transmitter
   sends no voice, so the resync is a short clean silence (+68 B).
+  Radio test: good.
+- HOP: each resync still cuts the voice for ~0.3 s. The first full resync
+  stays at 8 s, so the clock drift between the radios is measured early,
+  then one comes every 16 s instead of 8 s (24 s, 40 s...): half the cuts.
+  A receiver that joins mid-over waits up to 16 s. The carrier blocks now
+  start at the resyncs. Not compatible with the previous HOP build (+16 B).
   Not radio-tested yet.
 
 - SetCtr/SetInv: leaving the menu with the submenu open (menu timeout, PTT,
