@@ -39,6 +39,7 @@
 #endif
 #include "app/text_input.h"
 #include "app/scanner.h"
+#include "app/scr_hop.h"
 #include "audio.h"
 #include "board.h"
 #include "driver/backlight.h"
@@ -1802,6 +1803,19 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
     if (!gIsInSubMenu)
     {
         const int m = UI_MENU_GetCurrentMenuId();
+
+#ifdef ENABLE_GOGUFW_CRYPTO
+        /* HOP keeps MsgRx ON (MSG_RF_Tick10ms()) and VOX OFF (APP_Update()):
+         * refuse to edit them, with the double beep, while it is active. */
+        if ((m == MENU_MSG_RX
+#ifdef ENABLE_VOX
+             || m == MENU_VOX
+#endif
+            ) && SCR_HOP_Watching()) {
+            gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+            return;
+        }
+#endif
 
         #ifdef ENABLE_VOICE
             if (m != MENU_SCR)

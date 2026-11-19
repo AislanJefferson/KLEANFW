@@ -1813,9 +1813,32 @@ void APP_Update(void)
     }
 #endif
 
+#ifdef ENABLE_GOGUFW_CRYPTO
+    /* HOP active (SCR_HOP_Watching()) and the radio idle: neither TX nor RX. */
+    const bool hopIdle = SCR_HOP_UpdateWatching() && !FUNCTION_IsTxOrRx();
+#ifndef ENABLE_VOX
+    (void)hopIdle;
+#endif
+#endif
+
 #ifdef ENABLE_VOX
-    if (gEeprom.VOX_SWITCH)
+    if (gEeprom.VOX_SWITCH) {
+#ifdef ENABLE_GOGUFW_CRYPTO
+        if (hopIdle) {
+            /* VOX keeps the Messenger sidecar, which reads the HOP seed burst,
+             * down: turn it OFF and save it, as the VOX action does. It stays
+             * OFF after HOP is off; ACTION_Vox() and the menu refuse to change
+             * it meanwhile. Done here, not through the flags of ProcessKey(),
+             * which wait for a key. RADIO_SetupRegisters() takes VOX out of the
+             * chip and its IRQs; no RADIO_SelectVfos(), which would drop a Full
+             * Watch target. No erase: 1->0 bit. */
+            gEeprom.VOX_SWITCH = false;
+            SETTINGS_SaveSettings();
+            RADIO_SetupRegisters(true);
+        } else
+#endif
         HandleVox();
+    }
 #endif
 
     if (gSchedulePowerSave) {

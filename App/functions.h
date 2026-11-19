@@ -12,11 +12,14 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
+ * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 enum FUNCTION_Type_t
@@ -38,5 +41,14 @@ extern FUNCTION_Type_t       gCurrentFunction;
 void FUNCTION_Init(void);
 void FUNCTION_Select(FUNCTION_Type_t Function);
 bool FUNCTION_IsRx();
+/* Transmitting or receiving: FUNCTION_TRANSMIT..FUNCTION_RECEIVE (1..4). */
+static inline bool FUNCTION_IsTxOrRx(void)
+{
+    _Static_assert(FUNCTION_TRANSMIT == 1 && FUNCTION_MONITOR == 2 &&
+                   FUNCTION_INCOMING == 3 && FUNCTION_RECEIVE == 4,
+                   "FUNCTION_IsTxOrRx(): TX and the RX states are 1..4");
+    return (uint8_t)(gCurrentFunction - FUNCTION_TRANSMIT) <=
+           FUNCTION_RECEIVE - FUNCTION_TRANSMIT;
+}
 
 #endif

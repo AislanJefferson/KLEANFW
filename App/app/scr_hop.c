@@ -20,7 +20,7 @@
 
 #ifdef ENABLE_GOGUFW_CRYPTO
 
-#include "app/messenger_store.h"
+#include "app/chFrScanner.h"
 #include "driver/bk4819.h"
 #include "driver/bk4819-regs.h"
 #include "driver/system.h"
@@ -301,20 +301,21 @@ bool SCR_HOP_VfoUsesHop(const VFO_Info_t *vfo)
            vfo->Modulation == MODULATION_FM && gSetting_ScrambleEnable;
 }
 
-bool SCR_HOP_Watching(void)
+bool SCR_HOP_UpdateWatching(void)
 {
-    /* Without MsgRx (or with VOX) the seed burst is never decoded: sleeping
-     * costs nothing then. */
-    if (!gMessengerConfig.msg_rx)
-        return false;
-#ifdef ENABLE_VOX
-    if (gEeprom.VOX_SWITCH)
-        return false;
-#endif
-    return SCR_HOP_VfoUsesHop(gRxVfo) ||
-           (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF &&
-            (SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[0]) ||
-             SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[1])));
+    bool on = false;
+    /* No HOP during a scan: nothing to decode, and the radio must not save
+     * settings or reconfigure in the middle of it (APP_Update(),
+     * MSG_RF_Tick10ms()). */
+    if (gScanStateDir == SCAN_OFF)
+        /* gTxVfo: Cross Band TX, or a Full Watch priority channel picked for
+         * TX (outside VfoInfo[]). With Dual/Full Watch, VFO A and B too. */
+        on = SCR_HOP_VfoUsesHop(gRxVfo) || SCR_HOP_VfoUsesHop(gTxVfo) ||
+             (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF &&
+              (SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[0]) ||
+               SCR_HOP_VfoUsesHop(&gEeprom.VfoInfo[1])));
+    gScrHop.watching = on;
+    return on;
 }
 
 void SCR_HOP_Tick(void)

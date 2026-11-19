@@ -1033,6 +1033,19 @@ void MSG_RF_Tick10ms(void)
     if (s_last_range_ping_age_ticks < MSG_RF_RANGE_PING_DUP_WINDOW_TICKS) ++s_last_range_ping_age_ticks;
     MSG_RF_EnsureStoreInitialized();
 
+#ifdef ENABLE_GOGUFW_CRYPTO
+    /* HOP reads its seed burst through this sidecar, which MsgRx OFF keeps
+     * down: while HOP is active (SCR_HOP_Watching()), turn MsgRx ON and save
+     * it, as the menu does. It stays ON after HOP is off; the menu refuses to
+     * change it meanwhile. VOX: APP_Update(). Only while idle (neither TX nor
+     * RX), so no flash access in the middle of an over. One deferred erase
+     * per change (0->1 bit). */
+    if (!gMessengerConfig.msg_rx && SCR_HOP_Watching() && !FUNCTION_IsTxOrRx()) {
+        gMessengerConfig.msg_rx = 1u;
+        MSG_STORE_SaveConfig();
+    }
+#endif
+
     if (!gMessengerConfig.msg_rx && (s_sidecar_armed || s_rx_capture_active)) {
         /* MsgRx OFF must also stop an already-armed modem. Restore the stock
          * radio once, then leave re-arm disabled until the setting is enabled. */

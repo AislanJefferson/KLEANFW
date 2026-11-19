@@ -779,6 +779,14 @@ static void ACTION_AlarmOr1750(const bool b1750)
 #ifdef ENABLE_VOX
 void ACTION_Vox(void)
 {
+#ifdef ENABLE_GOGUFW_CRYPTO
+    /* HOP keeps VOX OFF (APP_Update()): refuse with the double beep, like
+     * W/N on a HOP channel. */
+    if (SCR_HOP_Watching()) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+#endif
     gEeprom.VOX_SWITCH   = !gEeprom.VOX_SWITCH;
     gRequestSaveSettings = true;
     gFlagReconfigureVfos = true;

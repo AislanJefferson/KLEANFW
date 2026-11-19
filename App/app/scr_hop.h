@@ -45,6 +45,7 @@ typedef struct {
     uint8_t  ref_idx;
     uint8_t  ref_ok;
     uint8_t  rs_mute;   /* RX: audio output muted for a resync burst */
+    uint8_t  watching;  /* SCR_HOP_Watching(), see SCR_HOP_UpdateWatching() */
     int16_t  adj;       /* RX: TX/RX clock ratio - 1, Q16 (0 on TX)  */
     uint16_t slot;
     uint16_t idx;       /* TX: last resync burst sent                */
@@ -73,9 +74,17 @@ void SCR_HOP_Tick(void);
  * ScraEn on). Every HOP path that bypasses RADIO_ApplyScramble() uses it. */
 struct VFO_Info_t;
 bool SCR_HOP_VfoUsesHop(const struct VFO_Info_t *vfo);
-/* The RX listens to a HOP channel (either VFO with Dual Watch) and can decode
- * its seed burst: battery save must not sleep through that ~0.2 s burst. */
-bool SCR_HOP_Watching(void);
+/* HOP is active: the radio receives or transmits on a HOP channel (with
+ * Dual/Full Watch, VFO A or B too), outside a scan. Battery save must not
+ * sleep through the ~0.2 s seed burst, MsgRx is turned ON (MSG_RF_Tick10ms())
+ * and VOX OFF (APP_Update()), both saved, and ACTION_Vox() and the menu
+ * refuse to change them meanwhile. APP_Update() recomputes it on every pass
+ * with SCR_HOP_UpdateWatching(); every other reader is a byte load. */
+static inline bool SCR_HOP_Watching(void)
+{
+    return gScrHop.watching;
+}
+bool SCR_HOP_UpdateWatching(void);
 
 #endif
 #endif
