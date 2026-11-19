@@ -17,11 +17,13 @@
 /* KLEANFW "HOP" voice scrambler.
  *
  * The BK4829 only offers spectrum inversion. HOP changes the inversion
- * carrier every HOP_SLOT_MS following XTEA(CryKey, seed || slot). The seed is
- * sent in a short FSK burst at the start of every PTT; both ends anchor the
- * slot clock to the end of the 8th burst byte, computed from the programmed
- * FSK timing (no bench calibration). Not encryption: it only defeats quick
- * decoding with a fixed-inversion scrambler. */
+ * carrier every HOP_SLOT_MS among 8 carriers spread over 2600..3500 Hz, in an
+ * order taken from XTEA(CryKey, seed || 16 s block) that keeps consecutive
+ * carriers far apart. A HOP channel always runs Wide (RADIO_GetFmBandwidth).
+ * The seed is sent in a short FSK burst at the start of every PTT; both ends
+ * anchor the slot clock to the end of the 8th burst byte, computed from the
+ * programmed FSK timing (no bench calibration). Not encryption: it only
+ * defeats quick decoding with a fixed-inversion scrambler. */
 #ifndef APP_SCR_HOP_H
 #define APP_SCR_HOP_H
 
@@ -42,6 +44,7 @@ typedef struct {
     uint8_t  stamp_ok;  /* stamp from the REG_0C spin (~1 ms), not a late sync */
     uint8_t  ref_idx;
     uint8_t  ref_ok;
+    uint8_t  rs_mute;   /* RX: audio output muted for a resync burst */
     int16_t  adj;       /* RX: TX/RX clock ratio - 1, Q16 (0 on TX)  */
     uint16_t slot;
     uint16_t idx;       /* TX: last resync burst sent                */

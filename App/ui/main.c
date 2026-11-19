@@ -26,6 +26,7 @@
 #include "app/chFrScanner.h"
 #include "app/dtmf.h"
 #include "app/main.h"
+#include "app/scr_hop.h"
 
 #ifdef ENABLE_FEAT_F4HWN_BEAM
     #include "app/beam.h"
@@ -2389,25 +2390,20 @@ void UI_DisplayMain(void)
 #endif
 
 #if ENABLE_FEAT_F4HWN
-        const uint8_t displayBandwidth = vfoInfo->CHANNEL_BANDWIDTH;
+        /* The bandwidth in use: N+ with SetNFM, and always W on a HOP
+         * channel (RADIO_GetFmBandwidth). */
+        const uint8_t displayBandwidth = RADIO_GetFmBandwidth(vfoInfo, false);
 
         #ifdef ENABLE_FEAT_F4HWN_NARROWER
-            bool narrower = 0;
-
-            if(displayBandwidth == BANDWIDTH_NARROW && gSetting_set_nfm == 1)
-            {
-                narrower = 1;
-            }
-
             if (gSetting_set_gui)
             {
                 const char *bandWidthNames[] = {"W", "N", "N+"};
-                UI_PrintStringSmallNormal(bandWidthNames[displayBandwidth + narrower], LCD_WIDTH + 80, 0, line + 1);
+                UI_PrintStringSmallNormal(bandWidthNames[displayBandwidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
-                GUI_DisplaySmallest(bandWidthNames[displayBandwidth + narrower], VFO_TINY_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(bandWidthNames[displayBandwidth], VFO_TINY_BANDWIDTH_X, line == 0 ? 17 : 49, false, true);
             }
         #else
             if (gSetting_set_gui)
@@ -2461,9 +2457,19 @@ void UI_DisplayMain(void)
 #ifdef ENABLE_GOGUFW_SCRAMBLER
             if (vfoInfo->SCRAMBLING_TYPE > 0 && gSetting_ScrambleEnable &&
                 vfoInfo->Modulation == MODULATION_FM)   // shown only where it applies
+            {
+#ifdef ENABLE_GOGUFW_CRYPTO
+                /* Inverted while a HOP session runs on this VFO: its seed
+                 * burst was received (RX) or sent (TX). */
+                const bool hop = gScrHop.active &&
+                                 vfoInfo == (gScrHop.rx ? gRxVfo : gCurrentVfo);
+#else
+                const bool hop = false;
+#endif
                 memcpy(policyLine + (gSetting_set_gui ? VFO_CLASSIC_SCR_ICON_X
                                                       : VFO_TINY_SCR_ICON_X),
-                       BITMAP_Scrambler, sizeof(BITMAP_Scrambler));
+                       BITMAP_Scrambler[hop], sizeof(BITMAP_Scrambler[0]));
+            }
 #endif
 
             /* FSK and Roger policy flags exist only on memory channels. */

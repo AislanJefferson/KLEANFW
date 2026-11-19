@@ -129,9 +129,9 @@ static void ACTION_OpenRfLog(void)
 #ifdef ENABLE_GOGUFW_SCRAMBLER
 #include "app/scr_hop.h"
 /* Toggle the scrambler of the current channel/VFO. Turning it off remembers
- * the type so the next press restores it. Defaults to HOP, whose carriers
- * follow the channel bandwidth (a fixed 3200 Hz loses the voice lows in
- * N/N+); builds without HOP use 3200 Hz (index 7 of gSubMenu_SCRAMBLER). */
+ * the type so the next press restores it. Defaults to HOP, which always runs
+ * Wide and so keeps the voice lows (a fixed 3200 Hz loses them in N/N+);
+ * builds without HOP use 3200 Hz (index 7 of gSubMenu_SCRAMBLER). */
 #ifdef ENABLE_GOGUFW_CRYPTO
 #define SCRAMBLE_DEFAULT_TYPE SCRAMBLE_TYPE_HOP
 #else
@@ -905,6 +905,16 @@ void ACTION_Wn(void)
     const bool isRx = FUNCTION_IsRx();
     VFO_Info_t *pVfo = isRx ? gRxVfo : gTxVfo;
 
+#ifdef ENABLE_GOGUFW_CRYPTO
+    /* A HOP channel always runs Wide (RADIO_GetFmBandwidth): the key would
+     * only flip the stored W/N, which a later channel save would keep.
+     * Refuse with the double beep, like SCRAMBLE on AM. */
+    if (SCR_HOP_VfoUsesHop(pVfo)) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+#endif
+
     pVfo->CHANNEL_BANDWIDTH = !pVfo->CHANNEL_BANDWIDTH;
 
     if (pVfo->Modulation == MODULATION_AM)
@@ -913,19 +923,11 @@ void ACTION_Wn(void)
         return;
     }
 
-    uint8_t bw = pVfo->CHANNEL_BANDWIDTH;
-
-    #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        if (bw == BANDWIDTH_NARROW && gSetting_set_nfm == 1)   // RX and TX alike
-        {
-            bw++; 
-        }
-    #endif
-
+    // RX and TX alike: N is N+ with SetNFM
     #ifdef ENABLE_AM_FIX
-        BK4819_SetFilterBandwidth(bw, true);
+        BK4819_SetFilterBandwidth(RADIO_GetFmBandwidth(pVfo, false), true);
     #else
-        BK4819_SetFilterBandwidth(bw, false);
+        BK4819_SetFilterBandwidth(RADIO_GetFmBandwidth(pVfo, false), false);
     #endif
 }
 

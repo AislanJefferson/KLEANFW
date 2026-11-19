@@ -3,6 +3,64 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+HOP, tested between two radios: the receiver syncs on every over and
+decodes the voice, and a resync is a short silence at 8 s and then every
+16 s. A HOP channel always runs Wide and its carriers hop far apart across
+2600-3500 Hz. Not compatible with the HOP of 0.1.4 and earlier: every
+radio of a group needs this version. Image 120,748 / 120,832 bytes
+(84 bytes free); RAM 15,640 / 16,384 bytes at link time.
+
+### Added
+
+- HOP: the scrambler icon on the VFO line is drawn inverted while a HOP
+  session runs on that VFO (seed burst received on RX, sent on TX). A plain
+  icon means HOP is set but not in step (+64 B).
+
+### Changed
+
+- HOP always runs Wide. While a channel's scrambler is HOP (FM), TX and RX
+  use the Wide filter whatever its W/N or SetNFM, so both ends of a HOP
+  link always match. The screen shows W. The stored W/N is not changed and
+  applies again when HOP is turned off. The W/N side key gives the double
+  beep on a HOP channel (silent with Beep OFF). Messenger frames and the
+  HOP seed burst still go out with the narrow deviation (+4 B). The W/N key
+  and the W label were not checked separately on the radio.
+- HOP carriers hop far apart. They were 16 carriers 33 Hz apart in a
+  500 Hz window per bandwidth, drawn at random every slot. Now there are 8
+  carriers over the whole 2600-3500 Hz the chip allows. Every carrier is
+  used once every 4 s, and the next carrier is at least 386 Hz away
+  (257 Hz two slots later). A radio with a fixed scrambler near a HOP
+  carrier used to hear long stretches nearly clear. Simulation with an
+  assumed intelligibility curve (clear up to 50 Hz off, lost from 300 Hz),
+  best fixed setting: mean intelligibility about 0.65 → 0.34, time with 1 s
+  of clear speech in a row 48 % → about 1 % (-32 B).
+- HOP resyncs: the seed burst is sent at 0 s and repeated at 0.5 s, then
+  resent at 8 s and every 16 s after that (24 s, 40 s...). Each resync cuts
+  the voice for ~0.3 s; the 8 s one measures the clock drift between the
+  radios early. A receiver that joins mid-over waits up to 16 s. The
+  carrier blocks start at the resyncs. Wait about 1 s after PTT before
+  talking (+52 B with the repeat below).
+
+### Fixed
+
+- HOP never decoded between two radios: the seed and resync bursts were
+  transmitted with the AF TX mute (REG_50<15>) on, unlike every other FSK
+  and tone TX in the firmware (Messenger, AirCopy, MDC, DTMF, roger), which
+  go on air with the mute off and keep the mic out through REG_30. The
+  receiver never opened a HOP session, although the Messenger and the fixed
+  scrambler worked between the same radios. The burst now follows the same
+  pattern as the other tones (+28 B).
+- HOP: a receiver could miss the single seed burst (randomly, also on the
+  first over after power-on) and stay scrambled until the next resync. The
+  burst is now repeated at 0.5 s, so it joins before the voice.
+- HOP: every resync was heard as a short cut with a whistle: the receiver,
+  already in step, played the data burst through its descrambler until the
+  Messenger muted it. The receiver now mutes its audio output for the first
+  320 ms of each resync slot, while the transmitter sends no voice, so the
+  resync is a short clean silence (+68 B).
+
 ## KLEANFW 0.1.4 — 2026-11-18
 
 The EEPROM layout is the same as 0.1.3 (only the D Prel range of the CHIRP

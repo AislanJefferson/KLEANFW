@@ -32,5 +32,7 @@ void MSG_RF_OnVoxModeChanged(bool enabled);
 void MSG_RF_OnRadioSetupRegisters(void);
 bool MSG_RF_RxChannelLockActive(void);
 bool MSG_RF_TransactionActive(void);
+/* The Messenger narrow-lock owns the VFO bandwidth for an FSK frame. */
+bool MSG_RF_NarrowLockActive(void);
 
 #endif

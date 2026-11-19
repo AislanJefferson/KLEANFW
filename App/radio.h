@@ -170,6 +170,10 @@ void     RADIO_ApplyScramble(const VFO_Info_t *pVfo, bool tx);
     void RADIO_ConfigureNOAA(void);
 #endif
 BK4819_FilterBandwidth_t RADIO_GetAMFilterBandwidth(const VFO_Info_t *pVfo);
+/* FM filter a VFO really uses: its W/N (N is N+ with SetNFM), except that a
+ * HOP channel always runs Wide, so both ends of a HOP link match. Only a TX
+ * setup (tx) defers to the Messenger narrow-lock (FSK frame on HOP). */
+BK4819_FilterBandwidth_t RADIO_GetFmBandwidth(const VFO_Info_t *pVfo, bool tx);
 void     RADIO_SetTxParameters(void);
 void     RADIO_PrepareTx(void);
 void     RADIO_SetupAGC(bool listeningAM, bool disable);
