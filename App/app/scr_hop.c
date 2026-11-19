@@ -34,13 +34,14 @@
 /* Burst check salt, bumped with each incompatible change so radios with an
  * older HOP reject the burst as a wrong CryKey instead of hopping wrongly:
  * 0x48505351 16 carriers, 0x48505352 8 far carriers, 0x48505353 adds the
- * slot-1 repeat (resync_ms()). */
-#define HOP_CHECK_N    0x48505353u
+ * slot-1 repeat, 0x48505354 resyncs at 8 s then every 16 s (resync_ms()). */
+#define HOP_CHECK_N    0x48505354u
 #define HOP_SLOT_MS    500u
 /* Burst idx ends its 8th byte at t0 + resync_ms(idx) + HOP_POS_MS: mid-slot,
  * away from hop boundaries. The TX never moves t0, so a receiver that misses
  * a resync stays aligned. */
-#define HOP_RESYNC_MS  8000u
+#define HOP_RESYNC1_MS 8000u    /* first full resync: drift measured early */
+#define HOP_RESYNC_MS  16000u   /* then one every HOP_RESYNC_MS */
 #define HOP_POS_MS     290u
 /* RX keeps hopping through fades: stop only after this long without RX. */
 #define HOP_HANG_MS    2000u
@@ -73,10 +74,12 @@ void SCR_HOP_Reset(void)
 /* Resync k starts at resync_ms(k) on the TX slot clock: the seed burst is
  * repeated at slot 1 (the UV-K1 FSK RX can miss a lone frame, as the
  * Messenger PING repeat notes), so a receiver that missed the first one
- * still joins before the voice; then every HOP_RESYNC_MS as before. */
+ * still joins before the voice. The first full resync comes at 8 s, so the
+ * clock drift is measured early, then one every HOP_RESYNC_MS (each costs a
+ * ~0.3 s mic cut): resync slots 1, 16, 48, 80... */
 static uint32_t resync_ms(uint32_t k)
 {
-    return k < 2u ? k * HOP_SLOT_MS : (k - 1u) * HOP_RESYNC_MS;
+    return k < 2u ? k * HOP_SLOT_MS : HOP_RESYNC1_MS + (k - 2u) * HOP_RESYNC_MS;
 }
 
 static uint16_t carrier(uint32_t seed, uint32_t slot)
@@ -86,15 +89,16 @@ static uint16_t carrier(uint32_t seed, uint32_t slot)
      * so even the top carrier keeps the voice above 500 Hz.
      *
      * A fixed-carrier scrambler understands the slots near its own carrier,
-     * so hops must land far apart. Each block of 16 slots (one resync
-     * interval, so a late receiver joins at a block start) takes the carriers
-     * in the order D + S * slot (mod 8), with D and the stride S (3 or 5)
-     * from XTEA(CryKey, seed || block). Within a block every carrier is used
-     * twice, and the carrier 1, 2 and 3 slots later is at least 3, 2 and
-     * 1 carriers away (386, 257 and 129 Hz). The jump into a new block is
-     * free, but that slot carries little voice: the resync burst mutes its
-     * first ~0.3 s. */
-    const uint32_t r = CRYPTO_Word(seed, slot >> 4);
+     * so hops must land far apart. Blocks start at the full resyncs (block
+     * 0 is slots 0-15, then 32 slots from slots 16, 48, 80...), so a late
+     * receiver joins at a block start. Each takes the carriers in the order
+     * D + S * slot (mod 8), with D and the stride S (3 or 5) from
+     * XTEA(CryKey, seed || block); blocks start on multiples of 8 slots. Each
+     * carrier is used once every 8 slots, and the carrier 1, 2 and 3 slots
+     * later is at least 3, 2 and 1 carriers away (386, 257 and 129 Hz). The
+     * jump into a new block is free, but that slot carries little voice: the
+     * resync burst mutes its first ~0.3 s. */
+    const uint32_t r = CRYPTO_Word(seed, (slot + 16u) >> 5);
     return (uint16_t)(0x68DCu + ((r + (3u + ((r >> 2) & 2u)) * slot) & 7u) * 1327u);
 }
 
@@ -357,11 +361,11 @@ void SCR_HOP_Tick(void)
     if (BK4819_ReadRegister(BK4819_REG_31) & (1u << 1))
         BK4819_WriteRegister(BK4819_REG_71, carrier(gScrHop.seed, gScrHop.slot));
     if (gScrHop.rx) {
-        /* Resync slot (slot 1, then every 16th, see resync_ms()): the TX cuts
+        /* Resync slot (1, 16, 48, 80..., see resync_ms()): the TX cuts
          * its mic and sends the burst, which the descrambler would play as a
          * whistle. Mute the audio output (REG_47, not the REG_48 gain that the
          * guard and the Messenger save and restore) until HOP_RS_MUTE_MS. */
-        if (gScrHop.slot == 1u || !(gScrHop.slot & 15u)) {
+        if (gScrHop.slot == 1u || (gScrHop.slot & 31u) == 16u) {
             gScrHop.rs_mute = 1;
             BK4819_SetAF(BK4819_AF_MUTE);
         }
