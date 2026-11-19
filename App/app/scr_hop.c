@@ -147,16 +147,10 @@ void SCR_HOP_TxBurst(uint16_t idx)
     }
     BK4819_EnterTxMute();   // silent setup, as the tone routines do
     BK4819_DisableScramble();
-    /* HOP voice always runs Wide (RADIO_GetFmBandwidth). Same narrow-lock as
-     * Messenger FSK TX: the burst goes out with Narrow (N+: Narrower)
-     * deviation, the proven decode path for Wide, Narrow and Narrower
-     * receivers alike. */
-    BK4819_FilterBandwidth_t bw = BK4819_FILTER_BW_NARROW;
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (gSetting_set_nfm == 1)
-        bw = BK4819_FILTER_BW_NARROWER;
-#endif
-    BK4819_SetFilterBandwidth(bw, false);
+    /* HOP voice always runs Wide (RADIO_GetFmBandwidth), and so does every HOP
+     * receiver. The burst goes out with Narrow deviation even with SetNFM:
+     * N+ halves it, and the weaker FSK was missed on weak or noisy signals. */
+    BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROW, false);
     BK4819_SetupAircopy();
     /* TX DSP on, mic ADC off: the burst carries the FSK tone only. This, not
      * the AF TX mute, is how every tone in the firmware leaves the mic out. */
@@ -329,8 +323,17 @@ void SCR_HOP_Tick(void)
     }
     wait_until(boundary);
     gScrHop.slot = (uint16_t)(elapsed() / HOP_SLOT_MS);
+    /* A block start carries the resync burst: the TX has its mic out and its
+     * scrambler off, so the RX takes the burst unscrambled, as at the start
+     * of the over. An accepted resync (start()) or the next slot switches the
+     * descrambler back on. */
+    const uint8_t pos = gScrHop.slot & 15u;
+    if (gScrHop.rx && pos == 0u)
+        BK4819_DisableScramble();
+    else if (gScrHop.rx && pos == 1u)
+        SCR_HOP_Apply(false);
     /* Scrambler off means DTMF/beep owns REG_71 (tone generator): leave it. */
-    if (BK4819_ReadRegister(BK4819_REG_31) & (1u << 1))
+    else if (BK4819_ReadRegister(BK4819_REG_31) & (1u << 1))
         BK4819_WriteRegister(BK4819_REG_71, carrier(gScrHop.seed, gScrHop.slot));
     if (gScrHop.rx) {
         wait_until(boundary + HOP_GUARD_MS);

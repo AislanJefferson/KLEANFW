@@ -1894,9 +1894,12 @@ void MSG_RF_OnRadioInterrupt(uint16_t status)
 #ifdef ENABLE_GOGUFW_CRYPTO
         if (gScrHop.rx_wait) {
             gScrHop.rx_wait = 0;
-            if (s_rx_words == 4u && SCR_HOP_RxStart(g_FSK_Buffer, gScrHop.stamp,
-                                                     gScrHop.stamp_ok)) {
-                /* Seed burst: drop the capture and give the audio back. */
+            const bool hop = s_rx_words == 4u &&
+                             SCR_HOP_RxStart(g_FSK_Buffer, gScrHop.stamp, gScrHop.stamp_ok);
+            /* Seed burst, or neither a burst nor a Messenger frame (noise, a
+             * damaged resync): drop the capture and give the audio back, so
+             * a bad frame never mutes the rest of a HOP over. */
+            if (hop || g_FSK_Buffer[0] != 0xABCDu) {
                 s_rx_capture_active = false;
                 s_rx_stale_ticks = 0;
                 s_rx_words = 0;
@@ -1907,8 +1910,7 @@ void MSG_RF_OnRadioInterrupt(uint16_t status)
                 MSG_RF_RestoreFskAudioMute();
                 return;
             }
-            if (g_FSK_Buffer[0] == 0xABCDu)
-                MSG_RF_FskSyncHoldStart(gEeprom.RX_VFO);
+            MSG_RF_FskSyncHoldStart(gEeprom.RX_VFO);
         }
 #endif
     }
