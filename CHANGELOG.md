@@ -3,7 +3,10 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.1.4 — 2026-11-18
+
+The EEPROM layout is the same as 0.1.3 (only the D Prel range of the CHIRP
+module changed), and the apps are built from the same sources.
 
 Menu audit: every entry of the M menu was checked against its limits,
 load/save, drawing and run-time consumer. None is orphaned; the fixes below
