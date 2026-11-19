@@ -3,10 +3,14 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.2.1 — 2026-11-19
 
-Image 120,816 / 120,832 bytes (16 bytes free); RAM 15,640 / 16,384 bytes at
-link time. Not radio-tested yet.
+HOP sets up its receiver by itself: MsgRx ON and VOX OFF while HOP is
+active. The EEPROM layout is the same as 0.2.0, the apps are byte-identical
+to those of 0.2.0, and HOP works between 0.2.0 and 0.2.1 radios (a 0.2.0
+receiver still needs MsgRx ON and VOX OFF set by hand). Image 120,816 /
+120,832 bytes (16 bytes free); RAM 15,640 / 16,384 bytes at link time.
+Checked by code review and builds only, not radio-tested yet.
 
 ### Changed
 

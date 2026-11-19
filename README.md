@@ -38,7 +38,7 @@ direction:
 **Talk**
 - **HOP voice scrambler.** The inversion carrier changes every 500 ms in a
   sequence derived from the CryKey. A short data burst at each PTT keeps
-  receivers in step, and late listeners catch up within 8 s.
+  receivers in step, and late listeners catch up within 16 s.
 - **Fixed scrambler** (2600–3500 Hz) for radios that only know classic
   inversion. Both scramblers work on FM only.
 - **CALLTX.** Five call melodies sent over the air with F+9.
@@ -83,9 +83,9 @@ direction:
 
    | File | What it is for |
    | --- | --- |
-   | `KLEANFW-v0.2.0.bin` | The firmware |
-   | `KLEANFW-v0.2.0-multiboot.bin` | The same image, named for a multiboot slot |
-   | `KLEANFW_0.2.0_chirp_module.py` | CHIRP module for this version |
+   | `KLEANFW-v0.2.1.bin` | The firmware |
+   | `KLEANFW-v0.2.1-multiboot.bin` | The same image, named for a multiboot slot |
+   | `KLEANFW_0.2.1_chirp_module.py` | CHIRP module for this version |
    | `FM-Search-Apps.zip` | `FMVFO.app`, `FMMemory.app` and `Search.app` |
    | `Apps.zip` | Every other overlay app (Beam is not supported) |
    | `SHA256SUMS.txt` | Checksums to verify the downloads |
@@ -127,7 +127,8 @@ On **every** radio of the group:
 1. **MENU → Msg → CryKey**: type the same passphrase, up to 10 characters
    (case sensitive).
 2. On the channel you will use: **Channels → Scramb = HOP**, FM modulation.
-3. Keep **MsgRx ON** and **VOX OFF**, and do not scan while you listen.
+3. Do not scan while you listen. While HOP is active the radio sets
+   **MsgRx ON** and **VOX OFF** by itself.
 
 After pressing PTT, wait a moment before talking, because the first quarter of
 a second carries the sync burst. A soft tick every half second on receive is
@@ -148,10 +149,10 @@ default HOP sequence.
 
 - **Messenger** still talks to GOGUFW radios in plain text. Encrypted text only
   works between KLEANFW radios with the same CryKey; GOGUFW rejects it.
-- **CHIRP** needs `KLEANFW_0.2.0_chirp_module.py`. Over USB, CHIRP and UV Studio
+- **CHIRP** needs `KLEANFW_0.2.1_chirp_module.py`. Over USB, CHIRP and UV Studio
   read the host identity `v7 GGFW v6.3.0`, which UV Studio uses to choose the
   app catalog. The radio itself, SystemInfo and multiboot show
-  `KLEANFW v0.2.0`.
+  `KLEANFW v0.2.1`.
 - **Apps** use the same official F4HWN API 4 as GOGUFW 3.6.x, so your
   installed apps keep working. The CryKey of the old `Crypto.app` test builds
   must be typed again in the menu.
@@ -173,7 +174,7 @@ start:
 - [Troubleshooting](MANUAL.md#28-solução-de-problemas) and
   [legal notices](MANUAL.md#30-avisos-legais-e-licenças)
 
-Release notes: [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md).
+Release notes: [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md).
 
 ## Build
 
@@ -192,14 +193,14 @@ cmake --build --preset Fusion
 ```
 
 The image must stay within **120,832 bytes**, including the 920-byte
-multiboot loader. Release 0.2.0 uses 120,748 bytes, leaving 84 bytes free, so
+multiboot loader. Release 0.2.1 uses 120,816 bytes, leaving 16 bytes free, so
 every change is measured. Setup guides:
 [BUILD_WITH_VSCODE.md](BUILD_WITH_VSCODE.md) (Docker) and
 [BUILD_VSCODE_MAC.md](BUILD_VSCODE_MAC.md) (native, macOS).
 
 ## Status and feedback
 
-0.2.0 is the current KLEANFW release. Open questions, such as STE on strong
+0.2.1 is the current KLEANFW release. Open questions, such as STE on strong
 repeaters and HOP timing under heavy load, are listed under *Known issues* in
 the [CHANGELOG](CHANGELOG.md). Report bugs in
 [GitHub Issues](https://github.com/AislanJefferson/KLEANFW/issues) with the
