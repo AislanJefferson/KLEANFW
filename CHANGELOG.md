@@ -25,8 +25,8 @@ radio of a group needs this version. Image 120,748 / 120,832 bytes
   link always match. The screen shows W. The stored W/N is not changed and
   applies again when HOP is turned off. The W/N side key gives the double
   beep on a HOP channel (silent with Beep OFF). Messenger frames and the
-  HOP seed burst still go out with the narrow deviation (+4 B). The W/N key
-  and the W label were not checked separately on the radio.
+  HOP seed burst still go out with the narrow deviation (+4 B). Radio test:
+  the W/N key refusal and the W label on a HOP channel checked.
 - HOP carriers hop far apart. They were 16 carriers 33 Hz apart in a
   500 Hz window per bandwidth, drawn at random every slot. Now there are 8
   carriers over the whole 2600-3500 Hz the chip allows. Every carrier is
