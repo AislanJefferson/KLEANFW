@@ -171,7 +171,7 @@ Com `SetTmr = ON` (padrão), o cronômetro de RX/TX ocupa o lugar de `MO`/`XB`/`
 | **Segurar F** | Bloqueia / desbloqueia o teclado |
 | **Segurar 0–4, 6** | Mesmo efeito de F + tecla |
 | **Segurar 5** | MR: muda a lista de scan do canal · VFO: liga/desliga a faixa de scan entre VFO A e B |
-| **Segurar 7** | Liga / desliga o **VOX** |
+| **Segurar 7** | Liga / desliga o **VOX** (com o HOP ativo, bipe duplo) |
 | **Segurar 8** | **Reverse** (troca as frequências de RX e TX) |
 | **Segurar 9** | Vai para o canal **1 Call** |
 | **Segurar \*** | Inicia o **scan** |
@@ -647,7 +647,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: 1:4.
 - **Quando mudar**: `OFF` ou `1:1` quando o início das transmissões não pode ser perdido (o receptor dormindo pode cortar a primeira sílaba). Valores altos servem para escuta longa.
 - **Atenção**: durante o sono do receptor aparece um ícone na barra de status.
-- **Atenção**: enquanto o receptor escuta um canal **HOP** (com `MsgRx` ON e `VOX` OFF; com Dual Watch, qualquer um dos dois VFOs), o BatSav fica suspenso, como em `OFF`, para não perder o burst de ~0,2 s do início do câmbio, inclusive com a tela apagada pelo `SetOff`. Nos outros canais a economia funciona normalmente.
+- **Atenção**: enquanto o **HOP** está ativo (seção 12.3: canal em escuta ou de TX em HOP; com Dual/Full Watch, também o VFO A ou B), o BatSav fica suspenso, como em `OFF`, para não perder o burst de ~0,2 s do início do câmbio, inclusive com a tela apagada pelo `SetOff`. Em Cross Band isso vale também com só o canal de TX em HOP. Nos outros casos a economia funciona normalmente.
 
 #### `BatTxt`: texto da bateria
 
@@ -903,7 +903,9 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Opções**: `OFF` ou um nível de 1 a 10, que define o volume de voz que dispara o TX. Os limites vêm da calibração do rádio.
 - **Padrão**: OFF.
 - **Quando mudar**: uso com as mãos ocupadas e fone com microfone. Teste alguns níveis até achar um que dispara com a sua voz e não com o ruído do ambiente.
-- **Atenção**: com o VOX ligado aparece `VOX` na barra de status. A ação **VOX** liga e desliga.
+- **Atenção**:
+  - Com o VOX ligado aparece `VOX` na barra de status. A ação **VOX** (ou segurar 7) liga e desliga.
+  - Enquanto o **HOP** está ativo (seção 12.3), o rádio desliga o VOX e grava `OFF`: com VOX ligado o receptor não lê o burst do HOP. Nesse tempo o menu e a ação **VOX** dão bipe duplo (mudo com `Beep` OFF). Ao sair do HOP o VOX continua `OFF`; religue se quiser.
 
 #### `RxMode`: modo de recepção
 
@@ -964,7 +966,9 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Opções**: `OFF`, `ON`.
 - **Padrão**: ON.
 - **Quando mudar**: desligue só se você nunca usa o Messenger e quer o rádio 100% dedicado à voz.
-- **Atenção**: também é necessário para receber ACK, para responder PING (PONG) e para o **HOP** no RX. Com `OFF`, nada disso funciona.
+- **Atenção**:
+  - Também é necessário para receber ACK, para responder PING (PONG) e para o **HOP** no RX. Com `OFF`, nada disso funciona.
+  - Enquanto o **HOP** está ativo (seção 12.3), o rádio liga o MsgRx e grava `ON`; o menu dá bipe duplo (mudo com `Beep` OFF) em vez de deixar desligar. Ao sair do HOP o MsgRx continua `ON`: o rádio volta a receber mensagens e, com `MsgAck` ou `RngRsp` ON, a responder ACK e PONG em qualquer canal. Desligue de novo se quiser.
 
 #### `MsgAck`: confirmação de entrega
 
@@ -1029,7 +1033,7 @@ Configure em **Keys → F1Shrt, F1Long, F2Shrt, F2Long, M Long** (ou pelo CHIRP)
 | **POWER** | Avança a potência (LOW1 → HIGH) e salva no canal |
 | **MONITOR** | Abre/fecha o squelch |
 | **SCAN** | Inicia o scan · durante o scan de memória, troca de lista |
-| **VOX** | Liga/desliga o VOX |
+| **VOX** | Liga/desliga o VOX. Com o HOP ativo dá bipe duplo, mudo com `Beep` OFF, e não muda nada |
 | **FM RADIO** | Abre o rádio FM (igual a F+0) |
 | **LOCK KEYPAD** | Bloqueia/desbloqueia o teclado |
 | **VFO A VFO B** | Alterna VFO A / B |
@@ -1140,7 +1144,7 @@ A tela de leitura mostra `ACK: ID1 ID2 ID3` com quem confirmou.
 
 ### 9.5 Como a recepção funciona
 
-- Requer **MsgRx = ON** e **VOX = OFF**.
+- Requer **MsgRx = ON** e **VOX = OFF** (com o HOP ativo o rádio ajusta os dois sozinho).
 - O áudio fica abafado durante o quadro FSK.
 - Mensagens duplicadas (mesmo remetente e ID) não entram de novo no Inbox, mas o ACK é reenviado.
 - O ACK sai com atraso aleatório de 0,8 a 3 s, para evitar colisão entre vários rádios.
@@ -1280,6 +1284,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 **Como funciona:**
 
 - Enquanto o HOP está ativo, o canal opera sempre em **WIDE** (25 kHz) no TX e no RX, seja qual for o `W/N` do canal ou o `SetNFM`. Assim os dois lados sempre usam o mesmo filtro. Na tela aparece `W`. O `W/N` gravado não muda e volta a valer quando o HOP é desligado. A ação **WIDE NARROW** dá bipe duplo num canal HOP. As mensagens do Messenger e o burst continuam saindo com o desvio estreito de sempre.
+- O burst é lido pelo receptor do Messenger, que `MsgRx = OFF` ou `VOX` ligado desligam. Por isso, enquanto o HOP está ativo, o rádio põe **`MsgRx = ON`** e **`VOX = OFF`** e grava os dois, assim que estiver parado (fora de RX e TX). O HOP está ativo quando o canal em escuta ou o de TX está em HOP (com Dual/Full Watch, também o VFO A ou B), fora de scan. Nesse tempo o menu (`MsgRx`, `VOX`) e a ação **VOX** dão bipe duplo (mudo com `Beep` OFF). Ao sair do HOP os dois continuam assim; mude de novo se quiser.
 - A cada PTT, o rádio envia a semente num curto **burst FSK** (cerca de 0,25 s) e o repete 0,5 s depois, porque o receptor FSK do UV-K1 às vezes perde um quadro isolado. Quem perdeu o primeiro sincroniza no segundo. O microfone fica mudo até o fim do segundo burst: **espere cerca de 1 s depois de apertar o PTT antes de falar**.
 - A portadora salta entre **8 valores de 2600 a 3500 Hz** (128,6 Hz entre eles), a faixa inteira que o chip permite.
 - A ordem é escolhida para ficar longe de um scrambler fixo: cada valor sai uma vez a cada 4 s, e a portadora seguinte fica a pelo menos 386 Hz da anterior (257 Hz dois slots depois), exceto na troca de bloco, que cai num resync silenciado. Um rádio com scrambler fixo, em qualquer valor, passa a pegar em geral só trechos curtos e soltos de fala, em vez dos longos trechos quase claros de antes.
@@ -1292,8 +1297,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 
 **Requisitos no receptor:**
 
-- canal de RX também em **Scramb = HOP**;
-- **MsgRx = ON** e **VOX = OFF**;
+- canal de RX também em **Scramb = HOP** (o rádio então põe `MsgRx = ON` e `VOX = OFF` sozinho);
 - mesma CryKey (ou nenhuma nos dois);
 - **mesma versão do HOP**: rádios com firmware anterior a esta mudança usam outra sequência e não decodificam (o burst é recusado como CryKey diferente);
 - não estar em scan.
@@ -1788,7 +1792,7 @@ O módulo CHIRP é licenciado pela GNU GPL v2 ou posterior (`LICENSE-GPL-2.0.txt
 - **Leia ou anote mensagens importantes antes de desligar**: Inbox e Sent não sobrevivem a desligar o rádio.
 - **Use os rascunhos** para mensagens frequentes: editar e enviar um rascunho é mais rápido que digitar.
 - **Confira o `TO:`** no rodapé antes de enviar: a mensagem vai para o canal exibido.
-- **Evite VOX** em rádios que precisam receber mensagens: VOX ligado desativa o RX do Messenger e do HOP.
+- **Evite VOX** em rádios que precisam receber mensagens: VOX ligado desativa o RX do Messenger. Num canal HOP o rádio desliga o VOX sozinho.
 - **Use FM**: o Messenger não transmite em AM/USB.
 - **Grupos grandes**: os atrasos aleatórios de ACK e PONG reduzem colisões, mas evite enviar várias mensagens seguidas sem esperar o ciclo de ACK (até cerca de 12 s).
 
@@ -1883,7 +1887,7 @@ A memória Flash do rádio suporta um número limitado de apagamentos por setor.
 | Última configuração não ficou salva | Rádio desligado menos de 2 s após a mudança | Espere cerca de 2 s antes de desligar |
 | Áudio picota e o LED verde apaga num sinal forte de repetidora | `STE` ON detectando em falso o fim de transmissão | Use `STE` OFF nesse canal (e `RP STE` para a cauda da repetidora) |
 | Tons/offset sumiram ao digitar uma frequência | Frequência digitada entra em simplex limpo | Configure tons e offset depois de digitar, ou use F+1 a partir de um canal |
-| HOP sai embaralhado | Receptor perdeu o burst, VOX ON ou MsgRx OFF | Confira os requisitos da seção 12.3 e espere o próximo resync (até 16 s) |
+| HOP sai embaralhado | Receptor perdeu o burst (entrou no meio do câmbio), ou entrou no canal HOP durante um câmbio com MsgRx OFF ou VOX ON gravados (o rádio só os ajusta quando o RX acaba) | Confira os requisitos da seção 12.3 e espere o próximo resync (até 16 s) |
 | HOP sai mudo (ou embaralhado) o câmbio todo | CryKey diferente, firmware de versão anterior em um dos rádios (outra sequência de HOP), ou canal do receptor fora de HOP (Scramb ≠ HOP ou ScraEn OFF) com MsgRx ON: o burst é tratado como mensagem e o áudio costuma ficar mudo até o sinal acabar (com CTCSS/DCS no receptor pode sair embaralhado) | Use a mesma CryKey, a mesma versão do firmware e Scramb = HOP no canal de RX |
 | Início da fala cortado no HOP | Mic mudo durante os dois bursts do início | Espere cerca de 1 s após o PTT |
 | F+0 só dá bipe duplo | Faltam `FMVFO.app` / `FMMemory.app` | Instale os dois |

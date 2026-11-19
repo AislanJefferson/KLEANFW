@@ -3,6 +3,27 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+Image 120,816 / 120,832 bytes (16 bytes free); RAM 15,640 / 16,384 bytes at
+link time. Not radio-tested yet.
+
+### Changed
+
+- HOP turns MsgRx ON and VOX OFF by itself. The receiver reads the seed
+  and resync bursts through the Messenger FSK receiver, which MsgRx OFF or
+  VOX ON keep off (a two-radio test once failed only because MsgRx was
+  OFF). While HOP is active (the channel being received or transmitted on
+  is HOP, or VFO A or B with Dual/Full Watch, outside a scan), the radio
+  sets MsgRx = ON and VOX = OFF and saves them as soon as it is idle (no
+  RX or TX). Meanwhile the MsgRx and VOX menus and the VOX action (side
+  key, hold 7) refuse with the double beep (silent with Beep OFF). Both
+  stay so after HOP is off. Battery save now also stays awake in Cross
+  Band when only the TX channel is HOP. Flash wear: a forced MsgRx costs
+  one deferred sector erase, a forced VOX OFF none (+100 B).
+- Image size, no behaviour change: entering VOX reuses the Messenger hard
+  restore, the same sequence with the same final state (-32 B).
+
 ## KLEANFW 0.2.0 — 2026-11-19
 
 This 0.2.0 has no relation to the 0.2.0 withdrawn on 2026-11-14; it is
