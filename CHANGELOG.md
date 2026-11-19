@@ -3,7 +3,11 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.2.0 — 2026-11-19
+
+This 0.2.0 has no relation to the 0.2.0 withdrawn on 2026-11-14; it is
+built on 0.1.4. The EEPROM layout is the same as 0.1.4, and the apps are
+byte-identical to those of 0.1.4.
 
 HOP, tested between two radios: the receiver syncs on every over and
 decodes the voice, and a resync is a short silence at 8 s and then every
