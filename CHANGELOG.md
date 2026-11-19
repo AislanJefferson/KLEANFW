@@ -111,9 +111,9 @@ which are not radio-tested yet.
   HOP seed burst still go out with the narrow deviation (+4 B).
 - HOP carriers hop far apart. They were 16 carriers 33 Hz apart in a
   500 Hz window per bandwidth, drawn at random every slot. Now there are 8
-  carriers over the whole 2600-3500 Hz the chip allows. In each 8 s block
-  every carrier is used twice, and the next carrier is at least 386 Hz
-  away (257 Hz two slots later). A radio with a fixed scrambler near a HOP
+  carriers over the whole 2600-3500 Hz the chip allows. Every carrier is
+  used once every 4 s, and the next carrier is at least 386 Hz away
+  (257 Hz two slots later). A radio with a fixed scrambler near a HOP
   carrier used to hear long stretches nearly clear. Simulation with an
   assumed intelligibility curve (clear up to 50 Hz off, lost from 300 Hz),
   best fixed setting: mean intelligibility about 0.65 → 0.34, time with 1 s
