@@ -1283,7 +1283,7 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 - A cada PTT, o rádio envia a semente num curto **burst FSK** (cerca de 0,25 s) e o repete 0,5 s depois, porque o receptor FSK do UV-K1 às vezes perde um quadro isolado. Quem perdeu o primeiro sincroniza no segundo. O microfone fica mudo até o fim do segundo burst: **espere cerca de 1 s depois de apertar o PTT antes de falar**.
 - A portadora salta entre **8 valores de 2600 a 3500 Hz** (128,6 Hz entre eles), a faixa inteira que o chip permite.
 - A ordem é escolhida para ficar longe de um scrambler fixo: dentro de cada bloco de 8 s, cada valor sai 2 vezes, e a portadora seguinte fica a pelo menos 386 Hz da anterior (257 Hz dois slots depois). Um rádio com scrambler fixo, em qualquer valor, passa a pegar em geral só trechos curtos e soltos de fala, em vez dos longos trechos quase claros de antes.
-- A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um.
+- A cada **8 s** de TX, um novo burst ressincroniza os receptores. O microfone fica mudo cerca de 0,3 s em cada um, e o receptor fica em silêncio nesse instante (em vez de tocar o tom de dados).
 - No RX, um leve "tique" a cada 0,5 s é normal (o áudio é silenciado ±8 ms em cada troca).
 - O receptor tolera desvanecimentos: a sessão só termina 2 s após o último sinal.
 - **Sincronismo na tela**: o ícone de onda dupla fica **invertido** enquanto a sessão HOP está ativa naquele VFO. No RX isso significa que o burst foi recebido e conferido; no TX, que foi enviado. Com o ícone normal num câmbio HOP, o receptor não sincronizou: confira os requisitos abaixo e espere o próximo resync (8 s).
