@@ -44,6 +44,7 @@ typedef struct {
     uint8_t  stamp_ok;  /* stamp from the REG_0C spin (~1 ms), not a late sync */
     uint8_t  ref_idx;
     uint8_t  ref_ok;
+    uint8_t  rs_mute;   /* RX: audio output muted for a resync burst */
     int16_t  adj;       /* RX: TX/RX clock ratio - 1, Q16 (0 on TX)  */
     uint16_t slot;
     uint16_t idx;       /* TX: last resync burst sent                */

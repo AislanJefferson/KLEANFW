@@ -53,6 +53,9 @@
 #define HOP_ANCHOR_MS  (((16u + 4u + 8u) * 20u + 1u) / 3u)
 /* Whole burst on air: preamble + sync + 8 data + 2 CRC bytes. */
 #define HOP_BURST_MS   (((16u + 4u + 8u + 2u) * 20u + 2u) / 3u)
+/* RX audio output stays muted this long into a resync slot: the TX sends no
+ * voice there, and its burst ends at HOP_POS_MS + 2 CRC bytes (~303 ms). */
+#define HOP_RS_MUTE_MS (HOP_POS_MS + 30u)
 /* RX drift tracking between precise resync stamps. Below the dead band (twice
  * the worst stamp-difference jitter: 2 ms TX start, ms truncation, IRQ
  * latency) no correction is applied, so drift-free radios behave exactly as
@@ -278,6 +281,10 @@ void SCR_HOP_Stop(void)
     gScrHop.active  = 0;
     gScrHop.rx_wait = 0;
     gUpdateDisplay  = true;   // back to the plain scrambler icon
+    if (gScrHop.rs_mute) {    // stopped inside a resync window
+        gScrHop.rs_mute = 0;
+        BK4819_SetAF(BK4819_AF_FM);
+    }
     /* The RX VFO may already be a fixed-scrambler channel (channel change or
      * DW within the hang): restore its state instead of forcing REG_31<1> off. */
     if (rx_session)
@@ -329,7 +336,14 @@ void SCR_HOP_Tick(void)
     }
 
     const uint32_t boundary = (gScrHop.slot + 1u) * HOP_SLOT_MS;
-    if ((int32_t)(boundary - elapsed()) > (int32_t)(10u + HOP_GUARD_MS))
+    const uint32_t now      = elapsed();
+    /* RX resync window over: the TX mic is back after its burst. An accepted
+     * resync has re-anchored the clock, so this lands on the TX ms. */
+    if (gScrHop.rs_mute && now + HOP_SLOT_MS - boundary >= HOP_RS_MUTE_MS) {
+        gScrHop.rs_mute = 0;
+        BK4819_SetAF(BK4819_AF_FM);   // as RADIO_SetModulation() on FM
+    }
+    if ((int32_t)(boundary - now) > (int32_t)(10u + HOP_GUARD_MS))
         return;
 
     /* The boundary falls inside the next 10 ms tick: switch on the exact ms. */
@@ -343,6 +357,14 @@ void SCR_HOP_Tick(void)
     if (BK4819_ReadRegister(BK4819_REG_31) & (1u << 1))
         BK4819_WriteRegister(BK4819_REG_71, carrier(gScrHop.seed, gScrHop.slot));
     if (gScrHop.rx) {
+        /* Resync slot (slot 1, then every 16th, see resync_ms()): the TX cuts
+         * its mic and sends the burst, which the descrambler would play as a
+         * whistle. Mute the audio output (REG_47, not the REG_48 gain that the
+         * guard and the Messenger save and restore) until HOP_RS_MUTE_MS. */
+        if (gScrHop.slot == 1u || !(gScrHop.slot & 15u)) {
+            gScrHop.rs_mute = 1;
+            BK4819_SetAF(BK4819_AF_MUTE);
+        }
         wait_until(boundary + HOP_GUARD_MS);
         guard_mute(false);
     }
