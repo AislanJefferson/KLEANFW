@@ -14,9 +14,9 @@ SetMet TINY/CLASSIC across the six RxModes; the four "Main screen" fixes
 below come from it. SetMet only changes how the bars look and needed no
 fix. HOP: a HOP channel always runs Wide, the carriers now hop far apart
 across 2600-3500 Hz, the seed burst no longer goes out with the TX mute
-on, and the scrambler icon shows an active HOP session. The first
-two-radio HOP test (scrambled from start to end) led to the burst fix.
-Image 120,628 / 120,832 bytes (204 bytes free); RAM 15,640 / 16,384 bytes
+on and is repeated 0.5 s later, and the scrambler icon shows an active
+HOP session. The two-radio HOP tests led to the burst fixes.
+Image 120,664 / 120,832 bytes (168 bytes free); RAM 15,640 / 16,384 bytes
 at link time. All of it was tested on a radio except the HOP changes,
 which are not radio-tested yet.
 
@@ -35,7 +35,13 @@ which are not radio-tested yet.
   receiver never opened a HOP session, although the Messenger and the fixed
   scrambler worked between the same radios. The burst now follows the same
   pattern as the other tones: mic off, mute off while it is sent (+28 B).
-  Not radio-tested yet.
+  Radio test: HOP now decodes between two radios.
+- HOP: some overs still stayed scrambled with the receiver's scrambler icon
+  plain, because the receiver missed the single seed burst and the next one
+  came only 8 s later. The burst is now repeated at slot 1 (0.5 s), so a
+  receiver that misses the first joins before the voice; the 8 s resyncs
+  stay. Wait about 1 s after PTT before talking. Not compatible with the
+  previous HOP build (+36 B). Not radio-tested yet.
 
 - SetCtr/SetInv: leaving the menu with the submenu open (menu timeout, PTT,
   a popup) kept the previewed contrast or inversion on the LCD until the next
