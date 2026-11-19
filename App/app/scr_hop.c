@@ -147,11 +147,16 @@ void SCR_HOP_TxBurst(uint16_t idx)
     }
     BK4819_EnterTxMute();   // silent setup, as the tone routines do
     BK4819_DisableScramble();
-    /* HOP voice always runs Wide (RADIO_GetFmBandwidth), and so does every HOP
-     * receiver. The burst goes out with Narrow deviation even with SetNFM, the
-     * Messenger FSK path with SetNFM = NARROW: N+ halves the deviation and the
-     * burst was missed on weak or noisy signals. */
-    BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROW, false);
+    /* HOP voice always runs Wide (RADIO_GetFmBandwidth). Same narrow-lock as
+     * Messenger FSK TX: the burst goes out with Narrow (N+: Narrower)
+     * deviation, the proven decode path for Wide, Narrow and Narrower
+     * receivers alike. */
+    BK4819_FilterBandwidth_t bw = BK4819_FILTER_BW_NARROW;
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    if (gSetting_set_nfm == 1)
+        bw = BK4819_FILTER_BW_NARROWER;
+#endif
+    BK4819_SetFilterBandwidth(bw, false);
     BK4819_SetupAircopy();
     /* TX DSP on, mic ADC off: the burst carries the FSK tone only. This, not
      * the AF TX mute, is how every tone in the firmware leaves the mic out. */
