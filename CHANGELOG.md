@@ -16,7 +16,7 @@ fix. HOP: a HOP channel always runs Wide, the carriers now hop far apart
 across 2600-3500 Hz, the seed burst no longer goes out with the TX mute
 on, and the scrambler icon shows an active HOP session. The first
 two-radio HOP test (scrambled from start to end) led to the burst fix.
-Image 120,628 / 120,832 bytes (204 bytes free); RAM 15,640 / 16,384 bytes
+Image 120,608 / 120,832 bytes (224 bytes free); RAM 15,640 / 16,384 bytes
 at link time. All of it was tested on a radio except the HOP changes,
 which are not radio-tested yet.
 
@@ -35,7 +35,15 @@ which are not radio-tested yet.
   receiver never opened a HOP session, although the Messenger and the fixed
   scrambler worked between the same radios. The burst now follows the same
   pattern as the other tones: mic off, mute off while it is sent (+28 B).
-  Not radio-tested yet.
+  Radio test: HOP now decodes between two radios.
+- HOP on weak or noisy signals and at the 8 s resync: the seed burst now
+  always uses Narrow deviation (with SetNFM it used N+, half the
+  deviation, into a Wide HOP receiver). At each resync the receiver turns
+  its descrambler off like the transmitter, so the burst is read
+  unscrambled. A frame that is neither a HOP burst nor a message no longer
+  keeps the receiver muted until the carrier ends (-20 B). A trial that
+  repeated the burst 0.5 s later always synced but hurt the audio and the
+  8 s resync; it was reverted. Not radio-tested yet.
 
 - SetCtr/SetInv: leaving the menu with the submenu open (menu timeout, PTT,
   a popup) kept the previewed contrast or inversion on the LCD until the next
