@@ -3,6 +3,15 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+### Fixed
+
+- VOX no longer transmits while the menu is open. At sensitive levels, room
+  noise could key TX inside the menu; in TX every key is sent as a DTMF tone,
+  so the menu stopped responding. VOX resumes about 0.8 s after leaving the
+  menu, and PTT still works inside it. Radio-tested.
+
 ## KLEANFW 0.2.1 — 2026-11-19
 
 HOP sets up its receiver by itself: MsgRx ON and VOX OFF while HOP is

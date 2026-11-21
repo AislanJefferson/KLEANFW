@@ -898,6 +898,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Quando mudar**: uso com as mãos ocupadas e fone com microfone. Teste alguns níveis até achar um que dispara com a sua voz e não com o ruído do ambiente.
 - **Atenção**:
   - Com o VOX ligado aparece `VOX` na barra de status. A ação **VOX** (ou segurar 7) liga e desliga.
+  - Com o menu aberto o VOX não transmite, e volta cerca de 0,8 s depois de sair do menu. O PTT continua funcionando dentro do menu.
   - Enquanto o **HOP** está ativo (seção 12.3), o rádio desliga o VOX e grava `OFF`: com VOX ligado o receptor não lê o burst do HOP. Nesse tempo o menu e a ação **VOX** dão bipe duplo (mudo com `Beep` OFF). Ao sair do HOP o VOX continua `OFF`; religue se quiser.
 
 #### `RxMode`: modo de recepção

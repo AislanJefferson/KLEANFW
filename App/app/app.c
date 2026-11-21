@@ -1563,6 +1563,12 @@ static void HandleVox(void)
         return;
 #endif
 
+    /* Menu open: VOX must not key TX, or every key becomes a DTMF tone and the
+     * menu stops responding. Same hold-off as a beep: drops the pending
+     * detection and lasts 800 ms after the menu closes. PTT is not affected. */
+    if (gScreenToDisplay == DISPLAY_MENU)
+        gVoxResumeCountdown = 80;
+
     if (gVoxResumeCountdown == 0) {
         if (gVoxPauseCountdown)
             return;
