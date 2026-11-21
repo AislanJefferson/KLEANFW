@@ -140,36 +140,9 @@ typedef struct {
     uint8_t  off_10ms;
 } CallToneNote_t;
 
-typedef struct {
-    uint8_t note_offset;
-    uint8_t note_count;
-    uint8_t repeat_count;
-} CallToneMelody_t;
-
-/* Store each phrase once; the previous table duplicated the same notes three
- * or four times per tone.  Offsets avoid pointers and therefore consume no
- * writable relocation data in RAM. */
 static const CallToneNote_t gCallToneNotes[] = {
     {1180,7,2}, {1580,7,3}, {1180,7,2}, {1580,7,5},
-    {1800,4,1}, {1800,4,4}, {1350,4,1}, {1350,4,7},
-    { 820,8,2}, {1080,8,2}, {1380,8,2}, {1760,12,6},
-    {1850,9,2}, {1450,7,2}, {1050,9,5}, {1450,7,2},
-    { 980,16,3}, {1650,5,2}, {1650,5,8},
 };
-
-static const CallToneMelody_t gCallToneMelodies[] = {
-    { 0, 4, 3},
-    { 4, 4, 4},
-    { 8, 4, 3},
-    {12, 4, 3},
-    {16, 3, 4},
-};
-
-static const CallToneNote_t *MAIN_GetCallToneNote(const CallToneMelody_t *melody, uint8_t sequence)
-{
-    while (sequence >= melody->note_count) sequence -= melody->note_count;
-    return &gCallToneNotes[melody->note_offset + sequence];
-}
 #endif
 
 static uint16_t MAIN_ScaleToneFreq(uint16_t freq)
@@ -255,80 +228,6 @@ static void MAIN_CallTonePreviewWaitForRelease(void)
     }
 }
 
-#ifdef ENABLE_GOGUFW_CALLTX
-KEY_Code_t MAIN_PlayCallTonePreview(uint8_t tone)
-{
-    if (tone > 4u) tone = 0u;
-    if (gCurrentFunction == FUNCTION_TRANSMIT || FUNCTION_IsRx()) return KEY_INVALID;
-
-#ifdef ENABLE_MESSENGER
-    MSG_RF_HardRestoreVoicePath();
-#endif
-
-    /* Deliberately synchronous and short.  This uses the exact local tone
-     * path proven by AUDIO_PlayBeep(), so no scheduler/FSK task can replace
-     * REG_30/70 while the sample is playing. */
-    AUDIO_AudioPathOff();
-    if (gCurrentFunction == FUNCTION_POWER_SAVE && gRxIdleMode) {
-        BK4819_RX_TurnOn();
-    }
-    SYSTEM_DelayMs(20u);
-
-    const uint16_t saved_reg71 = BK4819_ReadRegister(BK4819_REG_71);
-    BK4819_PrepareToPlayTone(true);
-    SYSTEM_DelayMs(2u);
-    AUDIO_AudioPathOn();
-    SYSTEM_DelayMs(60u);
-
-    uint16_t elapsed_ms = 0u;
-    uint8_t note = 0u;
-    const CallToneMelody_t *melody = &gCallToneMelodies[tone];
-    const uint8_t total_notes = (uint8_t)(melody->note_count * melody->repeat_count);
-    KEY_Code_t interrupted_by = KEY_INVALID;
-    CallTonePreviewKeys_t keys = {
-        .released = false,
-        .candidate = KEY_INVALID,
-        .stable_reads = 0u,
-    };
-    while (elapsed_ms < 1200u) {
-        if (note >= total_notes) note = 0u;
-        const CallToneNote_t *n = MAIN_GetCallToneNote(melody, note);
-
-        BK4819_WriteRegister(BK4819_REG_71, MAIN_ScaleToneFreq(n->hz));
-        BK4819_ExitTxMute();
-        interrupted_by = MAIN_CallTonePreviewDelay((uint16_t)n->on_10ms * 10u, &keys);
-        BK4819_EnterTxMute();
-        if (interrupted_by != KEY_INVALID) break;
-
-        if (n->off_10ms > 0u)
-            interrupted_by = MAIN_CallTonePreviewDelay((uint16_t)n->off_10ms * 10u, &keys);
-        if (interrupted_by != KEY_INVALID) break;
-
-        elapsed_ms += (uint16_t)((uint16_t)n->on_10ms + n->off_10ms) * 10u;
-        ++note;
-    }
-
-    AUDIO_AudioPathOff();
-    SYSTEM_DelayMs(5u);
-    BK4819_TurnsOffTones_TurnsOnRX();
-    SYSTEM_DelayMs(5u);
-    BK4819_WriteRegister(BK4819_REG_71, saved_reg71);
-
-    /* Rebuild stock RX once, then let the existing Messenger hook perform
-     * its normal controlled sidecar re-arm. */
-    RADIO_SelectVfos();
-    RADIO_SetupRegisters(true);
-
-    /* MENU/EXIT are handled after returning to the menu.  Consume their
-     * physical release here so the normal key scanner cannot deliver them a
-     * second time.  UP/DOWN immediately starts the next preview, which owns
-     * the still-held key until it is released. */
-    if (interrupted_by == KEY_MENU || interrupted_by == KEY_EXIT)
-        MAIN_CallTonePreviewWaitForRelease();
-
-    return interrupted_by;
-}
-#endif
 
 KEY_Code_t MAIN_PlayRogerPreview(uint8_t mode)
 {
@@ -431,10 +330,6 @@ static void MAIN_SendPmrCallTone(void)
         return;
     }
 
-    CALLTX_STORE_Init();
-    uint8_t tone = gCallTxTone;
-    if (tone > 4u) tone = 0;
-
 #ifdef ENABLE_MESSENGER
     (void)MSG_RF_PrepareManualVoiceTx();   // never blocks: no RX here (guard above)
 #endif
@@ -465,10 +360,9 @@ static void MAIN_SendPmrCallTone(void)
     /* Send for at least 3 seconds, but only stop at the end of a complete
      * melody phrase so the last note is never truncated. */
     uint16_t elapsed = 0;
-    const CallToneMelody_t *melody = &gCallToneMelodies[tone];
     while (elapsed < 3000u) {
-        for (uint8_t i = 0; i < melody->note_count; ++i) {
-            const CallToneNote_t *n = MAIN_GetCallToneNote(melody, i);
+        for (uint8_t i = 0; i < sizeof(gCallToneNotes) / sizeof(gCallToneNotes[0]); ++i) {
+            const CallToneNote_t *n = &gCallToneNotes[i];
             MAIN_SendCallToneNote(n->hz, n->on_10ms, n->off_10ms);
             elapsed += (uint16_t)((uint16_t)n->on_10ms + (uint16_t)n->off_10ms) * 10u;
         }

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-extern uint8_t gCallTxTone;
 extern uint8_t gCallTxVol;
 
 void CALLTX_STORE_Init(void);

@@ -26,7 +26,6 @@ extern bool gCallToneTxActive;
 
 void MAIN_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 #ifdef ENABLE_GOGUFW_CALLTX
-KEY_Code_t MAIN_PlayCallTonePreview(uint8_t tone);
 void MAIN_SendPmrCallToneAction(void);
 #endif
 KEY_Code_t MAIN_PlayRogerPreview(uint8_t mode);

@@ -185,7 +185,7 @@ enum
     MENU_MSG_BEEP,
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-    MENU_CALL_TONE,
+    MENU_CALL_TONE,    /* retired: slot kept so later menu IDs stay stable */
     MENU_CALL_VOL,
 #endif
 #ifdef ENABLE_MESSENGER

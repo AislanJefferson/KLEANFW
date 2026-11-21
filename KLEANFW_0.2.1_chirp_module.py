@@ -11,7 +11,7 @@
 #   FM names: 0x00D000 alias -> firmware flash 0x013000
 #   Messenger/Call config: 0x00E000 alias -> firmware flash 0x012000
 #   CryKey passphrase:     0x00E140 alias -> firmware flash 0x012140
-# Includes GGFW settings: MsgRx, MsgAck, MsgBeep, MsgLed, CllTon, CllVol,
+# Includes GGFW settings: MsgRx, MsgAck, MsgBeep, MsgLed, CllVol,
 # RngRsp, Callsign, CryKey, Drafts, FM names, No FSK TX, No Roger,
 # Scrambler (fixed carriers and HOP), the SCRAMBLE key action and Compander.
 # F Lock offers the firmware's three plans: BRASIL, DISABLE ALL, UNLOCK ALL.
@@ -746,7 +746,6 @@ GGFW_MSG_START = 0x00E000
 GGFW_MSG_SIZE = 0x1000
 GGFW_MSG_MAGIC = 0x47
 GGFW_MSG_VERSION = 7
-GGFW_CALL_TONE_LIST = ["TONE1", "TONE2", "TONE3", "TONE4", "TONE5"]
 GGFW_CALL_VOL_LIST = ["LOW", "HIGH"]
 GGFW_MSG_OFF_ON_LIST = ["OFF", "ON"]
 GGFW_MSG_LED_LIST = ["OFF", "GREEN", "YELLOW"]
@@ -2164,8 +2163,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
                     _mem.ggfw_msg_beep = int(element.value)
                 elif elname == "ggfw_msg_led":
                     _mem.ggfw_msg_led = int(element.value)
-                elif elname == "ggfw_call_tone":
-                    _mem.ggfw_call_tone = int(element.value)
                 elif elname == "ggfw_call_vol":
                     _mem.ggfw_call_vol = int(element.value)
                 elif elname == "ggfw_rng_rsp":
@@ -3156,9 +3153,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 
         val = RadioSettingValueList(GGFW_MSG_LED_LIST, GGFW_MSG_LED_LIST[int(_mem.ggfw_msg_led)])
         ggfw.append(RadioSetting("ggfw_msg_led", "MsgLed", val))
-
-        val = RadioSettingValueList(GGFW_CALL_TONE_LIST, GGFW_CALL_TONE_LIST[int(_mem.ggfw_call_tone)])
-        ggfw.append(RadioSetting("ggfw_call_tone", "CllTon", val))
 
         val = RadioSettingValueList(GGFW_CALL_VOL_LIST, GGFW_CALL_VOL_LIST[int(_mem.ggfw_call_vol)])
         ggfw.append(RadioSetting("ggfw_call_vol", "CllVol", val))

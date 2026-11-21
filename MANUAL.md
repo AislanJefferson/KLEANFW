@@ -26,7 +26,7 @@ Este manual descreve o build **Fusion** (o preset oficial) do código atual, ver
 11. [Criptografia: CryKey](#11-criptografia-crykey)
 12. [Scrambler de voz (fixo e HOP)](#12-scrambler-de-voz-fixo-e-hop)
 13. [Largura de banda: W, N e N+](#13-largura-de-banda-w-n-e-n)
-14. [CALLTX (melodias de chamada)](#14-calltx-melodias-de-chamada)
+14. [CALLTX (melodia de chamada)](#14-calltx-melodia-de-chamada)
 15. [Rádio FM comercial](#15-rádio-fm-comercial)
 16. [Search Frequency e Search Tone](#16-search-frequency-e-search-tone)
 17. [Spectrum](#17-spectrum)
@@ -57,7 +57,7 @@ O KLEANFW mantém o conjunto de recursos de rádio do F4HWN e do GOGUFW. Princip
 | **AUTO CHECK** | Teste de alcance automático periódico em segundo plano |
 | **Criptografia (CryKey)** ★ | Texto do Messenger cifrado (XTEA-CTR) com frase-senha compartilhada |
 | **Scrambler HOP** ★ | Inversão de voz com portadora que salta a cada 500 ms |
-| **CALLTX** | Cinco melodias de chamada transmitidas pelo rádio |
+| **CALLTX** | Melodia de chamada transmitida pelo rádio |
 | **FM comercial** | 48 memórias nomeadas, 4 bandas e Live RSSI (via apps) |
 | **Search** | Busca de frequência e de tom (CTCSS/DCS) com gravação em canal |
 | **Spectrum** | Analisador de espectro em VFO ou em canais de memória |
@@ -164,7 +164,7 @@ Com `SetTmr = ON` (padrão), o cronômetro de RX/TX ocupa o lugar de `MO`/`XB`/`
 | **F + 6** | Potência de TX (LOW1 → … → HIGH) |
 | **F + 7** | **Lista de apps** |
 | **F + 8** | Luz de fundo: sempre acesa → sempre apagada → configuração salva |
-| **F + 9** | **CALLTX** (transmite a melodia selecionada) |
+| **F + 9** | **CALLTX** (transmite a melodia de chamada) |
 | **F + \*** | **Search Tone** (precisa de `Search.app`) |
 | **F + UP/DOWN** | Squelch +1 / −1 (durante scan: troca a lista) |
 | **F + SIDE1 / SIDE2** | Aumenta / diminui o passo de frequência |
@@ -275,21 +275,21 @@ Com `SetPTT = ONEPUSH`, o primeiro toque no PTT começa a transmitir e o segundo
 | 25 | F1Long | Keys | | 67 | SetVol | Audio |
 | 26 | F2Shrt | Keys | | 68 | SetScn | Scan |
 | 27 | F2Long | Keys | | 69 | SetCfg | Channels |
-| 28 | M Long | Keys | | 70 | CllTon | Audio |
-| 29 | KeyLck | Keys | | 71 | CllVol | Audio |
-| 30 | TxTOut | Timers | | 72 | MsgRx | Msg |
-| 31 | BatSav | Power | | 73 | MsgAck | Msg |
-| 32 | BatTxt | Power | | 74 | MsgBep | Msg |
-| 33 | Mic | Audio | | 75 | MsgLed | Msg |
-| 34 | MicBar | Audio | | 76 | CllSgn | Msg |
-| 35 | ChDisp | Display | | 77 | CryKey | Msg |
-| 36 | BLTime | Display | | 78 | RngRsp | Msg |
-| 37 | BLMin | Display | | 79 | F Lock | Service |
-| 38 | BLMax | Display | | 80 | 350 En | Service |
-| 39 | BLTxRx | Display | | 81 | BatCal | Service |
-| 40 | Beep | Audio | | 82 | BatTyp | Service |
-| 41 | Roger | Radio | | 83 | SetNav | Service |
-| 42 | STE | Radio | | 84 | Reset | Service |
+| 28 | M Long | Keys | | 70 | CllVol | Audio |
+| 29 | KeyLck | Keys | | 71 | MsgRx | Msg |
+| 30 | TxTOut | Timers | | 72 | MsgAck | Msg |
+| 31 | BatSav | Power | | 73 | MsgBep | Msg |
+| 32 | BatTxt | Power | | 74 | MsgLed | Msg |
+| 33 | Mic | Audio | | 75 | CllSgn | Msg |
+| 34 | MicBar | Audio | | 76 | CryKey | Msg |
+| 35 | ChDisp | Display | | 77 | RngRsp | Msg |
+| 36 | BLTime | Display | | 78 | F Lock | Service |
+| 37 | BLMin | Display | | 79 | 350 En | Service |
+| 38 | BLMax | Display | | 80 | BatCal | Service |
+| 39 | BLTxRx | Display | | 81 | BatTyp | Service |
+| 40 | Beep | Audio | | 82 | SetNav | Service |
+| 41 | Roger | Radio | | 83 | Reset | Service |
+| 42 | STE | Radio | | | | |
 
 > [!NOTE]
 > A categoria **Power** trata de bateria e modo sono. A **potência de TX** (item `Power`) fica em **Channels**.
@@ -790,7 +790,6 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 | **SetVol** | OFF, 01–63 | 58 | Volume de RX |
 | **SetRxA** | FM: FLAT, CLEAN, MID, BOOST, MAX · AM: SHARP, STOCK, OPEN · USB | FLAT / SHARP | Perfil de áudio de RX |
 | **SetRxG** | OFF, ON | ON | Gate de áudio de RX |
-| **CllTon** | TONE1–TONE5 | TONE1 | Melodia do CALLTX |
 | **CllVol** | LOW, HIGH | HIGH | Nível do tom do CALLTX |
 
 #### `Mic`: ganho do microfone
@@ -842,12 +841,6 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: ON.
 - **Quando mudar**: `OFF` se o início ou o fim das palavras de quem fala baixo estão sumindo.
 - **Atenção**: com o compander de RX ligado (`Compnd = RX` ou `TX/RX`), o item fica fixo em `ON (COMPND)`.
-
-#### `CllTon`: melodia do CALLTX
-
-- **O que faz**: escolhe a melodia transmitida pelo CALLTX (**F+9** ou a ação **CALLTX**). As melodias estão listadas na seção 14.
-- **Opções**: `TONE1` a `TONE5`. Ao navegar pelos valores, a melodia toca como prévia.
-- **Padrão**: TONE1.
 
 #### `CllVol`: nível do CALLTX
 
@@ -1328,20 +1321,13 @@ O HOP troca a portadora de inversão a cada **500 ms**, numa sequência derivada
 
 ---
 
-## 14. CALLTX (melodias de chamada)
+## 14. CALLTX (melodia de chamada)
 
-- **F + 9** (ou a ação **CALLTX**) transmite a melodia escolhida por pelo menos 3 s e termina a frase sem cortar a última nota.
+- **F + 9** (ou a ação **CALLTX**) transmite a melodia de chamada por pelo menos 3 s e termina a frase sem cortar a última nota.
 - Não funciona durante RX ou TX (bipe duplo).
 - Sai sem Roger/MDC e sem scrambler.
-- **Configuração** (Audio): `CllTon` escolhe TONE1–TONE5 (com prévia), `CllVol` escolhe LOW ou HIGH.
-
-| Melodia | Notas |
-|---|---|
-| TONE1 | Alternância 1180 / 1580 Hz |
-| TONE2 | 1800 / 1350 Hz |
-| TONE3 | Escala subindo de 820 a 1760 Hz |
-| TONE4 | 1850 / 1450 / 1050 Hz |
-| TONE5 | 980 Hz seguido de 1650 Hz duplo |
+- **Melodia**: alternância de 1180 e 1580 Hz.
+- **Configuração** (Audio): `CllVol` escolhe LOW ou HIGH.
 
 > [!NOTE]
 > O CALLTX é uma transmissão real: respeita F Lock e TXLock como a voz.
@@ -1765,7 +1751,7 @@ Se as setas parecerem invertidas, ajuste `SetNav`.
 **O que o módulo expõe:**
 
 - 1024 canais de memória;
-- grupo GGFW: MsgRx, MsgAck, MsgBeep, MsgLed, CllTon, CllVol, RngRsp, indicativo, **CryKey** e os 8 rascunhos;
+- grupo GGFW: MsgRx, MsgAck, MsgBeep, MsgLed, CllVol, RngRsp, indicativo, **CryKey** e os 8 rascunhos;
 - por canal: TXLock, No FSK TX, No Roger, Scrambler, BusyCL, FreqRev, PTT ID, Compander e listas de scan;
 - 48 nomes de FM (15 caracteres);
 - **F Lock** com os três planos do firmware (BRASIL, DISABLE ALL, UNLOCK ALL; UNLOCK ALL só pode ser escolhido no menu do rádio);

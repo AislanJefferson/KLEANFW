@@ -41,7 +41,7 @@ direction:
   receivers in step, and late listeners catch up within 16 s.
 - **Fixed scrambler** (2600–3500 Hz) for radios that only know classic
   inversion. Both scramblers work on FM only.
-- **CALLTX.** Five call melodies sent over the air with F+9.
+- **CALLTX.** A call melody sent over the air with F+9.
 
 **Text**
 - **Messenger.** 36-character messages with delivery receipts, retries,

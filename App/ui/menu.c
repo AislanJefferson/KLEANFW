@@ -186,7 +186,6 @@ const t_menu_item MenuList[] =
 #endif
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-    {"CllTon",      MENU_CALL_TONE    },
     {"CllVol",      MENU_CALL_VOL     },
 #endif
 #ifdef ENABLE_MESSENGER
@@ -658,7 +657,7 @@ static const uint8_t CatAudio[]   = {
     MENU_SET_AUD, MENU_SET_RXG,
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-    MENU_CALL_TONE, MENU_CALL_VOL,
+    MENU_CALL_VOL,
 #endif
 };
 static const uint8_t CatRadio[]   = { MENU_SQL, MENU_STE, MENU_RP_STE, MENU_ROGER, MENU_VOX, MENU_TDR };
@@ -1307,14 +1306,6 @@ void UI_DisplayMenu(void)
         }
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-        case MENU_CALL_TONE:
-        {
-            uint8_t value = (uint8_t)gSubMenuSelection;
-            if (!gIsInSubMenu) { CALLTX_STORE_Init(); value = gCallTxTone; }
-            if (value > 4u) value = 0;
-            sprintf(String, "TONE%u", (unsigned)(value + 1u));
-            break;
-        }
         case MENU_CALL_VOL:
         {
             static const char * const names[] = { "LOW", "HIGH" };

@@ -453,9 +453,6 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             break;
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-        case MENU_CALL_TONE:
-            *pMax = 4;
-            break;
         case MENU_CALL_VOL:
             *pMax = 1;
             break;
@@ -541,8 +538,6 @@ void MENU_AcceptSetting(void)
             gMessengerConfig.rng_rsp = gSubMenuSelection; MSG_STORE_SaveConfig(); break;
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-        case MENU_CALL_TONE:
-            gCallTxTone = gSubMenuSelection; CALLTX_STORE_Save(); break;
         case MENU_CALL_VOL:
             gCallTxVol = gSubMenuSelection; CALLTX_STORE_Save(); break;
 #endif
@@ -1038,8 +1033,6 @@ void MENU_ShowCurrentSetting(void)
             MSG_STORE_Init(); gSubMenuSelection = gMessengerConfig.rng_rsp; break;
 #endif
 #ifdef ENABLE_GOGUFW_CALLTX
-        case MENU_CALL_TONE:
-            CALLTX_STORE_Init(); gSubMenuSelection = gCallTxTone; break;
         case MENU_CALL_VOL:
             CALLTX_STORE_Init(); gSubMenuSelection = gCallTxVol; break;
 #endif
@@ -2163,18 +2156,10 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
 
         default:
             MENU_ClampSelection(Direction);
-#ifdef ENABLE_GOGUFW_CALLTX
-            if (m == MENU_CALL_TONE || m == MENU_ROGER) {
-#else
             if (m == MENU_ROGER) {
-#endif
                 for (;;) {
                     if (gSubMenuSelection < 0) gSubMenuSelection = 0;
-#ifdef ENABLE_GOGUFW_CALLTX
-                    const int8_t preview_max = (m == MENU_CALL_TONE) ? 4 : 2;
-#else
                     const int8_t preview_max = 2;
-#endif
                     if (gSubMenuSelection > preview_max) gSubMenuSelection = preview_max;
                     /* The melody itself replaces the normal navigation beep. */
                     gBeepToPlay = BEEP_NONE;
@@ -2183,13 +2168,7 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
                     gRequestDisplayScreen = DISPLAY_MENU;
                     GUI_DisplayScreen();
 
-#ifdef ENABLE_GOGUFW_CALLTX
-                    const KEY_Code_t preview_key = (m == MENU_CALL_TONE)
-                        ? MAIN_PlayCallTonePreview((uint8_t)gSubMenuSelection)
-                        : MAIN_PlayRogerPreview((uint8_t)gSubMenuSelection);
-#else
                     const KEY_Code_t preview_key = MAIN_PlayRogerPreview((uint8_t)gSubMenuSelection);
-#endif
 
                     if (preview_key == KEY_UP || preview_key == KEY_DOWN) {
                         int8_t preview_direction = preview_key == KEY_UP ? 1 : -1;
