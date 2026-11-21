@@ -3,28 +3,6 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## KLEANFW 0.2.2 — 2026-11-20
-
-TX power fixes for HIGH and for the lower half of each calibration band.
-The EEPROM layout is the same as 0.2.1, the apps are byte-identical to those
-of 0.2.1, and HOP works between 0.2.0, 0.2.1 and 0.2.2 radios. Image
-120,828 / 120,832 bytes (4 bytes free); RAM 15,640 / 16,384 bytes at link
-time. Checked by code review, a host test and builds only, not radio-tested
-yet.
-
-### Fixed
-
-- TX power HIGH could drop to almost nothing: HIGH adds 24 to the
-  calibration bias in one byte, so a calibration value of 232 or more
-  wrapped around (0xFF, an erased calibration, gave a bias of 23 out of
-  255). The sum now stops at 255 (+4 B).
-- TX power was off below the middle of each calibration band (for example
-  144–148 MHz and 400–435 MHz) whenever the band's Low and Mid calibration
-  values differ: the bias was interpolated from the Mid value instead of
-  the Low one, off by their difference, and could wrap around near the
-  band middle. It is now interpolated like the stock K1 firmware 7.03.05.
-  Bands whose Low and Mid values are equal are unchanged (+8 B).
-
 ## KLEANFW 0.2.1 — 2026-11-19
 
 HOP sets up its receiver by itself: MsgRx ON and VOX OFF while HOP is

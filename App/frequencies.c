@@ -134,10 +134,11 @@ uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid, uint8_t T
     if (UpperLimit <= Frequency)
         return TxpHigh;
 
-    // Lower half starts from TxpLow, as the stock K1 firmware does
-    // (7.03.05 @ 0x0800412C).
     if (Frequency <= Middle)
-        return TxpLow + ((TxpMid - TxpLow) * (Frequency - LowerLimit)) / (Middle - LowerLimit);
+    {
+        TxpMid += ((TxpMid - TxpLow) * (Frequency - LowerLimit)) / (Middle - LowerLimit);
+        return TxpMid;
+    }
 
     TxpMid += ((TxpHigh - TxpMid) * (Frequency - Middle)) / (UpperLimit - Middle);
 
