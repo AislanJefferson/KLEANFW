@@ -702,7 +702,9 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
         else // case 6
         {
             // Txp[p] += 30; // For UV-K5 V1
-            Txp[p] += 24;
+            // Saturate: a calibration byte >= 232 (0xFF when erased) must
+            // not wrap around to a near-zero bias.
+            Txp[p] = (Txp[p] > 255 - 24) ? 255 : Txp[p] + 24;
         }
     }
 #else
