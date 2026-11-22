@@ -3,7 +3,14 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.2.2 — 2026-11-22
+
+Adds QR Map, updates the apps to the latest F4HWN source, keeps one call tone
+and stops VOX from transmitting inside the menu. This release replaces the
+v0.2.2 withdrawn on 2026-11-21 and does not contain its TX power changes. The
+EEPROM layout is the same as 0.2.1. Image 120,208 / 120,832 bytes (624 bytes
+free); RAM 15,640 / 16,384 bytes at link time. The VOX fix is radio-tested; the
+app update and QR Map are host-tested where tests exist, not radio-tested.
 
 ### Added
 
@@ -17,6 +24,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ### Changed
 
+- CALLTX keeps TONE1 as its only call melody: the `CllTon` menu, its preview
+  and the CHIRP setting are gone. `CllVol` and the stored byte stay, so the
+  EEPROM layout does not change.
 - Updated the 22 apps shared with F4HWN to its latest source (main 11035b83,
   after v7.0.0), keeping the KLEANFW/GOGUFW changes: the shared APRS profile
   with frequency and power, private tuning, FM VFO/Memory. Host-tested where
