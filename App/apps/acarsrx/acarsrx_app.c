@@ -12,6 +12,8 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
+ * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
 /* ACARS RX - VHF ACARS (AM-MSK, 2400 bit/s) receive-only overlay.
@@ -520,6 +522,7 @@ static void handleKeys(void){
         g.count=g.cur=g.top=g.lim=0;
         g.syncs=g.crcFails=g.parityFails=g.corrected=g.nOk=0;
     }
+    g.A->cfg_save(&g.spk,2);     /* staged after each key: kept across a switch-off */
 }
 
 static void house(void){
@@ -621,5 +624,4 @@ void app_main(const app_api_t *api){
     api->af_capture_close();
     api->set_af(APP_AF_MUTE);
     api->audio_path(false);
-    api->cfg_save(&g.spk,2);
 }

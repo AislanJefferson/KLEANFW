@@ -208,5 +208,8 @@ void app_main(const app_api_t *api){
     }
 
     api->cfg_save(&g.fmt, 1);    /* staged: the loader writes it once, if it changed */
+    /* The loader does not wait for a key release: the sender must not take
+     * this EXIT, still held, for its own. */
+    while (api->get_key() != APP_KEY_INVALID) api->delay_ms(TICK_MS);
     if (g.from[0]) api->handoff(g.from, NULL, 0);
 }

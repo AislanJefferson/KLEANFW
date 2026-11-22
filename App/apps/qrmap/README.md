@@ -3,7 +3,7 @@
 QR Map shows a position that another app hands over as a QR code on the
 radio's screen. A phone scans it and opens the position on a map, so a
 received position goes to the phone without typing a digit. In KLEANFW,
-APRS RX sends it (key 7, then MENU); any app can do the same (see
+APRS RX and EPIRB 406 send it (key 7, then MENU); any app can do the same (see
 [Hand-off message](#hand-off-message)).
 
 Imported from F4HWN's firmware and adapted for KLEANFW. Needs app API level 3

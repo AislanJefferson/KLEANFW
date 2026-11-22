@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 # Build one ACARS RX overlay app. Invoked by ../../../compile-app.sh inside the
 # uvk1-uvk5v3 Docker image, from this directory.
 set -euo pipefail
 
 APP="$(basename "$PWD")"
 APP_NAME="ACARS RX"
-APP_VER="0.1"
+APP_VER="0.2-klean"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}
 OUT="${APP_NAME// /}"
@@ -30,5 +31,5 @@ step 4 pack    ; python3 ../pack_app.py "${APP}.bin" "${OUT}.app" \
 trap - ERR
 
 BYTES=$(wc -c < "${APP}.bin")
-printf '\r  ✅ %-13s %4d B  (%d%% of 4 KiB)  ->  %s.app   \n' \
+printf '\r  ✅ %-13s %4d B  (%3d%% of 4 KiB)  ->  %s.app   \n' \
        "$APP_NAME" "$BYTES" "$(( BYTES * 100 / 4096 ))" "$OUT"

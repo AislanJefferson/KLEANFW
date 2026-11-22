@@ -33,8 +33,8 @@ a.text("T_KEYS", "UP/DN FORMAT")
 a.text("T_BACK", "EXIT  BACK")
 a.text("T_QUIT", "EXIT  QUIT")
 # Launched from the menu, or a message without a valid position.
-a.text("T_NOPOS", "QR MAP\0\0NO POSITION RECEIVED.\0IN APRS RX, ON A POSITION\0"
-                  "FRAME: KEY 7, THEN MENU.\0\0EXIT  LEAVE")
+a.text("T_NOPOS", "QR MAP\0\0NO POSITION RECEIVED.\0IN APRS RX OR EPIRB 406,\0"
+                  "ON A POSITION: 7, THEN MENU.\0\0EXIT  LEAVE")
 a.const("NOPOS_LINES", 7)
 entries = []
 for name, pre, mid in FORMATS:
