@@ -148,6 +148,13 @@ licensed under the MIT License. Its license is included at:
 
   App/external/printf/LICENSE
 
+This repository includes the QR Map app by Johan Denoyer F4WAT, licensed under
+the Apache License, Version 2.0 and modified for KLEANFW. Its QR Code encoder
+is derived from the QR Code generator library by Project Nayuki, licensed under
+the MIT License. That license is included in:
+
+  App/apps/qrmap/qr.c
+
 License notice
 --------------
 

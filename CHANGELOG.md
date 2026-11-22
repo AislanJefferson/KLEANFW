@@ -5,6 +5,16 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ## Unreleased
 
+### Added
+
+- QR Map app, imported from F4HWN's firmware and adapted: it shows a received
+  position as a QR code that a phone opens on a map (Google, Apple, geo:, OSM
+  or plain text).
+- APRS RX opens it for the frame on screen: key 7, then MENU to confirm. Works
+  with Mic-E and uncompressed positions. Opening the code ends APRS RX, so its
+  received frames are lost and nothing is received until EXIT brings it back.
+  Host-tested, not radio-tested. The firmware image is unchanged.
+
 ### Fixed
 
 - VOX no longer transmits while the menu is open. At sensitive levels, room

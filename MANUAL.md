@@ -1505,7 +1505,8 @@ O rádio tem **48 slots** na Flash externa. Instale os `.app` pela página **App
 | **FMVFO / FMMemory** | Rádio FM (seção 15) |
 | **Search** | Busca de frequência e tom (seção 16) |
 | **SystemInfo** | Informações do sistema, bateria, armazenamento e pilha |
-| **APRS RX** | Decodifica APRS (AX.25/AFSK 1200, Mic-E) |
+| **APRS RX** | Decodifica APRS (AX.25/AFSK 1200, Mic-E). Em um quadro com posição, **7** e depois **MENU** abre o QR Map |
+| **QR Map** | Mostra a posição recebida no APRS RX como QR code para abrir no mapa do celular. **UP/DOWN** ou **1–5** trocam o formato, **EXIT** volta ao APRS RX. Abrir o QR apaga os quadros recebidos e interrompe a recepção até voltar |
 | **APRS TX** | Beacon de posição APRS |
 | **APRS Edit** | Editor do perfil APRS (indicativo vazio = usa o `CllSgn`) |
 | **APRS DIGI** | Digipeater WIDE1-1 / WIDE2-1 |
