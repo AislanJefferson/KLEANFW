@@ -33,7 +33,7 @@ ARISS = "ARISS"
 PATHS = ["DIRECT", "WIDE1-1", "WIDE1-1,2-1", ARISS]
 LAT, LON = "4850.90N", "00216.25E"         # default position: DDMM.hhN, DDDMM.hhE
 SYMBOL = "/["                              # table, code: '[' = person
-COMMENT = "Portable, UV-K5/K1 F4HWN firmware (github.com/armel)"
+COMMENT = ""                               # empty until set in APRS Edit
 FREQ_KHZ = 144800                         # independent APRS TX frequency
 POWER = 6                                 # LOW1..LOW5, MID, HIGH
 # info field: "!" + LAT + SYMBOL[0] + LON + SYMBOL[1] + COMMENT

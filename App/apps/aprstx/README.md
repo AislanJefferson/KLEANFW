@@ -20,12 +20,12 @@ which is also the test receiver.
 | `PATH` | `1` = `WIDE1-1`, an index in `PATHS`: `DIRECT` (no digipeater), `WIDE1-1`, `WIDE1-1,WIDE2-1`; editable in APRS Edit |
 | `LAT`, `LON` | `4850.90N`, `00216.25E`: default position, editable in APRS Edit |
 | `SYMBOL` | `/[` (person): one of 48 symbols, editable in APRS Edit |
-| `COMMENT` | `Portable, UV-K5/K1 F4HWN firmware (github.com/armel)` by default; up to 89 characters, editable with the companion APRS Edit app |
+| `COMMENT` | empty by default; up to 89 characters, editable with the companion APRS Edit app |
 | `FREQ` | `144.800 MHz` by default; 18.000–999.999 MHz, editable in APRS Edit |
 | `POWER` | `HIGH` by default; `LOW1`…`LOW5`, `MID`, `HIGH`, editable in APRS Edit |
 
-Frame sent: `F4HWN-7>APZK5,WIDE1-1:!4850.90N/00216.25E[Portable, UV-K5/K1 F4HWN firmware (github.com/armel)` (97 bytes,
-~0.98 s on the air: 50 ms of tone settle, 40 flags = 267 ms, the frame, 3 flags).
+Frame sent: `F4HWN-7>APZK5,WIDE1-1:!4850.90N/00216.25E[` (45 bytes,
+~0.64 s on the air: 50 ms of tone settle, 40 flags = 267 ms, the frame, 3 flags).
 If neither the profile nor boot message supplies a plain 1-6 character uppercase
 alphanumeric callsign, the app shows `No callsign` and does not transmit.
 

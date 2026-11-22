@@ -136,9 +136,9 @@ def main():
     default_ssid, default_path, default_sym = route & 15, route >> 4, profile[6]
     good = (D["F_PROFILE"] == 0 and D["F_PROFILE_LEN"] == 122 and
             int.from_bytes(profile[:4], "little") == 0x37435041 and
-            profile[4] == len("Portable, UV-K5/K1 F4HWN firmware (github.com/armel)") and
+            profile[4] == len("") and
             list(profile[8:21]) == [4,8,5,0,9,0,0,0,2,1,6,2,5] and
-            profile[21:21 + profile[4]].decode() == "Portable, UV-K5/K1 F4HWN firmware (github.com/armel)" and
+            profile[21:21 + profile[4]].decode() == "" and
             profile[110:117] == b"\x00      " and
             int.from_bytes(profile[117:121], "little") == 144800 and
             profile[121] == 6)
@@ -148,7 +148,7 @@ def main():
     ssid = default_ssid
     WIDE = ["WIDE1-1", "WIDE2-1"]                                # gen_assets.py WIDE
     HOPS = [[], WIDE[:1], WIDE, ["ARISS"]]                       # gen_assets.py PATHS
-    info = "!4850.90N/00216.25E[Portable, UV-K5/K1 F4HWN firmware (github.com/armel)"          # gen_assets.py defaults
+    info = "!4850.90N/00216.25E["          # gen_assets.py defaults
     ref = build("%s-%d" % (CALL, ssid) if ssid else CALL, dst="APZK5",
                 path=WIDE[:default_path], info=info)
     print("frame  ", decode(f), "(%d bytes)" % len(f))
@@ -183,7 +183,7 @@ def main():
     pos = [3, 3, 5, 2, 1, 3, 1, 5, 1, 1, 2, 5, 6]           # 33 52.13S 151 12.56W
     f2 = build_c(blob, D, pos=pos, hemi=3)
     want = build("F4HWN-7", dst="APZK5", path=["WIDE1-1"],
-                 info="!3352.13S/15112.56W[Portable, UV-K5/K1 F4HWN firmware (github.com/armel)")
+                 info="!3352.13S/15112.56W[")
     ok &= f2 == want
     print("edited position frame:", f2 == want, decode(f2))
     # SSID and path edited: every path, SSID 0 (no suffix) and 15
@@ -194,7 +194,7 @@ def main():
         print("SSID %2d, path %d frame:" % (sid, path), f3 == want, decode(f3))
     f3 = build_c(blob, D, sym=0)
     want = build("F4HWN-7", dst="APZK5", path=["WIDE1-1"],
-                 info="!4850.90N/00216.25E#Portable, UV-K5/K1 F4HWN firmware (github.com/armel)")
+                 info="!4850.90N/00216.25E#")
     ok &= f3 == want
     print("selected /# symbol frame:", f3 == want, decode(f3))
     good = default_ssid == 7 and default_path == 1 and default_sym < 48

@@ -24,6 +24,8 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 - Apps whose code differs from the official F4HWN build carry a `-klean`
   version suffix in their metadata, replacing the former `-gogu`. The radio's
   app list shows only the first four characters of a version.
+- The default APRS comment (`Comm.` in APRS Edit) is now empty. It applies to a
+  fresh APRS TX install; a comment already saved on the radio is kept.
 - Beacon now opens in READY and only transmits after MENU. It also gains its
   own TX power and an A1A mode.
 - Left out because this firmware cannot support them: EPIRB 406 homing keys 8
