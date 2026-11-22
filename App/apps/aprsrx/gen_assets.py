@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 # APRS RX read-only assets: the screen texts and the correlator tables.
 #
 # The UI texts come first, each padded to a multiple of 4 bytes: draw() reads
@@ -23,7 +24,9 @@ WAIT_CAPS = "WAIT"                          # status-bar capsule until a frame
 
 UI = [
     ("T_TITLE",  TITLE),
-    ("T_WAIT",   WAIT_CAPS),
+    # The capsule's padding holds the space before the key-7 prompt, which
+    # starts at T_WAIT + T_QR_OFS: " MENU=QR", in the same 16 bytes.
+    ("T_WAIT",   WAIT_CAPS + "\0" * (7 - len(WAIT_CAPS)) + " MENU=QR"),
     ("T_DBM",    "dBm"),
     ("T_KMH",    "km/h "),
     ("T_CUSTOM", "Custom-"),
@@ -38,14 +41,16 @@ def cos_table(f):
     return [int(round(127 * math.cos(2 * math.pi * f * n / FS))) for n in range(per)]
 
 def mic_code(c):
-    """Digit in bits 0-3, message/position bit in bit 4, custom flag in bit 5."""
+    """Digit in bits 0-3, message/position bit in bit 4, custom flag in bit 5,
+    bit 6 set for a character legal in a Mic-E address (0-9, A-L, P-Z)."""
     digit = 0
     for base in (ord('0'), ord('A'), ord('P')):
         if base <= c < base + 10:
             digit = c - base
     custom = ord('A') <= c <= ord('K')
     bit = c >= ord('P') or custom
-    return digit | (int(bit) << 4) | (int(custom) << 5)
+    valid = chr(c).isascii() and (chr(c).isdigit() or "A" <= chr(c) <= "L" or "P" <= chr(c) <= "Z")
+    return digit | (int(bit) << 4) | (int(custom) << 5) | (int(valid) << 6)
 
 a = Assets("APRSRX")
 ui_size = 0
@@ -56,6 +61,7 @@ for name, s in UI:
 a.u8("T_MIC", [mic_code(c) for c in range(128)])
 a.const("T_TITLE_CHARS", len(TITLE))
 a.const("T_WAIT_CHARS", len(WAIT_CAPS))
+a.const("T_QR_OFS", 7)                      # T_WAIT + this: " MENU=QR"
 a.table("T_MSG", MIC_MSG)                    # Mic-E standard messages
 # Assets.build() places every text/table before binary data. Include the
 # messages between the UI labels and T_MIC in the single display read.

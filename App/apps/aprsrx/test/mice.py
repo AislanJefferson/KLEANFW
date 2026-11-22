@@ -227,6 +227,7 @@ def main():
         assert packed & 15 == mic_digit(c)
         assert bool(packed & 16) == mic_bit(c)
         assert bool(packed & 32) == (0x41 <= c <= 0x4B)
+        assert bool(packed & 64) == (0x30 <= c <= 0x39 or 0x41 <= c <= 0x4C or 0x50 <= c <= 0x5A)
     print("Mic-E asset lookup: all 128 codes equivalent")
     msg_offset, _ = offsets["T_MSG"]
     stride = dict(a.extra)["T_MSG_STRIDE"]

@@ -12,6 +12,8 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
+ * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
 /*
@@ -36,8 +38,9 @@
  * Keys (UV-K5 and UV-K1): UP/DOWN (held) scroll the frame 1 px per slot when
  *   needed; pressed again at either end: the newer / older frame · * normal
  *   view / compact view (saved) · 1 speaker on/off (saved, off by default: the
- *   decoder does not need it; while on, the squelch gates it) · 2 clear · EXIT
- *   quit.
+ *   decoder does not need it; while on, the squelch gates it) · 2 clear · 7 then
+ *   MENU the position of the frame shown as a QR code (QR Map; any other key
+ *   cancels; the frames are lost, they live on this app's stack) · EXIT quit.
  * The loader re-runs RADIO_SetupRegisters on exit; the resident capture
  * (af_capture_close) restores the ADC, PA4, the DAC and its clock.
  */
@@ -80,6 +83,23 @@
 #define FRAME_MIN   18u    /* 2 addresses + control + PID + FCS              */
 #define FCS_GOOD    0xF0B8u
 #define HISTORY     5u
+
+/* ---- the position of the frame shown, handed to QR Map ---- */
+#define QR_ARMED    1u     /* g.qr: key 7 pressed, MENU confirms                */
+#define QR_NOTICE   2u     /* g.qr: QR Map is not installed                     */
+#define QR_GO       3u     /* g.qr: confirmed, listen() returns                 */
+#define QR_RELEASE  4u     /* g.qr: the cancelling key is inert until released;
+                              the only state outside QR_SHOWN, which clears it */
+#define QR_SHOWN    3u     /* g.qr mask: a question or notice on screen (QR_GO
+                              is never drawn: listen() returns first)           */
+#define MIC_VALID   64u    /* T_MIC: the character is legal in a Mic-E address  */
+#define QR_POS_OK   2u     /* g.qrOk: axes parsed in the frame drawn            */
+#define CAS_90DEG   32400000u   /* centi-arcseconds; 180 degrees is this << 1   */
+/* One block: the notice, from its 5th character the name handoff() looks for,
+ * then the four hemisphere letters latch() checks. */
+static const char NO_QR_MAP[]=" NO QR Map\0NSEW";
+#define QR_NAME (NO_QR_MAP+4)
+#define QR_HEMI 11u
 
 typedef struct {
     uint16_t len;
@@ -139,12 +159,14 @@ static struct {
     uint8_t  cw, spk;                  /* the saved settings, in cfg order: view (0 scroll,
                                             CW_COMPACT compact), speaker amplifier on (key 1) */
     uint8_t  refresh;                  /* housekeeping slots since the last redraw */
+    uint8_t  qr, qrOk;                 /* QR_* state, QR_POS_OK when qrPos is valid */
     uint16_t vrow;                     /* y of the next body row before scrolling */
     uint16_t top, lim, nOk;            /* pixel scroll of the body, its limit, frames */
     const app_api_t *A;
     char *text;                        /* formatting buffer (app_main's stack)    */
     frame_t **history;                 /* newest first; buffers live on app_main's stack */
     uint32_t tFrame;                   /* ticks_ms of the last frame              */
+    int32_t  qrPos[2];                 /* frame drawn: lat, lon, centi-arcseconds */
 } g;
 #define str g.text
 
@@ -236,6 +258,8 @@ static void accept(const sl_t *m){
         g.cur=0;                           /* show it, from its first row */
         g.top=0;
         g.redraw|=REDRAW_FRAME;
+        g.qr=g.qrOk=0;                     /* a confirmation is for the frame it saw;
+                                              7 waits for this one to be drawn */
     }
     g.tFrame=t;
 }
@@ -414,12 +438,44 @@ static char *put2(char *o,uint32_t v){ *o++=(char)('0'+sub(&v,10u)); *o++=(char)
 static char *put3(char *o,uint32_t v){ *o++=(char)('0'+sub(&v,100u)); return put2(o,v); }
 static bool micType(uint8_t t){ return t=='`'||t=='\''||t==0x1Cu||t==0x1Du; }
 
+/* The axis just printed, ending at o: "DD MM.hhN" (k = 0) or "DDD MM.hhE" (k = 1),
+ * into centi-arcseconds. One parser for both decoders. A space is APRS position
+ * ambiguity: 0, as the Mic-E display shows it. Anything else, or out of range:
+ * g.qrOk does not count it, no QR code. */
+__attribute__((noinline))
+static void latch(unsigned k,const char *o){
+    const char *p=o-(9u+k);
+    uint32_t v=0;                             /* hundredths of a minute */
+    for(unsigned n=0;n<8u+k;n++){
+        if(n==2u+k||n==5u+k) continue;        /* the space and the dot */
+        unsigned c=(uint8_t)p[n];
+        c=c==' '?0u:c-'0';
+        /* mixed radix: the tens of minutes count in sixes, so a digit past
+         * its radix (or not a digit at all) is the only check needed */
+        const unsigned r=n==3u+k?6u:10u;
+        if(c>=r) return;
+        v=v*r+c;
+    }
+    const char h=o[-1];
+    const unsigned neg=h>'O';                 /* S and W sort after N and E */
+    if(h!=NO_QR_MAP[QR_HEMI+2u*k+neg]) return;
+    v*=60u;
+    if(v<=(CAS_90DEG<<k)){
+        g.qrPos[k]=neg?-(int32_t)v:(int32_t)v;
+        g.qrOk++;
+    }
+}
+
 /* Keep decoder temporaries out of the history renderer's register allocation. */
 __attribute__((noinline))
 static void drawMicE(const uint8_t *f,unsigned i,unsigned end,const char *s){
     uint8_t c[6];
     /* The asset lookup packs digit, position/message bit and custom flag. */
-    for(unsigned k=0;k<6u;k++) c[k]=(uint8_t)s[T_MIC+(f[k]>>1)];
+    uint8_t all=MIC_VALID;                    /* every address byte is a Mic-E one */
+    for(unsigned k=0;k<6u;k++){
+        c[k]=(uint8_t)s[T_MIC+(f[k]>>1)];
+        all&=c[k];
+    }
 
     /* "48 50.89N" / "002 16.25E" (brk) */
     char *o=str;
@@ -429,6 +485,7 @@ static void drawMicE(const uint8_t *f,unsigned i,unsigned end,const char *s){
         if(k==3u) *o++='.';
     }
     *o++=(c[3]&16u)?'N':'S';
+    latch(0,o);
     o=brk(o);
     uint32_t deg=(uint8_t)(f[i+1]-28u);
     if(c[4]&16u) deg+=100u;
@@ -438,6 +495,8 @@ static void drawMicE(const uint8_t *f,unsigned i,unsigned end,const char *s){
     if(mn>=60u) mn-=60u;
     o=put3(o,deg); *o++=' '; o=put2(o,mn); *o++='.'; o=put2(o,(uint8_t)(f[i+3]-28u));
     *o++=(c[5]&16u)?'W':'E';
+    latch(1,o);
+    if(!all) g.qrOk=0;                        /* not a Mic-E destination: no position */
     emit(o);
 
     /* "12km/h 245 [/" / "En Route" (brk): speed in knots x 1.8525 (1897/1024) */
@@ -495,10 +554,11 @@ static bool drawPos(const uint8_t *f,unsigned i,unsigned end){
     const uint8_t *q=f+p;                     /* DDMM.hhN T DDDMM.hhE C */
     char *o=str;
     for(uint8_t k=0;k<18u;k++){
-        if(k==8u){ o=brk(o); continue; }       /* symbol table: later */
+        if(k==8u){ latch(0,o); o=brk(o); continue; }   /* symbol table: later */
         if(k==2u||k==12u) *o++=' ';
         *o++=safe(q[k]);
     }
+    latch(1,o);
     o=emit(o);
     if(p>i+1u){
         /* A timestamp always occupies the seven bytes after the data type. */
@@ -527,6 +587,7 @@ static void draw(void){
     A->status_clear();
     g.vrow=8;                            /* the body starts under the source */
     g.symTable=0;
+    g.qrOk=0;                            /* the decoders below set it again */
     A->print_inverse(s+T_TITLE,2,0,true,true,(uint8_t)(2u+T_TITLE_CHARS*4u));
     A->draw_battery();
 
@@ -592,7 +653,10 @@ static void draw(void){
 
     /* bottom line: "-89dBm", RSSI of the frame shown (none captured yet: blank) */
     o=str;
-    if(g.count){ o=puti(o,frame->rssi); o=put(o,s+T_DBM); }
+    if(g.count){
+        o=puti(o,frame->rssi); o=put(o,s+T_DBM);
+        if(g.qr&QR_SHOWN) o=put(o,g.qr==QR_ARMED?s+T_WAIT+T_QR_OFS:NO_QR_MAP);
+    }
     tiny(49,o);
 }
 
@@ -600,6 +664,18 @@ static void draw(void){
 static void handleKeys(void){
     const app_api_t *A=g.A;
     uint8_t key=A->get_key();
+    /* A pending QR question takes the next press, whatever it is: MENU confirms,
+     * anything else only cancels, and does nothing else until released. */
+    if(g.qr){
+        if(key==APP_KEY_INVALID) g.qr&=QR_SHOWN;
+        else if(key!=g.prevKey){
+            if(g.qr==QR_ARMED && key==APP_KEY_MENU){ g.qr=QR_GO; g.running=false; }
+            else g.qr=QR_RELEASE;
+            g.redraw|=REDRAW_ON;
+        }
+        g.prevKey=key;
+        return;
+    }
     /* UP/DOWN, held: scroll the body 1 px per slot (20 px/s) while rows overflow.
      * Pressed again once at an end: the newer (UP) or older (DOWN) frame, from its
      * first row; holding the key never leaves the frame. Raw KEY_UP is UP on
@@ -618,6 +694,7 @@ static void handleKeys(void){
     if(key==APP_KEY_EXIT) g.running=false;
     else if(key==APP_KEY_2){ g.count=g.cur=0; g.nOk=0; g.top=0; }   /* g.lim: 0 at the redraw that follows */
     else if(key==APP_KEY_1) g.spk^=1u;   /* speaker: listen() gates it at the next slot */
+    else if(key==APP_KEY_7 && g.qrOk==QR_POS_OK) g.qr=QR_ARMED;
     else if(key==APP_KEY_STAR){ g.cw^=CW_COMPACT; g.top=0; }   /* the view (saved on exit) */
 }
 
@@ -682,6 +759,15 @@ static void listen(void){
     }
 }
 
+/* The message QR Map reads: latitude, longitude, then the source call. Built
+ * in the text buffer, after listen() has returned: no stack on top of its peak.
+ * False: QR Map is not installed. */
+static bool openQr(void){
+    memcpy(str,g.qrPos,sizeof g.qrPos);
+    char *e=putCall(str+sizeof g.qrPos,g.history[g.cur]->buf+7);
+    return g.A->handoff(QR_NAME,str,(uint8_t)(e-str));
+}
+
 __attribute__((section(".text.entry"),used))
 void app_main(const app_api_t *api){
     frame_t frames[HISTORY];    /* on the stack: the 4 KiB overlay also holds .bss */
@@ -694,7 +780,9 @@ void app_main(const app_api_t *api){
     G->radio_tune_aprs();
     g.text=text;
     g.history=history;
-    /* The overlay loader zeroes g; the first idle key scan records APP_KEY_INVALID. */
+    /* The overlay loader zeroes g. The loader does not wait for a key release: a
+     * key still held at launch (EXIT, coming back from QR Map) is not a press. */
+    g.prevKey=api->get_key();
 
     api->af_capture_open();      /* PA4 bias and ADC channel 4, restored by close */
     api->backlight_on();
@@ -709,8 +797,14 @@ void app_main(const app_api_t *api){
     api->set_af(APP_AF_FM);
     api->delay_ms(50);
 
-    g.running=true;
-    listen();
+    for(;;){
+        g.running=true;
+        listen();
+        if(g.qr!=QR_GO || openQr()) break;
+        /* handoff() closes the capture before it looks the app up. */
+        api->af_capture_open();
+        g.qr=QR_NOTICE;
+    }
 
     api->af_capture_close();
     api->set_af(APP_AF_MUTE);
