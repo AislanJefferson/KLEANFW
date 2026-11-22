@@ -12,6 +12,8 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
+ * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
 /*
@@ -595,6 +597,12 @@ static void onLong(uint8_t key)
     G->key_state(KEY_STATE_F_OFF); func(key);
 }
 
+/* Do not let the key that closed this modal app reach the resident UI. */
+static void waitKeyRelease(void)
+{
+    while(A->get_key()!=APP_KEY_INVALID){}     /* each scan takes its own time */
+}
+
 __attribute__((section(".text.entry"),used))
 void app_main(const app_api_t *api)
 {
@@ -715,6 +723,7 @@ void app_main(const app_api_t *api)
     }
 
     /* push our state back to the resident FM and persist (config + 48 channels) */
+    waitKeyRelease();
     if(!g.st.is_mr) g.st.sel_freq=g.st.freq_playing;
     A->fm_state(&g.st,true);
     A->fm_commit();

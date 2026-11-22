@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 set -euo pipefail
 
 APP="$(basename "$PWD")"
 APP_NAME="FM Memory"
-APP_VER="3.6.0-gogu"
+APP_VER="3.6.1-gogu"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}
 OUT="${APP_NAME// /}"
