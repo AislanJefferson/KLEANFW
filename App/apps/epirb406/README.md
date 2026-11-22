@@ -465,4 +465,4 @@ a real bias reproduced on the host at the measured level.
 
 `APP_VER` in `build.sh` is bumped for every build that goes on a radio and is
 stored in the `.app` metadata. The status-bar title stays simply `EPIRB 406`.
-Current source: **v3.6-gogu**, from F4HWN's v3.6 (decode alarm: the flashlight blinks until a key): 4,084 of 4,096 bytes (v3.0, key 7, the position to QR Map: 4,080; v2.9: 4,072; v2.6, three decode beeps: 4,092; v2.5, one beep: 4,088; v2.4: 4,072).
+Current source: **v3.6-klean**, from F4HWN's v3.6 (decode alarm: the flashlight blinks until a key): 4,084 of 4,096 bytes (v3.0, key 7, the position to QR Map: 4,080; v2.9: 4,072; v2.6, three decode beeps: 4,092; v2.5, one beep: 4,088; v2.4: 4,072).

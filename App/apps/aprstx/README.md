@@ -34,7 +34,7 @@ frequency and power without duplicating the transmitter. APRS TX 1.6-gogu
 stores them in one versioned 122-byte
 profile asset. Reinstalling APRS TX restores the bundled defaults.
 
-APRS TX 1.9-gogu requires GOGUFW 3.1.1 or later. Its configuration proxy lets
+APRS TX 1.9-klean requires GOGUFW 3.1.1 or later. Its configuration proxy lets
 APRS Edit change the profile, and API level 6 applies the stored frequency and
 power in a private radio context while preserving the user's VFO. Earlier
 firmware refuses to launch it (`NOT SUPPORTED`).

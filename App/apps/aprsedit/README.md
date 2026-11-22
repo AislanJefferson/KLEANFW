@@ -69,9 +69,9 @@ updated profile.
 - `POWER`: `UP`/`DOWN` cycles `LOW1`…`LOW5`, `MID`, `HIGH`; number keys 0–6
   select them directly.
 
-APRS Edit 1.3-gogu and APRS TX 1.9-gogu require GOGUFW 3.1.1 or later. This
+APRS Edit 1.3-klean and APRS TX 1.9-klean require GOGUFW 3.1.1 or later. This
 firmware provides both the configuration proxy and the private frequency/power
 radio context; earlier firmware refuses to launch them (`NOT SUPPORTED`).
-Install APRS TX 1.9-gogu before launching APRS Edit 1.3-gogu. If
+Install APRS TX 1.9-klean before launching APRS Edit 1.3-klean. If
 a compatible APRS TX cannot be reached, the editor remains read-only and
 reports a TX/firmware mismatch. Reinstalling APRS TX restores the complete bundled profile.

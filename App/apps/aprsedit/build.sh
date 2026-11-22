@@ -5,7 +5,7 @@ set -euo pipefail
 
 APP="$(basename "$PWD")"
 APP_NAME="APRS Edit"
-APP_VER="1.3-gogu"
+APP_VER="1.3-klean"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}
 OUT="${APP_NAME// /}"
