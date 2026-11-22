@@ -1506,15 +1506,15 @@ O rádio tem **48 slots** na Flash externa. Instale os `.app` pela página **App
 | **Search** | Busca de frequência e tom (seção 16) |
 | **SystemInfo** | Informações do sistema, bateria, armazenamento e pilha |
 | **APRS RX** | Decodifica APRS (AX.25/AFSK 1200, Mic-E). Em um quadro com posição, **7** e depois **MENU** abre o QR Map |
-| **QR Map** | Mostra a posição recebida no APRS RX como QR code para abrir no mapa do celular. **UP/DOWN** ou **1–5** trocam o formato, **EXIT** volta ao APRS RX. Abrir o QR apaga os quadros recebidos e interrompe a recepção até voltar |
+| **QR Map** | Mostra a posição recebida no APRS RX ou no EPIRB 406 como QR code para abrir no mapa do celular. **UP/DOWN** ou **1–5** trocam o formato, **EXIT** volta ao app de origem. Abrir o QR apaga os quadros recebidos e interrompe a recepção até voltar |
 | **APRS TX** | Beacon de posição APRS |
 | **APRS Edit** | Editor do perfil APRS (indicativo vazio = usa o `CllSgn`) |
 | **APRS DIGI** | Digipeater WIDE1-1 / WIDE2-1 |
 | **KISS TNC** | Usa o rádio como TNC para o APRSdroid via USB |
 | **ACARS RX** | Recebe ACARS em 131,725 MHz (AM) |
-| **Beacon** | Transmissor de raposa/ARDF em CW |
+| **Beacon** | Transmissor de raposa/ARDF em CW. Abre em `READY` e só transmite depois de **MENU** |
 | **FoxHunt** | Caça de raposa por intensidade de sinal |
-| **EPIRB 406** | Decodifica beacons Cospas-Sarsat de 406 MHz |
+| **EPIRB 406** | Decodifica beacons Cospas-Sarsat de 406 MHz. **7** e depois **MENU** abre a posição no QR Map |
 | **Sonde MTS01** | Decodifica radiossondas MTS01 |
 | **SSTV** | Recebe imagens SSTV (14 modos) |
 | **Spectrum3D** | Espectro em visualização 3D |

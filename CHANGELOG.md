@@ -15,6 +15,21 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   received frames are lost and nothing is received until EXIT brings it back.
   Host-tested, not radio-tested. The firmware image is unchanged.
 
+### Changed
+
+- Updated the 22 apps shared with F4HWN to its latest source (main 11035b83,
+  after v7.0.0), keeping the KLEANFW/GOGUFW changes: the shared APRS profile
+  with frequency and power, private tuning, FM VFO/Memory. Host-tested where
+  the app has tests, not radio-tested.
+- Apps whose code differs from the official F4HWN build carry a `-klean` or
+  `-gogu` version suffix, so the app list tells them apart.
+- Beacon now opens in READY and only transmits after MENU. It also gains its
+  own TX power and an A1A mode.
+- Left out because this firmware cannot support them: EPIRB 406 homing keys 8
+  and 9 (no `vfo_stage`, no Sig Finder), the SSTV picture saved across launches
+  (the loader has no saved-screen support, which would also cost a flash erase
+  per exit) and the live GPS position in APRS TX (no K5Viewer GPS source).
+
 ### Fixed
 
 - VOX no longer transmits while the menu is open. At sensitive levels, room
