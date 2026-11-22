@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 """Host checks for APRS Edit's proxy descriptor and APRS profile block."""
 import os, re, struct, subprocess, sys, tempfile
 
@@ -38,6 +39,7 @@ def main():
     menu_names = [b"Call", b"SSID", b"Lat", b"Lon", b"Path", b"Symbol", b"Comm.",
                   b"Freq", b"Power"]
     power_names = [b"LOW1", b"LOW2", b"LOW3", b"LOW4", b"LOW5", b"MID", b"HIGH"]
+    path_names = [b"DIRECT", b"WIDE1-1", b"WIDE1-1,WIDE2-1", b"ARISS"]
     presets = [
         b"Portable, UV-K5/K1 F4HWN firmware (github.com/armel)",
         b"Mobile, UV-K5/K1 F4HWN firmware (github.com/armel)",
@@ -71,6 +73,10 @@ def main():
         all(blob[defs["T_POWER_NAMES"] + i * defs["T_POWER_NAMES_STRIDE"]:
                  defs["T_POWER_NAMES"] + i * defs["T_POWER_NAMES_STRIDE"] + len(name)] == name
             for i, name in enumerate(power_names)),
+        defs["T_PATHS_LEN"] == len(path_names) * defs["T_PATHS_STRIDE"],
+        all(blob[defs["T_PATHS"] + i * defs["T_PATHS_STRIDE"]:
+                 defs["T_PATHS"] + i * defs["T_PATHS_STRIDE"] + len(name)] == name
+            for i, name in enumerate(path_names)),
         all(blob[defs["T_PRESET_NAMES"] + i * defs["T_PRESET_NAMES_STRIDE"]:
                  defs["T_PRESET_NAMES"] + i * defs["T_PRESET_NAMES_STRIDE"] + len(name)] == name
             for i, name in enumerate(preset_names)),
@@ -87,6 +93,7 @@ def main():
         len(profile("Portable, UV-K5/K1 F4HWN firmware (github.com/armel)")) == length,
         profile("X" * 89)[4] == 89,
         profile("X")[5:8] == bytes([0x17, 5, 0]),
+        profile("X", path=3)[5] == 0x37,
         profile("X", callsign="F4HWN")[110:117] == b"\x05F4HWN ",
         profile("X")[110:117] == b"\x00      ",
         struct.unpack("<I", profile("X")[117:121])[0] == 144800,

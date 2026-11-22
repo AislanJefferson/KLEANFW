@@ -1,3 +1,5 @@
+/* Modified by AislanJefferson for KLEANFW, 2026 (see git history). */
+
 /* Copyright 2026 Armel F4HWN
  * Licensed under the Apache License, Version 2.0.
  */
@@ -7,9 +9,9 @@
  * The receiver is the APRS RX Bell 202 software demodulator. A valid AX.25 UI
  * frame is eligible when WIDE1-1 is its first unused path address, or WIDE2-1
  * when the extended mode is selected. That address is replaced in place by
- * the boot callsign with SSID 3 and the H bit, then the FCS is rebuilt and the
- * APRS TX tone generator sends it. Logical packet hashes suppress duplicates
- * for 30 seconds, ignoring path and FCS.
+ * the APRS Edit callsign (else the boot callsign) with SSID 3 and the H bit,
+ * then the FCS is rebuilt and the APRS TX tone generator sends it. Logical
+ * packet hashes suppress duplicates for 30 seconds, ignoring path and FCS.
  *
  * Set a non-zero squelch: transmission waits for 100-227 ms of closed squelch
  * and is abandoned after 3 seconds. The private RX/TX VFO uses the frequency

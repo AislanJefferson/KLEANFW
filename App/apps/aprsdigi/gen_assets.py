@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""APRS DIGI read-only texts and Bell 202 correlator tables."""
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
+"""APRS DIGI read-only texts, APRS TX profile proxy and Bell 202 tables."""
 import math
 import os
 import struct
@@ -28,6 +29,14 @@ def cos_table(freq):
     return [int(round(127 * math.cos(2 * math.pi * freq * n / FS)))
             for n in range(period)]
 
+
+# app_config_proxy_t: the digipeater reads the APRS TX profile only for the
+# callsign APRS Edit set. The proxy takes over cfg_load/cfg_save, so the W1/W12
+# mode is no longer saved, and the app never calls cfg_save.
+proxy = struct.pack("<I16sHBBI", PROXY_MAGIC, TARGET.ljust(16, b"\0"),
+                    0, PROFILE_LEN, 0, PROFILE_MAGIC)
+if len(proxy) != 28:
+    raise ValueError("configuration proxy descriptor layout changed")
 
 a = Assets("APRSDIGI")
 a.prefix("CFG_PROXY", proxy)

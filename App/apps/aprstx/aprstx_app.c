@@ -12,6 +12,8 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
+ * Modified by AislanJefferson for KLEANFW, 2026 (see git history).
  */
 
 /*
@@ -38,9 +40,10 @@
  *   1 px per loop · 1 / F then 1 tone level up / down (deviation, REG_70 gain
  *   10-127) · 2 / F then 2 twist up / down: 2200 Hz gain = level x (8 + tw) / 8,
  *   tw -4..+8 (-6..+6 dB), for a receiver's de-emphasis · 3 beacon interval
- *   (off, 1, 5, 15, 30, 60 min), F then 3 beacon off · * scroll view / compact
- *   view · EXIT quit. F as FoxHunt's: the next key goes down, an icon in the
- *   status bar while armed. Level, twist, view and interval are saved on exit.
+ *   (off, 1, 5, 15, 30, 60 min), F then 3 beacon off · 0 open APRS Edit, whose
+ *   top-level EXIT saves and returns here · * scroll view / compact view · EXIT
+ *   quit. F as FoxHunt's: the next key goes down, an icon in the status bar
+ *   while armed. Level, twist, view and interval are saved on exit.
  *
  * Beacon: while an interval is set, the time left before the next frame counts
  * down in a status-bar capsule ("4:32") and the frame is sent when it reaches
@@ -143,20 +146,13 @@ void *memcpy(void *d, const void *s, size_t n) {
 static char *put(char *o,const char *s){ while(*s)*o++=*s++; return o; }
 /* Formatting by repeated subtraction: no division. Values printed stay below 100000. */
 static uint8_t sub(uint32_t *v,uint32_t d){ uint8_t q=0; while(*v>=d){ *v-=d; q++; } return q; }
-static const uint16_t P10[]={10000u,1000u,100u,10u,1u};
 /* Beacon intervals in minutes, cycled by key 3; index 0 is off. */
 static const uint8_t IV_MIN[]={0u,1u,5u,15u,30u,60u};
 #define IV_COUNT    (sizeof IV_MIN)
-static char *puti(char *o,int32_t v){
-    uint32_t u;
-    if(v<0){*o++='-';u=(uint32_t)(-v);} else u=(uint32_t)v;
-    bool lead=false;
-    for(uint8_t i=0;i<5;i++){
-        uint8_t c=sub(&u,P10[i]);
-        if(c||lead||i==4u){ *o++=(char)('0'+c); lead=true; }
-    }
-    return o;
-}
+/* The resident formatter (API level 3). One local stub keeps every call a
+ * plain bl: the service lies past the ldr immediate range of the table. */
+__attribute__((noinline))
+static char *puti(char *o,int32_t v){ return g.A->append_i32(o,v); }
 /* A tiny row holds 32 characters (4 px each): print_tiny does not clip, so
  * every row built below stays within that. */
 static void tiny(uint8_t y,char *end){ *end='\0'; g.A->print_tiny(str,0,y,false,true); }
@@ -201,27 +197,6 @@ static char *brk(char *o){
     emit(o);
     return str;
 }
-/* The frequency (10 Hz units) drawn as the main screen draws it (ui/main.c,
- * ENABLE_BIG_FREQ): the big digits up to the kHz on lines 4-5, the last two
- * digits in the small font on line 5 right after them (from 1 GHz, the whole
- * string in the big font). The group is aligned left to reserve the rightmost
- * 20 columns for the APRS symbol. Big digits are 13 px (drawn from +2), the
- * point 3 px. No division. */
-static void drawFreq(uint32_t f){
-    const app_api_t *A=g.A;
-    uint16_t m=0;
-    while(f>=100000u){ f-=100000u; m++; }
-    char *o=puti(str,m);
-    *o++='.';
-    for(uint8_t i=0;i<5u;i++) *o++=(char)('0'+sub(&f,P10[i]));
-    *o='\0';
-    uint8_t n=(uint8_t)(o-str), big=(uint8_t)(n-3u);    /* digits before "00" */
-    if(m>=1000u){ A->print_string(str,0,0,4,8); return; }
-    A->print_normal(str+n-2u,(uint8_t)(big*13u+3u),0,5);     /* "00"      */
-    str[n-2u]='\0';
-    A->display_freq(str,0,4,false);                          /* "144.800" */
-}
-
 #define SYM_X 108u
 _Static_assert(SYM_X+SYM_W<=128u,"APRS symbol must fit on screen");
 static void drawSymbol(uint8_t x,uint8_t sym){
@@ -261,6 +236,7 @@ static bool posOk(const uint8_t *d){
 static void build(void){
     const app_api_t *A=g.A;
     uint8_t *f=g.frm;
+    g.flen=0;
     char call[12];
     uint8_t n=g.callLen;
     if(n) memcpy(call,g.call,n);
@@ -429,7 +405,7 @@ static void draw(void){
          * whatever the shift brought there (the big digits start at y = 33: one
          * blank px between) */
     for(uint8_t x=0;x<128u;x++) b[384u+x]=(uint8_t)((b[384u+x]&0x7Fu)|((~x&1u)<<7));
-    drawFreq(A->tx_freq());
+    g.A->draw_frequency(A->tx_freq(),0,4);   /* the main screen's big digits, lines 4-5 */
     drawSymbol(SYM_X,g.sym);
 
         /* bottom line: "lvl 66  tw +0  sent 3", or why nothing was sent */
@@ -451,10 +427,14 @@ static void draw(void){
 /* The next beacon frame is one whole interval from now. */
 static void arm(void){ g.due=g.A->ticks_ms()+(uint32_t)IV_MIN[g.iv]*60000u; }
 
+static bool loadProfile(void);
+
 /* ---- one frame on the air ---- */
 static void send(void){
     const app_api_t *A=g.A;
     arm();                               /* also when refused: no retry at each loop */
+    if(loadProfile()) build();
+    else g.flen=0;
     if(!g.flen){ g.status=ST_NOCALL; return; }
     if(A->tx_state()){ g.status=ST_DENIED; return; }
     g.status=ST_TX;
@@ -576,6 +556,9 @@ void app_main(const app_api_t *api){
     g.redraw=true;
     while(g.running){
         handleKeys();
+        /* Staged at each loop, written on a change only: kept across a switch-off. */
+        c[0]=CFG_MAGIC; c[1]=g.lvl; c[2]=(uint8_t)g.tw; c[3]=g.cw; c[4]=g.iv;
+        api->cfg_save(c,CFG_LEN);
         if(!g.running) break;
         /* The screen only changes on a key (or a send it starts): redraw then,
          * and every 5 s for the battery, not at each loop. The state stays in g:
@@ -589,7 +572,4 @@ void app_main(const app_api_t *api){
         api->delay_ms(LOOP_MS);
         api->backlight_update();     /* normal BLTime timeout; keys re-arm it */
     }
-
-    c[0]=CFG_MAGIC; c[1]=g.lvl; c[2]=(uint8_t)g.tw; c[3]=g.cw; c[4]=g.iv;
-    api->cfg_save(c,CFG_LEN);
 }

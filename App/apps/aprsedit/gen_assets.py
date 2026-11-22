@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 """APRS Edit texts, symbol table and declarative APRS TX profile proxy."""
 import os, struct, sys
 
@@ -38,7 +39,7 @@ UI = [
 
 MENU = ["Call", "SSID", "Lat", "Lon", "Path", "Symbol", "Comm.", "Freq", "Power"]
 POWER_NAMES = ["LOW1", "LOW2", "LOW3", "LOW4", "LOW5", "MID", "HIGH"]
-PATHS = ["DIRECT", "WIDE1-1", "WIDE1-1,WIDE2-1", "ARISS"]
+PATHS = ["DIRECT", "WIDE1-1", "WIDE1-1,WIDE2-1", "ARISS"]   # APRS TX path order
 PRESETS = [
     ("PORTABLE", "Portable, UV-K5/K1 F4HWN firmware (github.com/armel)"),
     ("MOBILE", "Mobile, UV-K5/K1 F4HWN firmware (github.com/armel)"),

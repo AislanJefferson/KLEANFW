@@ -33,8 +33,7 @@ uses the APRS TX configuration proxy, this choice is session-only and starts at
 
 `WIDE2-2` and all higher hop counts remain unsupported.
 
-The app remains an overlay and does not add resident APRS support or change the
-overlay API.
+The app remains an overlay and does not add resident APRS support.
 
 ## Requirements
 

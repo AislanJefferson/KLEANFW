@@ -1,3 +1,5 @@
+/* Modified by AislanJefferson for KLEANFW, 2026 (see git history). */
+
 /* APRS Edit - companion editor for APRS TX's mutable beacon profile.
  *
  * The profile is edited in place: opening a field snapshots the whole block,
@@ -16,8 +18,8 @@
 #define LOOP_MS       10u
 #define EDIT_CHARS    11u    /* comment: normal-font characters per pane row   */
 #define EDIT_ROWS     6u     /* rows above the bottom capsules: no scrolling   */
-#define PATH_WIDE2    2u
-#define PATH_MAX      3u
+#define PATH_WIDE2    2u     /* "WIDE1-1,WIDE2-1": its second hop on a second line */
+#define PATH_MAX      3u     /* "ARISS", the ISS digipeater alias */
 #define LAT_DIGITS    6u
 #define FREQ_DIGITS   6u    /* kHz: 144800 is displayed as 144.800 MHz */
 #define INDEX_SEP_X   48u
@@ -55,7 +57,7 @@ static struct {
     uint8_t mode, screen, item, preset, active_preset;
     uint8_t pending_key, pending_pos, cycle, held_key;
     uint16_t pending_ticks, held_ticks;
-    bool pending, long_fired, dirty, changed, running, missing, bad, return_to_tx;
+    bool pending, long_fired, dirty, running, missing, bad, return_to_tx;
 } g;
 
 void *memcpy(void *dst, const void *src, size_t n)
@@ -71,15 +73,12 @@ void *memset(void *dst, int value, size_t n)
     return dst;
 }
 
+/* The resident formatter (API level 3). One local stub keeps every call a
+ * plain bl: the service lies past the ldr immediate range of the table. */
+__attribute__((noinline))
 static char *put_u8(char *out, uint8_t value)
 {
-    if (value >= 10u) {
-        *out = '0';
-        while (value >= 10u) { (*out)++; value -= 10u; }
-        out++;
-    }
-    *out++ = (char)('0' + value);
-    return out;
+    return g.A->append_i32(out, value);
 }
 
 static uint32_t get_u32(const uint8_t *p)
@@ -208,9 +207,9 @@ static void draw_menu(const char *assets)
 /* The path name, in bold while it is being edited (as the SSID and symbol). */
 static void draw_path(const char *assets, uint8_t path, bool bold)
 {
-    /* The first hop never moves: "DIRECT" or "WIDE1-1" on line 2. The longest
-     * path adds its second hop on the line below, read after the comma of its
-     * own name "WIDE1-1,WIDE2-1". */
+    /* The first hop never moves: "DIRECT", "WIDE1-1" or "ARISS" on line 2.
+     * The two-hop path shows "WIDE1-1" there and adds its second hop on the
+     * line below, read after the comma of its own name "WIDE1-1,WIDE2-1". */
     const char *paths = assets + T_PATHS;
     pane(paths + (path == PATH_WIDE2 ? 1u : path) * T_PATHS_STRIDE, 2u, bold);
     if (path == PATH_WIDE2) pane(paths + PATH_WIDE2 * T_PATHS_STRIDE + 8u, 3u, bold);
@@ -442,7 +441,10 @@ static void commit_editor(void)
     if (g.bad) return;
     if (is_text())
         g.profile[g.item == ITEM_CALL ? APRS_PROFILE_CALL_LEN : APRS_PROFILE_COMMENT_LEN] = g.len;
-    g.changed = true; g.screen = SCREEN_INDEX;
+    g.screen = SCREEN_INDEX;
+    /* Each field confirmed is staged: kept across a switch-off, and an EXIT
+     * after none saves nothing. */
+    g.A->cfg_save(g.profile, APRS_PROFILE_LEN);
 }
 
 static void apply_preset(void)
@@ -463,7 +465,6 @@ static void index_key(uint8_t key)
 {
     if (key == APP_KEY_MENU) open_editor();
     else if (key == APP_KEY_EXIT) {
-        if (g.changed) g.A->cfg_save(g.profile, APRS_PROFILE_LEN);
         if (g.return_to_tx) g.A->handoff(APRS_TX_APP_NAME, NULL, 0u);
         g.running = false;
     } else g.item = step(g.item, g.A->nav_dir(key), MENU_COUNT);
