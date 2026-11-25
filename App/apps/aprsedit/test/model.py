@@ -62,7 +62,10 @@ def main():
         defs["SYM_COUNT"] == 48,
         defs["SYM_CODES"] + defs["SYM_CODES_LEN"] == defs["UI_SIZE"],
         defs["KEYMAP"] == defs["UI_SIZE"],
-        defs["KEYMAP_LEN"] == 50,
+        defs["KEYMAP_LEN"] == 60,
+        defs["KEYMAP_STRIDE"] == 6,
+        blob[defs["KEYMAP"] + defs["KEYMAP_STRIDE"]:
+             defs["KEYMAP"] + 2 * defs["KEYMAP_STRIDE"]] == b".,?!-\0",
         defs["SYM_BITMAPS"] == defs["KEYMAP"] + defs["KEYMAP_LEN"],
         defs["SYM_BITMAPS_LEN"] == 48 * 60,
         defs["PRESET_COUNT"] == len(preset_names),

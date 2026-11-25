@@ -3,6 +3,13 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
+## Unreleased
+
+### Fixed
+
+- APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).
+  Host-tested, not radio-tested. The firmware image is unchanged.
+
 ## KLEANFW 0.2.2 — 2026-11-22
 
 Adds QR Map, updates the apps to the latest F4HWN source, keeps one call tone

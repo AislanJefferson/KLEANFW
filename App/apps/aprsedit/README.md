@@ -59,6 +59,7 @@ updated profile.
   1, 6, 11 ... 46.
 - `COMMENT`: 64-character T9 editor in the normal font, six rows of 11
   characters without scrolling, shown the same way in the index. Its length and the input mode sit in two capsules below. `*` cycles `ABC`, `abc`, `123`;
+  key `1` cycles `.`, `,`, `?`, `!`, `-` and key `0` inserts a space;
   long number keys insert digits; `F` deletes; `UP`/`DOWN` moves the cursor
   and wraps between the start and the end.
   `PTT` opens `CUSTOM` and four predefined messages. The custom draft remains

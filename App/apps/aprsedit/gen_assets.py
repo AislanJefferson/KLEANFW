@@ -75,9 +75,14 @@ a.const("COMMENT_MAX", COMMENT_MAX)
 a.const("COMMENT_LIMIT", COMMENT_LIMIT)
 a.const("PROFILE_LEN", PROFILE_LEN)
 a.const("SYM_COUNT", len(CODES))
-KEYS = [" ", ".,?!", "ABC", "DEF", "GHI", "JKL", "MNO", "PQRS", "TUV", "WXYZ"]
-a.raw("KEYMAP", b"".join(value.encode("ascii").ljust(5, b"\0") for value in KEYS))
-a.const("KEYMAP_STRIDE", 5)
+# Key 1 cycles the punctuation; every entry stays shorter than its stride so
+# the editor stops cycling at the first NUL.
+KEYS = [" ", ".,?!-", "ABC", "DEF", "GHI", "JKL", "MNO", "PQRS", "TUV", "WXYZ"]
+KEYMAP_STRIDE = 6
+if max(len(value) for value in KEYS) >= KEYMAP_STRIDE:
+    raise ValueError("a keymap entry needs a NUL inside its stride")
+a.raw("KEYMAP", b"".join(value.encode("ascii").ljust(KEYMAP_STRIDE, b"\0") for value in KEYS))
+a.const("KEYMAP_STRIDE", KEYMAP_STRIDE)
 # The shared icons fill rows 1-20 of their three pages. Moved down SYM_SHIFT
 # rows here, they still fit (rows 4-23): the app copies them to lines 2-4 and
 # the icon lands 4 px below the table/code row, at no code cost.
