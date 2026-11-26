@@ -1510,16 +1510,17 @@ O rádio tem **48 slots** na Flash externa. Instale os `.app` pela página **App
 | **FMVFO / FMMemory** | Rádio FM (seção 15) |
 | **Search** | Busca de frequência e tom (seção 16) |
 | **SystemInfo** | Informações do sistema, bateria, armazenamento e pilha |
-| **APRS RX** | Decodifica APRS (AX.25/AFSK 1200, Mic-E). Em um quadro com posição, **7** e depois **MENU** abre o QR Map |
-| **QR Map** | Mostra a posição recebida no APRS RX ou no EPIRB 406 como QR code para abrir no mapa do celular. **UP/DOWN** ou **1–5** trocam o formato, **EXIT** volta ao app de origem. Abrir o QR apaga os quadros recebidos e interrompe a recepção até voltar |
+| **APRS RX** | Decodifica APRS (AX.25/AFSK 1200, Mic-E). Em um quadro com posição, **7** abre o QR Map na hora |
+| **QR Map** | Mostra a posição recebida no APRS RX, no EPIRB 406 ou nos apps Sonde M10/MRZ/RS41 como QR code para abrir no mapa do celular. **UP/DOWN** ou **1–5** trocam o formato, **EXIT** volta ao app de origem. Abrir o QR (tecla **7**, sem confirmação) apaga os quadros recebidos e interrompe a recepção até voltar |
 | **APRS TX** | Beacon de posição APRS |
 | **APRS Edit** | Editor do perfil APRS (indicativo vazio = usa o `CllSgn`) |
 | **APRS DIGI** | Digipeater WIDE1-1 / WIDE2-1 |
-| **KISS TNC** | Usa o rádio como TNC para o APRSdroid via USB |
+| **KISS TNC** | Usa o rádio como TNC para o APRSdroid via USB. Também passa frames U/S do AX.25 (modo conectado) |
 | **ACARS RX** | Recebe ACARS em 131,725 MHz (AM) |
 | **Beacon** | Transmissor de raposa/ARDF em CW. Abre em `READY` e só transmite depois de **MENU** |
 | **FoxHunt** | Caça de raposa por intensidade de sinal |
-| **EPIRB 406** | Decodifica beacons Cospas-Sarsat de 406 MHz. **7** e depois **MENU** abre a posição no QR Map |
+| **EPIRB 406** | Decodifica beacons Cospas-Sarsat de 406 MHz. **7** abre a posição no QR Map na hora |
+| **Sonde M10 / MRZ / RS41** | Decodificam radiossondas Meteomodem M10, MRZ-N1/MP3-H1 e Vaisala RS41. Com posição decodificada, **7** abre o QR Map (no lugar do GeoNav do F4HWN, que o KLEANFW não inclui) |
 | **Sonde MTS01** | Decodifica radiossondas MTS01 |
 | **SSTV** | Recebe imagens SSTV (14 modos) |
 | **Spectrum3D** | Espectro em visualização 3D |

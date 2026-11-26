@@ -18,8 +18,8 @@
 
 Supported inputs, each pinned by SHA-256 (see VARIANTS):
 
-    k5v3  UV-K5 V3, version block 7.00.15
-    k1    UV-K1,    version block 7.03.05
+    k5v3  UV-K5 V3, version block 7.00.15  (K5ENG_v7.00.15_publish.bin)
+    k1    UV-K1,    version block 7.03.05  (K1ENG_v7.03.05_publish.bin)
 
 The stock image is decoded (128-byte XOR key), the 16-byte version block and
 the 2-byte checksum are removed, and the KLEANFW boot stub is appended at

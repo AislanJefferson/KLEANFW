@@ -38,9 +38,9 @@
  * Keys (UV-K5 and UV-K1): UP/DOWN (held) scroll the frame 1 px per slot when
  *   needed; pressed again at either end: the newer / older frame · * normal
  *   view / compact view (saved) · 1 speaker on/off (saved, off by default: the
- *   decoder does not need it; while on, the squelch gates it) · 2 clear · 7 then
- *   MENU the position of the frame shown as a QR code (QR Map; any other key
- *   cancels; the frames are lost, they live on this app's stack) · EXIT quit.
+ *   decoder does not need it; while on, the squelch gates it) · 2 clear · 7 the
+ *   position of the frame shown as a QR code (QR Map, at once; the frames are
+ *   lost, they live on this app's stack) · EXIT quit.
  * The loader re-runs RADIO_SetupRegisters on exit; the resident capture
  * (af_capture_close) restores the ADC, PA4, the DAC and its clock.
  */
@@ -85,13 +85,10 @@
 #define HISTORY     5u
 
 /* ---- the position of the frame shown, handed to QR Map ---- */
-#define QR_ARMED    1u     /* g.qr: key 7 pressed, MENU confirms                */
-#define QR_NOTICE   2u     /* g.qr: QR Map is not installed                     */
-#define QR_GO       3u     /* g.qr: confirmed, listen() returns                 */
-#define QR_RELEASE  4u     /* g.qr: the cancelling key is inert until released;
-                              the only state outside QR_SHOWN, which clears it */
-#define QR_SHOWN    3u     /* g.qr mask: a question or notice on screen (QR_GO
-                              is never drawn: listen() returns first)           */
+#define QR_GO       1u     /* g.qr: key 7 pressed, listen() returns             */
+#define QR_NOTICE   2u     /* g.qr: QR Map is not installed, notice on screen   */
+#define QR_RELEASE  4u     /* g.qr: the key that hid the notice is inert until
+                              released, which clears it                         */
 #define MIC_VALID   64u    /* T_MIC: the character is legal in a Mic-E address  */
 #define QR_POS_OK   2u     /* g.qrOk: axes parsed in the frame drawn            */
 #define CAS_90DEG   32400000u   /* centi-arcseconds; 180 degrees is this << 1   */
@@ -258,7 +255,7 @@ static void accept(const sl_t *m){
         g.cur=0;                           /* show it, from its first row */
         g.top=0;
         g.redraw|=REDRAW_FRAME;
-        g.qr=g.qrOk=0;                     /* a confirmation is for the frame it saw;
+        g.qr=g.qrOk=0;                     /* the notice was for the frame it saw;
                                               7 waits for this one to be drawn */
     }
     g.tFrame=t;
@@ -655,7 +652,7 @@ static void draw(void){
     o=str;
     if(g.count){
         o=puti(o,frame->rssi); o=put(o,s+T_DBM);
-        if(g.qr&QR_SHOWN) o=put(o,g.qr==QR_ARMED?s+T_WAIT+T_QR_OFS:NO_QR_MAP);
+        if(g.qr==QR_NOTICE) o=put(o,NO_QR_MAP);
     }
     tiny(49,o);
 }
@@ -664,13 +661,12 @@ static void draw(void){
 static void handleKeys(void){
     const app_api_t *A=g.A;
     uint8_t key=A->get_key();
-    /* A pending QR question takes the next press, whatever it is: MENU confirms,
-     * anything else only cancels, and does nothing else until released. */
+    /* The "NO QR Map" notice takes the next press, whatever it is: that press
+     * only hides it, and does nothing else until released. */
     if(g.qr){
-        if(key==APP_KEY_INVALID) g.qr&=QR_SHOWN;
+        if(key==APP_KEY_INVALID) g.qr&=QR_NOTICE;
         else if(key!=g.prevKey){
-            if(g.qr==QR_ARMED && key==APP_KEY_MENU){ g.qr=QR_GO; g.running=false; }
-            else g.qr=QR_RELEASE;
+            g.qr=QR_RELEASE;
             g.redraw|=REDRAW_ON;
         }
         g.prevKey=key;
@@ -694,8 +690,8 @@ static void handleKeys(void){
     if(key==APP_KEY_EXIT) g.running=false;
     else if(key==APP_KEY_2){ g.count=g.cur=0; g.nOk=0; g.top=0; }   /* g.lim: 0 at the redraw that follows */
     else if(key==APP_KEY_1) g.spk^=1u;   /* speaker: listen() gates it at the next slot */
-    else if(key==APP_KEY_7 && g.qrOk==QR_POS_OK) g.qr=QR_ARMED;
-    else if(key==APP_KEY_STAR){ g.cw^=CW_COMPACT; g.top=0; }   /* the view (saved on exit) */
+    else if(key==APP_KEY_7 && g.qrOk==QR_POS_OK){ g.qr=QR_GO; g.running=false; }
+    else if(key==APP_KEY_STAR){ g.cw^=CW_COMPACT; g.top=0; }   /* the view, saved on exit */
 }
 
 /* ---- keys and screen, between frames ---- */
@@ -809,4 +805,5 @@ void app_main(const app_api_t *api){
     api->af_capture_close();
     api->set_af(APP_AF_MUTE);
     api->audio_path(false);
+    api->cfg_save(&g.cw,2);      /* staged: flash is written only after a change */
 }

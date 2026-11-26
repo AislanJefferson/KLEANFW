@@ -5,7 +5,7 @@
 """QR Map end to end on a stub API (host_app.c): what the screen shows for
 each hand-off message and key, decoded from the frame buffer with OpenCV and
 ZXing (the engine of many phone scanner apps), which must agree.
-With APRS RX's host build, received frames also go through its key 7 + MENU
+With APRS RX's host build, received frames also go through its key 7
 message: the code must hold the position of the frame, rounded to 1e-6 degree,
 and the source callsign must show as the label.
 
@@ -85,9 +85,9 @@ check("cfg 2", decode(frames[0][1]) == GEO and saved == 2)
 frames, _, _ = run(SENT, "", cfg=0xFF)
 check("cfg junk", decode(frames[0][1]) == GOOGLE)
 
-# MENU, which confirmed in APRS RX, still held at launch is not a key press.
+# Key 7, which opened QR Map, still held at launch is not a key press.
 frames, _, _ = run(SENT, "^", cfg=0)
-check("held MENU", len(frames) == 1 and decode(frames[0][1]) == GOOGLE, f"{len(frames)} frames")
+check("held 7", len(frames) == 1 and decode(frames[0][1]) == GOOGLE, f"{len(frames)} frames")
 
 # Every centi-arcsecond rounds to the nearest 1e-6 degree: extremes, both
 # signs, a rest of 359999 (0.999997, the largest), a sweep, no "-0.000000".
@@ -123,7 +123,7 @@ for label, shown in [(b"F4WAT-9", "F4WAT-9"), (b"\x01ab\x7f", "?ab?"),
     t = [s for x, y, s in frames[0][0] if y == 27]
     check(f"label {label!r}", t == [shown], f"{t}")
 
-# APRS RX -> QR Map: a received frame, key 7, MENU, then the code on screen.
+# APRS RX -> QR Map: a received frame, key 7, then the code on screen.
 naprs = 0
 if APRSRX:
     sys.dont_write_bytecode = True
@@ -145,7 +145,7 @@ if APRSRX:
         ("Mic-E S/E", encode("F4HWN-9", -33.8688, 151.2093),
          cas(33, 52, 13, True), cas(151, 12, 56), "F4HWN-9"),
     ]:
-        out = subprocess.run([APRSRX[0], APRSRX[1], "14", "1", "f:" + frame.hex(), "k:7", "k:M"],
+        out = subprocess.run([APRSRX[0], APRSRX[1], "14", "1", "f:" + frame.hex(), "k:7"],
                              capture_output=True, text=True, check=True).stdout.splitlines()
         sent = [l for l in out if l.startswith("H QR Map ")]
         check(f"aprs {name} sent", len(sent) == 1, f"{out}")
@@ -161,4 +161,4 @@ if APRSRX:
 if fails:
     sys.exit(f"FAIL app: {fails} checks")
 print("app: formats, keys, panel, config, extremes, no-position pages and labels OK"
-      + (f"; {naprs} APRS frames exact through key 7 + MENU" if APRSRX else ""))
+      + (f"; {naprs} APRS frames exact through key 7" if APRSRX else ""))

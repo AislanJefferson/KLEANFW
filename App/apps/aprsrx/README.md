@@ -58,7 +58,7 @@ rows occupy eight pixels in normal mode (3 rows at rest) or six in compact mode
 | Status bar | `APRS RX` title, then a `WAIT` capsule until the first frame, the speaker icon while the speaker is on, then ▲ while rows or a newer frame are hidden above and ▼ while rows or an older frame are hidden below (x = 72-76 as in APRS TX, the speaker icon at x = 59-68; both drawn in one asset read) |
 | Lines 0-3 | One frame: source call in bold, fixed on line 0, with two capsules at the right (the frames received, then with several frames kept `2/5`, frame shown / frames kept, 1 = newest; x >= 89); under it the body in the small font (18 characters a row, non-ASCII shown as `.`), 3 rows at a time, scrolled pixel by pixel with UP/DOWN (v0.7): `>DEST,DIGI*,...` (as many path entries as fit two rows), then the info field, whole. For Mic-E (most Yaesu/Kenwood beacons, v0.3): latitude `48 50.89N`, longitude `002 16.25E`, speed km/h, course and symbol, the message type (`Off Duty`, `En Route`...), then altitude and comment without the device markers; for an uncompressed position (`!` `=` `/` `@`, v0.5): latitude, longitude, then the timestamp if any, the symbol (table + code) and the comment. Compressed positions stay raw text. A new frame is shown at once. Key * switches to the compact view (below) |
 | Lines 4-6 | Under a dotted separator (y=31), the frequency drawn as the main screen draws it (big digits up to the kHz, the last two in the small font), aligned left. A matching 20x20 bitmap from the 48-symbol Yaesu set is shown at x=108, y=33-52, on the right for decoded Mic-E and uncompressed positions; the area stays blank for an unknown or unavailable symbol |
-| Bottom row y=49 | `-89dBm`: RSSI at the end of the frame shown (the count of frames received moved to the capsule on line 0), followed by `MENU=QR` after key 7 or `NO QR Map` when that app is missing (the next key only clears this notice). (v0.4-v0.5 also showed frames per slicer, `sl a/b/c`: on air the outer slicers found frames too; dropped in v0.6 to fit the speaker key) |
+| Bottom row y=49 | `-89dBm`: RSSI at the end of the frame shown (the count of frames received moved to the capsule on line 0), followed by `NO QR Map` when key 7 finds that app missing (the next key only clears this notice). (v0.4-v0.5 also showed frames per slicer, `sl a/b/c`: on air the outer slicers found frames too; dropped in v0.6 to fit the speaker key) |
 
 Keys (UV-K5 and UV-K1):
 
@@ -69,12 +69,12 @@ Keys (UV-K5 and UV-K1):
 | * | Normal / compact view, saved on exit, returns to the first row of the frame shown. The callsign stays large and bold on line 0. Body rows use the normal font (18 characters) or 3x5 font (32 characters), continuous 1 px scrolling |
 | 1 | Allow speaker audio on/off, saved on exit (off by default); squelch mutes idle-channel noise and the icon remains visible while enabled |
 | 2 | Clear all five frames and the counters |
-| 7, then MENU | Show the position of the frame on screen as a QR code (needs **QR Map**, see below). 7 shows `MENU=QR` on the bottom row; any other key, or a new frame, cancels |
+| 7 | Show the position of the frame on screen as a QR code at once (needs **QR Map**, see below) |
 | EXIT | Quit |
 
 ### Position as a QR code
 
-For a Mic-E or uncompressed position, keys 7 and MENU hand the position and the
+For a Mic-E or uncompressed position, key 7 hands the position and the
 source callsign to the **QR Map** app, which shows a code a phone opens on a map.
 Compressed positions stay raw text and do not open it. A position with a
 malformed field (minutes of 60 or more, over 90 / 180 degrees, a wrong
@@ -82,7 +82,7 @@ hemisphere letter, a destination that is not a Mic-E address) does not either.
 APRS position ambiguity (spaces) counts as 0, as the Mic-E display shows it.
 
 The two apps cannot run together in the 4 KiB overlay, so **opening the code
-ends APRS RX**: its frames are lost, which is why MENU must confirm, and nothing
+ends APRS RX**: its frames are lost (key 7 asks no confirmation), and nothing
 is received while the code is on screen. EXIT in QR Map restarts APRS RX, empty.
 If QR Map is not installed, the bottom row shows `NO QR Map` and reception and
 the frames continue. No position is ever written to flash.

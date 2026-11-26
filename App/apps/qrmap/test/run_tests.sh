@@ -29,7 +29,7 @@ python3 ../gen_assets.py "$T/apps/qrmap/qrmap_assets.bin" "$T/apps/qrmap/qrmap_a
 cp ../qrmap_app.c ../qr.c ../qr.h "$T/apps/qrmap/"
 cp host_app.c "$T/apps/qrmap/test/"
 $CC -O1 -Wall -Wextra -o "$T/host_app" "$T/apps/qrmap/test/host_app.c"
-# APRS RX on the same kind of stub, for its key 7 + MENU message
+# APRS RX on the same kind of stub, for its key 7 message
 HOSTCC=$CC ../../aprsrx/test/run_qr_tests.sh "$T/aprs"
 python3 check_app.py "$T/host_app" "$T/apps/qrmap/qrmap_assets.bin" \
     "$T/aprs/host_aprsrx" "$T/aprs/apps/aprsrx/aprsrx_assets.bin"

@@ -24,9 +24,7 @@ WAIT_CAPS = "WAIT"                          # status-bar capsule until a frame
 
 UI = [
     ("T_TITLE",  TITLE),
-    # The capsule's padding holds the space before the key-7 prompt, which
-    # starts at T_WAIT + T_QR_OFS: " MENU=QR", in the same 16 bytes.
-    ("T_WAIT",   WAIT_CAPS + "\0" * (7 - len(WAIT_CAPS)) + " MENU=QR"),
+    ("T_WAIT",   WAIT_CAPS),
     ("T_DBM",    "dBm"),
     ("T_KMH",    "km/h "),
     ("T_CUSTOM", "Custom-"),
@@ -61,7 +59,6 @@ for name, s in UI:
 a.u8("T_MIC", [mic_code(c) for c in range(128)])
 a.const("T_TITLE_CHARS", len(TITLE))
 a.const("T_WAIT_CHARS", len(WAIT_CAPS))
-a.const("T_QR_OFS", 7)                      # T_WAIT + this: " MENU=QR"
 a.table("T_MSG", MIC_MSG)                    # Mic-E standard messages
 # Assets.build() places every text/table before binary data. Include the
 # messages between the UI labels and T_MIC in the single display read.

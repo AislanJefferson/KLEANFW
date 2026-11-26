@@ -55,7 +55,7 @@ static void s_blit_full(void){
 static void s_nop(void){}
 static void s_delay(uint32_t ms){ (void)ms; }
 static uint8_t s_get_key(void){
-    if (launchPolls) { launchPolls--; return launchPolls || keys[-1] == '^' ? APP_KEY_MENU : APP_KEY_INVALID; }
+    if (launchPolls) { launchPolls--; return launchPolls || keys[-1] == '^' ? APP_KEY_7 : APP_KEY_INVALID; }
     /* each press: 2 polls down, then 2 released */
     const unsigned i = keyPoll++ / 4, down = keyPoll % 4 <= 2 && keyPoll % 4 != 0;
     const char k = i < strlen(keys) ? keys[i] : 'X';

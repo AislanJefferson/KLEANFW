@@ -16,9 +16,20 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   the CHIRP key-action list. The unused REGA IDs move to 30/31. Image
   120,408 / 120,832 bytes (+200 B, 424 bytes free); RAM 15,648 bytes (+8 B).
   Code review and builds only, not radio-tested.
+- Apps **Sonde M10**, **Sonde MRZ** and **Sonde RS41** imported from F4HWN
+  73fc66c7. KLEANFW has no GeoNav, so key 7 shows the decoded position as a
+  QR code with QR Map instead (MENU no longer opens GeoNav). M10 4,064, MRZ
+  4,064, RS41 3,996 of 4,096 bytes. Sonde M20 is left out: with GCC 15.2
+  even F4HWN's M20 overflows the 4 KiB overlay. Host-tested decoders, not
+  radio-tested.
 
 ### Changed
 
+- APRS RX and EPIRB 406: key 7 opens QR Map at once, with no MENU
+  confirmation, as in the sonde apps. Leaving still clears the received
+  frames. Host-tested, not radio-tested.
+- KISS TNC 1.1 (F4HWN): passes 17-byte AX.25 U/S frames (no PID), so
+  connected mode works. Host-tested, not radio-tested.
 - FM VFO 3.6.2: MENU opens on **SAVE**, so MENU, MENU opens Ch Save and a
   third MENU stores (it took MENU, DOWN, MENU, MENU); LIVE RSSI is one
   UP/DOWN away. Ch Save offers the memory that already
@@ -59,6 +70,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   boot moved to the next memory, or left memory mode if it was the only one.
   Same image size (120,408 bytes, one instruction changes). The unused built-in
   FM scan now also stops at the band's top (not compiled). Radio-tested.
+- APRS RX saves the view (*) and the speaker (1) again: the v0.2.2 app
+  update had dropped the save, so both reset at every launch. Not
+  radio-tested.
 - APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).
   Host-tested, not radio-tested. The firmware image is unchanged.
 
