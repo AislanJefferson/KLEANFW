@@ -3,7 +3,15 @@
 KLEANFW is a modified version of GOGUFW by Gogu-Qs. The KLEANFW releases come
 first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
-## Unreleased
+## KLEANFW 0.2.3 — 2026-11-26
+
+Adds the COMPANDER RX side-key action and three sonde apps, opens QR Map with
+key 7 in every app that sends positions, fixes the FM VFO/Memory apps and
+updates KISS TNC to 1.1. The EEPROM layout is the same as 0.2.2 (the CHIRP
+module only gains the new key action). Image 120,408 / 120,832 bytes (424 bytes
+free); RAM 15,648 / 16,384 bytes at link time. COMPANDER RX and the FM changes
+are radio-tested; the app imports and the other app changes are host-tested
+where tests exist, not radio-tested.
 
 ### Added
 
@@ -15,7 +23,7 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   selected for TX, it refuses with the double beep. No screen icon. Added to
   the CHIRP key-action list. The unused REGA IDs move to 30/31. Image
   120,408 / 120,832 bytes (+200 B, 424 bytes free); RAM 15,648 bytes (+8 B).
-  Code review and builds only, not radio-tested.
+  Radio-tested.
 - Apps **Sonde M10**, **Sonde MRZ** and **Sonde RS41** imported from F4HWN
   73fc66c7. KLEANFW has no GeoNav, so key 7 shows the decoded position as a
   QR code with QR Map instead (MENU no longer opens GeoNav). M10 4,064, MRZ
@@ -37,7 +45,7 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   an occupied memory holds (`05 - NAME` or `05 - 101.5`). The header reads
   `VFO CH05` when the tuned frequency is stored. F+3 stays in the VFO when
   the band has no memory instead of loading FM Memory, which jumped straight
-  back. Code review and builds only, not radio-tested.
+  back. Radio-tested.
 
 ### Fixed
 
