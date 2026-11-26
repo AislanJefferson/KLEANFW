@@ -3,7 +3,7 @@
 QR Map shows a position that another app hands over as a QR code on the
 radio's screen. A phone scans it and opens the position on a map, so a
 received position goes to the phone without typing a digit. In KLEANFW,
-APRS RX, EPIRB 406 and the Sonde M10, M20, MRZ and RS41 apps send it (key 7,
+APRS RX, EPIRB 406 and the Sonde M10, MRZ and RS41 apps send it (key 7,
 at once); any app can do the same (see
 [Hand-off message](#hand-off-message)).
 
