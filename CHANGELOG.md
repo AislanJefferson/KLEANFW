@@ -19,8 +19,9 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ### Changed
 
-- FM VFO 3.6.2: MENU opens on **SAVE**, so MENU, MENU stores the station
-  (LIVE RSSI is one UP/DOWN away). Ch Save offers the memory that already
+- FM VFO 3.6.2: MENU opens on **SAVE**, so MENU, MENU opens Ch Save and a
+  third MENU stores (it took MENU, DOWN, MENU, MENU); LIVE RSSI is one
+  UP/DOWN away. Ch Save offers the memory that already
   holds this frequency, else the first empty one, else CH-01, and shows what
   an occupied memory holds (`05 - NAME` or `05 - 101.5`). The header reads
   `VFO CH05` when the tuned frequency is stored. F+3 stays in the VFO when
@@ -44,13 +45,14 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
     behind it (in FM Memory, digits behind CH-DEL changed the channel to be
     deleted). Long 1, 3 and \* do nothing behind Ch Save, LIVE RSSI, the
     auto-scan question or the name editor; long 0 still quits.
-  - A half-typed frequency/channel is dropped by any other key, so a scan no
-    longer shows `88-.-` and EXIT stops the scan at once.
+  - A half-typed frequency/channel is dropped by any other key, F+key or
+    long press, so a scan no longer shows `88-.-` and EXIT stops the scan at
+    once.
   - The key-release wait after a mode switch is 100 ms as documented
     (it was ~20 ms).
   - A memory at the very top of the band (108.0, 90.0, 76.0) is no longer
     hidden.
-  - FM VFO 4,092 / 4,096 bytes (was 4,096), FM Memory 3,828 / 4,096 bytes
+  - FM VFO 4,088 / 4,096 bytes (was 4,096), FM Memory 3,824 / 4,096 bytes
     (was 3,856). Code review and builds only, not radio-tested.
 - APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).
   Host-tested, not radio-tested. The firmware image is unchanged.

@@ -34,8 +34,10 @@ overlay. Install both `FMVFO.app` and `FMMemory.app`.
   (shown as CH-nn), which never needs an erase of the names sector.
 - The VFO header reads `VFO CH05` when the tuned frequency is stored. `F+3`
   stays in the VFO when the band has no memory.
+- In FM VFO, MENU, MENU opens Ch Save and a third MENU stores.
 - Auto scan stops at the top of the selected band. Any key other than a digit
-  or EXIT drops a half-typed frequency or channel.
+  or EXIT, and any F+key or long press, drops a half-typed frequency or
+  channel.
 - Memory band selection skips bands without saved stations instead of silently
   switching to VFO mode.
 

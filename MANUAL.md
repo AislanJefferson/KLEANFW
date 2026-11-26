@@ -1363,7 +1363,7 @@ Requer **os dois** apps `FMVFO.app` e `FMMemory.app`. Sem eles, F+0 dá bipe dup
 ### 15.3 Recursos
 
 - 48 memórias com nome (renomear e apagar pelo menu, editor da seção 23).
-- **Salvar no VFO**: MENU, MENU. O Ch Save abre na memória que já tem a frequência, senão na primeira vazia, senão no CH-01. UP/DOWN ou 2 dígitos escolhem outra. Uma memória ocupada aparece como `05 - NOME` (ou `05 - 101.5` sem nome); `CH-05` é memória vazia. Salvar de novo a mesma frequência mantém o nome.
+- **Salvar no VFO**: MENU, MENU abre o Ch Save e um terceiro MENU grava. O Ch Save abre na memória que já tem a frequência, senão na primeira vazia, senão no CH-01. UP/DOWN ou 2 dígitos escolhem outra. Uma memória ocupada aparece como `05 - NOME` (ou `05 - 101.5` sem nome); `CH-05` é memória vazia. Salvar de novo a mesma frequência mantém o nome.
 - O cabeçalho do VFO mostra `VFO CH05` quando a frequência sintonizada já está salva. F+3 fica no VFO se a banda não tem memórias.
 - O scan automático para no fim da banda selecionada.
 - **LIVE RSSI**: medidor de sinal atualizado continuamente.
