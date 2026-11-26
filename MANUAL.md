@@ -455,7 +455,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: OFF.
 - **Quando mudar**: só quando **todos** os rádios da conversa usam o compander. Se só um lado usar, o áudio fica com volume irregular.
 - **Atenção**: com o compander de RX ligado, `SetRxG` fica fixo em `ON (COMPND)`. A tela principal não mostra ícone de compander.
-- **Atalho**: a ação lateral **COMPANDER RX** liga e desliga só a parte de RX (o expansor) do canal atual, sem gravar. O `Compnd` do canal não muda: trocar de canal ou de banda no VFO, mexer no `Compnd` ou desligar o rádio volta ao valor gravado. O TX continua como está no `Compnd`.
+- **Atalho**: a ação lateral **COMPANDER RX** liga e desliga só a parte de RX (o expansor) do canal atual, sem gravar. O `Compnd` do canal não muda: trocar de canal ou de banda no VFO, mexer no `Compnd` ou desligar o rádio volta ao valor gravado. O TX continua como está no `Compnd`. Em Cross Band, assim como o menu `Compnd`, o atalho age no VFO de TX.
 
 #### `Mode`: modulação *(canal)*
 
@@ -1759,7 +1759,7 @@ Se as setas parecerem invertidas, ajuste `SetNav`.
 - por canal: TXLock, No FSK TX, No Roger, Scrambler, BusyCL, FreqRev, PTT ID, Compander e listas de scan;
 - 48 nomes de FM (15 caracteres);
 - **F Lock** com os três planos do firmware (BRASIL, DISABLE ALL, UNLOCK ALL; UNLOCK ALL só pode ser escolhido no menu do rádio);
-- SetNFM e as ações de teclas laterais deste build (inclusive **SCRAMBLE**).
+- SetNFM e as ações de teclas laterais deste build (inclusive **SCRAMBLE** e **COMPANDER RX**).
 
 > [!WARNING]
 > Use só o módulo desta versão: módulos do GOGUFW e de outras versões do KLEANFW não são compatíveis e podem sobrescrever campos.
