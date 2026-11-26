@@ -270,6 +270,30 @@ void RADIO_ValidateAndSetCode(FREQ_Config_t *pFreq_Config, uint8_t tmp) {
     pFreq_Config->Code = tmp;
 }
 
+/* COMPANDER RX shortcut: RAM only, never written to the channel.  While it
+ * names a VFO and the record it shows, the RX side of that VFO reads the
+ * Compander RX bit inverted.  Loading another record (or an empty one) and
+ * power-off end it; the stored Compander is never touched. */
+static struct {
+    const VFO_Info_t *pVfo;
+    uint16_t          Channel;
+} gRxCompTemp;
+
+void RADIO_ToggleRxCompanderTemp(const VFO_Info_t *pVfo)
+{
+    if (gRxCompTemp.pVfo == pVfo && gRxCompTemp.Channel == pVfo->CHANNEL_SAVE) {
+        gRxCompTemp.pVfo = NULL;
+    } else {
+        gRxCompTemp.pVfo    = pVfo;
+        gRxCompTemp.Channel = pVfo->CHANNEL_SAVE;
+    }
+}
+
+void RADIO_ClearRxCompanderTemp(void)
+{
+    gRxCompTemp.pVfo = NULL;
+}
+
 void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure)
 {
     VFO_Info_t *pVfo = &gEeprom.VfoInfo[VFO];
@@ -316,6 +340,10 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         channel = FREQ_CHANNEL_LAST - 1;
 
     ChannelAttributes_t* att = MR_GetChannelAttributes(channel);
+    if (gRxCompTemp.pVfo == pVfo &&
+        (att->__val == 0xFFFF || gRxCompTemp.Channel != channel))
+        gRxCompTemp.pVfo = NULL;   // COMPANDER RX shortcut: one record only
+
     if (att->__val == 0xFFFF) { // invalid/unused channel
         if (IS_MR_CHANNEL(channel)) {
             channel                    = gEeprom.FreqChannel[VFO];
@@ -991,7 +1019,7 @@ void RADIO_SetupRegisters(bool switchToForeground)
     }
 
     // RX expander.
-    BK4819_SetCompander(RADIO_IsRxCompanderOn(gRxVfo) ? gRxVfo->Compander : 0);
+    BK4819_SetCompander(RADIO_RxCompander(gRxVfo));
 
     BK4819_EnableDTMF();
     InterruptMask |= BK4819_REG_3F_DTMF_5TONE_FOUND;
@@ -1132,9 +1160,19 @@ static void RADIO_SetTxParametersEx(bool fm)
 void RADIO_SetTxParameters(void) { RADIO_SetTxParametersEx(true); }
 void RADIO_PrepareTx(void) { RADIO_SetTxParametersEx(false); }
 
+/* RX compander mode in use (0 when off): the stored one, with the RX bit
+ * inverted by the COMPANDER RX shortcut.  The TX side reads the stored value. */
+uint8_t RADIO_RxCompander(const VFO_Info_t *pInfo)
+{
+    uint8_t c = pInfo->Compander;
+    if (gRxCompTemp.pVfo == pInfo && gRxCompTemp.Channel == pInfo->CHANNEL_SAVE)
+        c ^= 2u;
+    return (pInfo->Modulation == MODULATION_FM && c >= 2) ? c : 0;
+}
+
 bool RADIO_IsRxCompanderOn(const VFO_Info_t *pInfo)
 {
-    return pInfo->Modulation == MODULATION_FM && pInfo->Compander >= 2;
+    return RADIO_RxCompander(pInfo) != 0;
 }
 
 void RADIO_SetModulation(ModulationMode_t modulation)

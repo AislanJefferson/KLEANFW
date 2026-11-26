@@ -548,6 +548,7 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
 #ifdef ENABLE_GOGUFW_SCRAMBLER
     {"SCRAMBLE",        ACTION_OPT_SCRAMBLE},
 #endif
+    {"COMPAND\nRX",     ACTION_OPT_COMPANDER_RX},
 };
 
 const uint8_t gSubMenu_SIDEFUNCTIONS_size = ARRAY_SIZE(gSubMenu_SIDEFUNCTIONS);

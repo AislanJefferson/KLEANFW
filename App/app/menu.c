@@ -758,6 +758,7 @@ void MENU_AcceptSetting(void)
             break;
 
         case MENU_COMPAND:
+            RADIO_ClearRxCompanderTemp();   // the menu value wins over the shortcut
             gTxVfo->Compander = gSubMenuSelection;
             SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true);
             gVfoConfigureMode = VFO_CONFIGURE;

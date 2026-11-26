@@ -836,7 +836,8 @@ KEYACTIONS_LIST = ["NONE",
                    "HEARD",
                    "CALLTX",
                    "RF LOG",
-                   "SCRAMBLE"
+                   "SCRAMBLE",
+                   "COMPANDER RX"
                   ]
 
 # Keep BEAM and RF LOG at their historical numeric slots so later GOGUFW
