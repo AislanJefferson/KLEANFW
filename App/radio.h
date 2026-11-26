@@ -179,6 +179,11 @@ void     RADIO_PrepareTx(void);
 void     RADIO_SetupAGC(bool listeningAM, bool disable);
 void     RADIO_SetModulation(ModulationMode_t modulation);
 bool     RADIO_IsRxCompanderOn(const VFO_Info_t *pInfo);
+uint8_t  RADIO_RxCompander(const VFO_Info_t *pInfo);
+/* COMPANDER RX shortcut (RAM only): toggle it on a VFO's current record, or
+ * end it (Compnd menu). */
+void     RADIO_ToggleRxCompanderTemp(const VFO_Info_t *pVfo);
+void     RADIO_ClearRxCompanderTemp(void);
 void     RADIO_SetVfoState(VfoState_t State);
 void     RADIO_PrepareTX(void);
 void     RADIO_SendCssTail(void);

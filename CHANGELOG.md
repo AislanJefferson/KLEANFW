@@ -5,6 +5,18 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
 
 ## Unreleased
 
+### Added
+
+- Side-key/picker action **COMPANDER RX** (ID 29): turns the RX compander
+  (expander) of the current channel/VFO on or off in RAM only. The channel's
+  `Compnd` setting is never written (no flash erase): another channel or VFO
+  band, the `Compnd` menu or power-off bring the stored value back. TX is
+  unchanged. FM only; on AM/USB, or with a Full Watch priority channel
+  selected for TX, it refuses with the double beep. No screen icon. Added to
+  the CHIRP key-action list. The unused REGA IDs move to 30/31. Image
+  120,408 / 120,832 bytes (+200 B, 424 bytes free); RAM 15,648 bytes (+8 B).
+  Code review and builds only, not radio-tested.
+
 ### Fixed
 
 - APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).

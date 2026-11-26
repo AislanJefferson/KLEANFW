@@ -164,6 +164,27 @@ static void ACTION_Scramble(void)
 }
 #endif
 
+/* Toggle the RX compander (expander) of the current channel/VFO in RAM only:
+ * the channel's Compnd setting is never written, and another channel/band or
+ * power-off brings it back.  FM only, like the expander itself. */
+static void ACTION_CompanderRx(void)
+{
+    if (gTxVfo->Modulation != MODULATION_FM
+#ifdef ENABLE_FEAT_F4HWN_FULL_WATCH
+        /* gTxVfo is then a virtual priority VFO no channel load would end. */
+        || APP_FullWatchManualTxSelected()
+#endif
+    ) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+
+    RADIO_ToggleRxCompanderTemp(gTxVfo);
+
+    gVfoConfigureMode     = VFO_CONFIGURE;   // reapply the RX path, no save
+    gRequestDisplayScreen = gScreenToDisplay;
+}
+
 void (*const action_opt_table[ACTION_OPT_LEN])(void) = {
     [ACTION_OPT_NONE] = &FUNCTION_NOP,
     [ACTION_OPT_POWER] = &ACTION_Power,
@@ -254,10 +275,12 @@ void (*const action_opt_table[ACTION_OPT_LEN])(void) = {
 #ifdef ENABLE_GOGUFW_SCRAMBLER
     [ACTION_OPT_SCRAMBLE]     = &ACTION_Scramble,
 #endif
+    [ACTION_OPT_COMPANDER_RX] = &ACTION_CompanderRx,
 };
 
 static_assert(ARRAY_SIZE(action_opt_table) == ACTION_OPT_LEN);
 static_assert(ACTION_OPT_SCRAMBLE == 28);
+static_assert(ACTION_OPT_COMPANDER_RX == 29);
 static_assert(ACTION_OPT_BEAM == 23);
 static_assert(ACTION_OPT_MESSENGER == 24);
 static_assert(ACTION_OPT_HEARD == 25);
@@ -458,6 +481,7 @@ static bool ACTION_IsBlockedInFM(uint8_t action)
 #ifdef ENABLE_GOGUFW_SCRAMBLER
         case ACTION_OPT_SCRAMBLE:
 #endif
+        case ACTION_OPT_COMPANDER_RX:
             return true;
 
         default:

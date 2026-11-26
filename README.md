@@ -117,6 +117,7 @@ direction:
 | Lock or unlock the keypad | Hold **F** |
 | Pick a firmware slot | Hold **MENU** while switching on |
 | Turn the channel scrambler on or off | Side key set to **SCRAMBLE** |
+| Turn the RX compander on or off for now (not saved) | Side key set to **COMPANDER RX** |
 | Spectrum: next scan list (MR) / listen bandwidth | **4** / **6** |
 | Spectrum: ignore this peak / backlight cycle | **SIDE1** / **SIDE2** |
 

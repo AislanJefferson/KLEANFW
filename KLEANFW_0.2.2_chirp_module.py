@@ -13,7 +13,8 @@
 #   CryKey passphrase:     0x00E140 alias -> firmware flash 0x012140
 # Includes GGFW settings: MsgRx, MsgAck, MsgBeep, MsgLed, CllVol,
 # RngRsp, Callsign, CryKey, Drafts, FM names, No FSK TX, No Roger,
-# Scrambler (fixed carriers and HOP), the SCRAMBLE key action and Compander.
+# Scrambler (fixed carriers and HOP), the SCRAMBLE and COMPANDER RX key
+# actions and Compander.
 # F Lock offers the firmware's three plans: BRASIL, DISABLE ALL, UNLOCK ALL.
 
 # Quansheng UV-K5 driver (c) 2023 Jacek Lipkowski <sq5bpf@lipkowski.org>
@@ -836,7 +837,8 @@ KEYACTIONS_LIST = ["NONE",
                    "HEARD",
                    "CALLTX",
                    "RF LOG",
-                   "SCRAMBLE"
+                   "SCRAMBLE",
+                   "COMPANDER RX"
                   ]
 
 # Keep BEAM and RF LOG at their historical numeric slots so later GOGUFW

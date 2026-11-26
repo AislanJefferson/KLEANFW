@@ -455,6 +455,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **Padrão**: OFF.
 - **Quando mudar**: só quando **todos** os rádios da conversa usam o compander. Se só um lado usar, o áudio fica com volume irregular.
 - **Atenção**: com o compander de RX ligado, `SetRxG` fica fixo em `ON (COMPND)`. A tela principal não mostra ícone de compander.
+- **Atalho**: a ação lateral **COMPANDER RX** liga e desliga só a parte de RX (o expansor) do canal atual, sem gravar. O `Compnd` do canal não muda: trocar de canal ou de banda no VFO, mexer no `Compnd` ou desligar o rádio volta ao valor gravado. O TX continua como está no `Compnd`. Em Cross Band, assim como o menu `Compnd`, o atalho age no VFO de TX.
 
 #### `Mode`: modulação *(canal)*
 
@@ -591,7 +592,7 @@ Cada categoria começa com uma tabela de consulta rápida. Abaixo dela, cada ite
 - **O que faz**: define a função de cada botão lateral, com toque curto (`Shrt`) ou segurado (`Long`).
   - `F1` = **SIDE1**, o botão de cima.
   - `F2` = **SIDE2**, o botão de baixo.
-- **Opções**: a lista de ações da seção 7 (MONITOR, SCAN, POWER, MESSENGER, HEARD, CALLTX, SCRAMBLE…).
+- **Opções**: a lista de ações da seção 7 (MONITOR, SCAN, POWER, MESSENGER, HEARD, CALLTX, SCRAMBLE, COMPANDER RX…).
 - **Padrão**: F1Shrt = MONITOR, F2Shrt = SCAN, os demais = NONE.
 - **Quando mudar**: coloque nos botões o que você mais usa. Exemplos: `F1Long = MESSENGER`, para abrir o Messenger sem passar pelo menu; `F2Long = SCRAMBLE`, para ligar o scrambler na hora.
 
@@ -1043,6 +1044,7 @@ Configure em **Keys → F1Shrt, F1Long, F2Shrt, F2Long, M Long** (ou pelo CHIRP)
 | **HEARD** | Abre o HEARD (de novo, volta ao rádio) |
 | **CALLTX** | Transmite a melodia de chamada (igual a F+9) |
 | **SCRAMBLE** | Liga/desliga o scrambler do canal atual (só em FM; em AM/USB dá bipe duplo, mudo com `Beep` OFF). Ao religar, restaura o último tipo usado; após ligar o rádio, o tipo padrão é **HOP** |
+| **COMPANDER RX** | Liga/desliga o compander de RX (expansor) do canal atual **sem gravar**: o `Compnd` do canal não muda e volta ao trocar de canal/banda, mexer no `Compnd` ou desligar o rádio. O TX não muda. Só em FM; em AM/USB (ou com um canal prioritário do Full Watch escolhido para TX) dá bipe duplo. Sem ícone na tela; o efeito aparece em `SetRxG = ON (COMPND)` |
 
 ---
 
@@ -1757,7 +1759,7 @@ Se as setas parecerem invertidas, ajuste `SetNav`.
 - por canal: TXLock, No FSK TX, No Roger, Scrambler, BusyCL, FreqRev, PTT ID, Compander e listas de scan;
 - 48 nomes de FM (15 caracteres);
 - **F Lock** com os três planos do firmware (BRASIL, DISABLE ALL, UNLOCK ALL; UNLOCK ALL só pode ser escolhido no menu do rádio);
-- SetNFM e as ações de teclas laterais deste build (inclusive **SCRAMBLE**).
+- SetNFM e as ações de teclas laterais deste build (inclusive **SCRAMBLE** e **COMPANDER RX**).
 
 > [!WARNING]
 > Use só o módulo desta versão: módulos do GOGUFW e de outras versões do KLEANFW não são compatíveis e podem sobrescrever campos.
