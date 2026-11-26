@@ -65,7 +65,7 @@ bool FM_CheckValidChannel(uint8_t Channel)
 {
     return  Channel < ARRAY_SIZE(gFM_Channels) && 
             gFM_Channels[Channel] >= BK1080_GetFreqLoLimit(gEeprom.FM_Band) && 
-            gFM_Channels[Channel] < BK1080_GetFreqHiLimit(gEeprom.FM_Band);
+            gFM_Channels[Channel] <= BK1080_GetFreqHiLimit(gEeprom.FM_Band);
 }
 
 uint8_t FM_FindNextChannel(uint8_t Channel, uint8_t Direction)
@@ -642,7 +642,7 @@ void FM_Play(void)
         }
     }
 
-    if (gFM_AutoScan && gEeprom.FM_FrequencyPlaying >= BK1080_GetFreqHiLimit(1))
+    if (gFM_AutoScan && gEeprom.FM_FrequencyPlaying >= BK1080_GetFreqHiLimit(gEeprom.FM_Band))
         FM_PlayAndUpdate();
     else
         FM_Tune(gEeprom.FM_FrequencyPlaying, gFM_ScanState, false);

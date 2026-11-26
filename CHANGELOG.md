@@ -54,6 +54,12 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
     hidden.
   - FM VFO 4,088 / 4,096 bytes (was 4,096), FM Memory 3,824 / 4,096 bytes
     (was 3,856). Code review and builds only, not radio-tested.
+- Firmware: at power-on, a saved FM Memory channel at the very top of the band
+  (108.0, 90.0, 76.0) is kept, like the FM Memory app now does. Before, the
+  boot moved to the next memory, or left memory mode if it was the only one.
+  Same image size (120,408 bytes, one instruction changes). The unused built-in
+  FM scan now also stops at the band's top (not compiled). Code review and
+  build only, not radio-tested.
 - APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).
   Host-tested, not radio-tested. The firmware image is unchanged.
 
