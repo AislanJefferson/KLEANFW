@@ -1,5 +1,7 @@
 # Sonde MRZ
 
+<!-- Modified by AislanJefferson for KLEANFW, 2026 (see git history). -->
+
 Receive-only Fusion overlay application for MRZ-N1 / MP3-H1 radiosondes. It
 samples the BK4829 AF output on PA4, validates the frame CRC, and displays the
 serial number, GPS position, altitude, temperature, relative humidity,
@@ -72,7 +74,7 @@ range, with vertical speed within 0.1 m/s on its test grid.
 | `4` | Reset the frequency offset |
 | `5` | Toggle the valid-frame beep |
 | `F` | Arm/disarm the reverse action for the next key |
-| `MENU` | Open GeoNav once a position is decoded; `EXIT` in GeoNav returns here |
+| `7` | Show the position as a QR code in QR Map once a position is decoded; its `EXIT` starts this app again, empty (KLEANFW: in place of F4HWN's GeoNav on `MENU`) |
 | `EXIT` | Quit |
 
 The footer recalls the tuned frequency, any offset, RSSI, frame count, and
@@ -135,7 +137,7 @@ python3 -B App/apps/sondemrz/test/flipper_mrz.py App/apps/sondemrz/test/flipper
 Tune the radio to 433.650 MHz FM wide for this bench test. The generated files
 are synthetic SRD-band transmissions, not recordings of an operational sonde.
 Their test position is `49.7559 N, 2.3522 E`, approximately 100 km north of
-Paris, which makes GeoNav distance and bearing checks meaningful.
+Paris, which makes the QR Map position easy to check on a phone map.
 Use only a frequency permitted by the Flipper's configured region.
 
 Start with the Flipper several metres from the radio. A bench transmitter

@@ -1,9 +1,10 @@
+/* Modified by AislanJefferson for KLEANFW, 2026 (see git history). */
 /* Decoded fields used by the Sonde MRZ overlay. */
 #ifndef SONDE_INFO_H
 #define SONDE_INFO_H
 #include <stdint.h>
 
-/* The whole structure goes to GeoNav and comes back on EXIT. */
+/* Key 7 hands QR Map latS, lonS and id (KLEANFW has no GeoNav). */
 typedef struct {
     char     id[12];
     int32_t  latS, lonS;    /* centi-arcseconds, + north / east */

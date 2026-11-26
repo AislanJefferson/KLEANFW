@@ -1,3 +1,5 @@
+/* Modified by AislanJefferson for KLEANFW, 2026 (see git history). */
+
 /* Copyright 2026 — Apache-2.0
  * Sonde M10: decode standard Meteomodem M10 frames on PA4 at 19.2 kHz.
  */
@@ -5,14 +7,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "../app_api.h"
-#include "../geonav_handoff.h"
 #include "sondem10_assets.h"
 #include "sonde_info.h"
 #include "decm10.c"
 
-GEONAV_ASSERT_SONDE_PREFIX(sonde_info_t);
-_Static_assert(offsetof(sonde_info_t, tRaw) == APP_HANDOFF_MAX,
-               "every displayed field must travel through GeoNav and back");
+/* Key 7 hands QR Map the position and the ID (KLEANFW has no GeoNav). */
+_Static_assert(offsetof(sonde_info_t, lonS) == offsetof(sonde_info_t, latS) + 4u &&
+               8u + sizeof(((sonde_info_t *)0)->id) <= APP_HANDOFF_MAX,
+               "QR Map hand-off must fit the mailbox");
 
 void *memcpy(void *d, const void *s, size_t n)
 {
@@ -267,15 +269,22 @@ static void draw(const char *s)
     g.A->print_tiny(str + 1, (uint8_t)str[0], 49, false, true);
 }
 
-/* One new key press (EXIT and a successful GeoNav handoff leave listen). */
+/* One new key press (EXIT and a successful QR Map hand-off leave listen). */
 static bool handleKey(uint8_t key)
 {
     if (key == APP_KEY_F) { g.fArm = !g.fArm; return false; }
     const bool reverse = g.fArm;
-    g.fArm = false;              /* any other key disarms F, MENU included */
-    if (key == APP_KEY_MENU)
-        return (g.info.flags & SONDE_HAS_POS) != 0u &&
-               g.A->handoff(GEONAV_APP_NAME, &g.info, APP_HANDOFF_MAX);
+    g.fArm = false;              /* any other key disarms F, 7 included */
+    if (key == APP_KEY_7) {      /* QR Map: latitude, longitude, then the ID */
+        if (!(g.info.flags & SONDE_HAS_POS)) return false;
+        int32_t m[2 + sizeof g.info.id / 4];
+        m[0] = g.info.latS;
+        m[1] = g.info.lonS;
+        memcpy(m + 2, g.info.id, sizeof g.info.id);
+        if (g.A->handoff("QR Map", m, sizeof m)) return true;
+        g.A->af_capture_open();  /* handoff() closed it before looking QR Map up */
+        return false;
+    }
     switch (key) {
         case APP_KEY_1: g.cfg.spk = !g.cfg.spk; rxAudio(); break;
         case APP_KEY_2: {
@@ -364,7 +373,10 @@ __attribute__((section(".text.entry"), used))
 void app_main(const app_api_t *api)
 {
     char ui[UI_SIZE] __attribute__((aligned(4)));
-    g.A = api; g.prevKey = APP_KEY_INVALID; api->led(false);
+    g.A = api; api->led(false);
+    /* The loader does not wait for a key release: a key still held at launch
+     * (EXIT, coming back from QR Map) is not a press. */
+    g.prevKey = api->get_key();
     api->asset_read(0, ui, UI_SIZE);
 
     api->af_capture_open();
@@ -386,9 +398,6 @@ void app_main(const app_api_t *api)
     applyAtt();
     tune();                      /* on the saved offset; sets the audio path too */
     api->delay_ms(50);
-    /* Back from GeoNav: show the last frame again. */
-    if (api->handoff_read(&g.info, APP_HANDOFF_MAX, NULL) == (int16_t)APP_HANDOFF_MAX)
-        g.nOk = 1u;
     listen(ui);
     if (g.cfg.offSteps) { g.cfg.offSteps = 0; tune(); }
     api->bk_write(BK_REG_13, r13);

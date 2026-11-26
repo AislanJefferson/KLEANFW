@@ -1,5 +1,7 @@
 # Sonde RS41
 
+<!-- Modified by AislanJefferson for KLEANFW, 2026 (see git history). -->
+
 Receive-only overlay application for standard Vaisala RS41 radiosondes. It
 samples the BK4829 AF output on PA4, validates RS41 STATUS and position
 sub-blocks, and displays the serial number, position, altitude, vertical
@@ -8,8 +10,9 @@ speed, the horizontal speed and heading, and the sonde's battery voltage.
 ## Status
 
 Version 0.8 implements the common 320-byte RS41 frame at 4800 bit/s, in its
-classic GPS layout and in the newer multi-GNSS layout, opens GeoNav on
-`MENU`, and shows the position as a QR code with QR Map on `7`. The parser,
+classic GPS layout and in the newer multi-GNSS layout, and shows the
+position as a QR code with QR Map on `7` (KLEANFW has no GeoNav: `MENU`
+does nothing). The parser,
 CRC path,
 normal RF polarity, and inverted RF polarity have synthetic host tests, and
 `test/model_rx.py` runs the demodulator through a model of the radio's RAW
@@ -99,7 +102,6 @@ version 0.7).
 | `4` | Restore the VFO frequency |
 | `5` | Decode beep on/off, saved |
 | `7` | Show the position as a QR code in QR Map (Google Maps, Apple Maps, `geo:`, OpenStreetMap or text; the serial beside it) once a position is decoded; its `EXIT` starts this app again, with an empty screen |
-| `MENU` | Open GeoNav (bearing, distance from the APRS position) once a position is decoded; its `EXIT` comes back here with the last frame |
 | `EXIT` | Quit |
 
 ## Supported frame

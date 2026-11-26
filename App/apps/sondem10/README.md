@@ -1,5 +1,7 @@
 # Sonde M10
 
+<!-- Modified by AislanJefferson for KLEANFW, 2026 (see git history). -->
+
 Receive-only overlay application for standard Meteomodem M10 radiosondes. It
 samples the BK4829 AF output on PA4, validates the M10 checksum, and displays
 the serial number, GPS position, altitude, outside temperature, relative
@@ -8,10 +10,14 @@ humidity, vertical speed, horizontal speed, and heading.
 ## Status
 
 Version 0.6 implements the standard M10 `0x9F` telemetry frame, outside
-temperature and humidity conversion, and the GPS velocity, and opens GeoNav
-on `MENU`. The parser and soft-input path have a synthetic host
+temperature and humidity conversion, and the GPS velocity, and shows the
+position as a QR code with QR Map on `7`. The parser and soft-input path have a synthetic host
 test. Live reception has also been validated in the field with an operational
 M10 radiosonde transmitted from Trappes, France.
+
+KLEANFW: key 7 opens [QR Map](../qrmap/README.md) at once in place of
+F4HWN's GeoNav (`MENU`), which KLEANFW does not ship. Leaving for QR Map
+ends this app: the last frame is not shown again on return.
 
 Not implemented yet:
 
@@ -45,7 +51,7 @@ samples per chip. The decoder DPLL tracks this small difference.
 | `3` / `F`+`3` | Cycle attenuation forward / backward |
 | `4` | Restore the VFO frequency |
 | `5` | Decode beep on/off, saved |
-| `MENU` | Open GeoNav (bearing, distance from the APRS position) once a position is decoded; its `EXIT` comes back here with the last frame |
+| `7` | Show the position as a QR code in QR Map (Google Maps, Apple Maps, `geo:`, OpenStreetMap or text; the serial beside it) once a position is decoded; its `EXIT` starts this app again, with an empty screen |
 | `EXIT` | Quit |
 
 ## Supported frame

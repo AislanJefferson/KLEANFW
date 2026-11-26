@@ -1,10 +1,11 @@
+/* Modified by AislanJefferson for KLEANFW, 2026 (see git history). */
 /* Decoded fields used by the Sonde M10 overlay. */
 #ifndef SONDE_INFO_H
 #define SONDE_INFO_H
 #include <stdint.h>
 
-/* The first APP_HANDOFF_MAX (32) bytes go to GeoNav and come back on EXIT:
- * every field the screen shows lies there, the decoder inputs after them. */
+/* Every field the screen shows comes first, the decoder inputs after them.
+ * Key 7 hands QR Map latS, lonS and id (KLEANFW has no GeoNav). */
 typedef struct {
     char     id[12];
     int32_t  latS, lonS;    /* centi-arcseconds, + north / east */

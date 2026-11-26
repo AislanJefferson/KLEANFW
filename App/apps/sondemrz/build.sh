@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
+# Modified by AislanJefferson for KLEANFW, 2026 (see git history).
 # Build one Sonde MRZ overlay through the common application packer.
 set -euo pipefail
 
 APP="$(basename "$PWD")"
 APP_NAME="Sonde MRZ"
-APP_VER="0.4"
+APP_VER="0.4-klean"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}
 OUT="${APP_NAME// /}"
