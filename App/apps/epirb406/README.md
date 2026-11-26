@@ -70,7 +70,7 @@ Keys (UV-K5 and UV-K1):
 | 5 | Back to 406.000 MHz |
 | 1 | Speaker on/off, saved; off by default |
 | 0 | Clear all five messages and the counters |
-| 7 | Position as a QR code: after MENU confirms, QR Map shows the selected message's position, exactly as decoded; EXIT there brings you back (see [Position as a QR code](#position-as-a-qr-code)) |
+| 7 | Position as a QR code: QR Map shows the selected message's position at once, exactly as decoded; EXIT there brings you back (see [Position as a QR code](#position-as-a-qr-code)) |
 | 8 | Homing on 121.5 MHz: not available in KLEANFW (no `vfo_stage`), does nothing |
 | 9 | Same on 243 MHz: not available in KLEANFW |
 | any key, lamp blinking | Acknowledges the decode alarm (v3.6) and does nothing else |
@@ -159,9 +159,9 @@ Google Maps (the default, Android and iPhone), Apple Maps, an Android map app
 (`geo:`), OpenStreetMap, or as plain decimal degrees.
 
 1. Nothing happens without a decoded message with a position.
-2. A confirmation page (`POSITION AS A QR CODE`, `THEN QR MAP`,
-   `MENU OK   OTHER KEY NO`) comes first, as for 8 / 9: leaving the app clears
-   the decoded messages, so a stray key press must not do it.
+2. KLEANFW opens QR Map at once, with no confirmation page (F4HWN asks for
+   MENU first), as APRS RX and the sonde apps do: leaving the app clears the
+   decoded messages.
 3. The message is the decoded record itself, 24 bytes from `latS`: latitude
    and longitude in centi-arcseconds, then the 15-hex ID, which QR Map shows
    beside the code. Nothing is converted or rounded on the way: the decoder

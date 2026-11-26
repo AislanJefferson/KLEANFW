@@ -3,7 +3,8 @@
 QR Map shows a position that another app hands over as a QR code on the
 radio's screen. A phone scans it and opens the position on a map, so a
 received position goes to the phone without typing a digit. In KLEANFW,
-APRS RX and EPIRB 406 send it (key 7, then MENU); any app can do the same (see
+APRS RX, EPIRB 406 and the Sonde M10, M20, MRZ and RS41 apps send it (key 7,
+at once); any app can do the same (see
 [Hand-off message](#hand-off-message)).
 
 Imported from F4HWN's firmware and adapted for KLEANFW. Needs app API level 3
@@ -11,7 +12,7 @@ Imported from F4HWN's firmware and adapted for KLEANFW. Needs app API level 3
 
 ## Using it
 
-1. In APRS RX, show a frame with a position, press 7, then MENU to confirm.
+1. In APRS RX, show a frame with a position and press 7 (no confirmation).
    This closes APRS RX: its received frames are lost and nothing is received
    while the code is on screen.
 2. QR Map opens with the code on the left and, on the right, the format, the
@@ -120,8 +121,8 @@ Needs a host C compiler, python3, and the `qrcode`, `opencv-python` and
   and key, the text beside them, the saved format, the return hand-off, the
   "no position" page, the labels, a key still held at launch, and the rounding
   of every case against exact fractions. Through the real APRS RX code on a
-  stub API (`../../aprsrx/test/host_qr.c`), received frames go from key 7 and
-  MENU to the code: each one holds the position of the frame, rounded to 1e-6
+  stub API (`../../aprsrx/test/host_qr.c`), received frames go from key 7 to
+  the code: each one holds the position of the frame, rounded to 1e-6
   degree, with the source callsign as the label.
 
 ## Credits

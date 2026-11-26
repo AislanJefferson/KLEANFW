@@ -63,22 +63,17 @@ for name, s in UI:
     ui_size += len(s) + 1 + pad
 a.const("UI_SIZE", ui_size)                 # the UI block read by draw()
 # Pages drawn by page(): NUL-separated lines, each block word-aligned.
-def page(name, lines, tail=(), size=0):
-    blob = "\0".join(list(lines) + list(tail)) + "\0"
+def page(name, lines):
+    blob = "\0".join(lines) + "\0"
     blob += "\0" * (-len(blob) % 4)
-    blob += "\0" * max(0, size - len(blob))   # pad a hand-off page to ASK_SIZE
     a.text("T_" + name, blob[:-1])          # text() adds the last NUL
     if name == "HELP":
         a.const("HELP_SIZE", len(blob))
         a.const("HELP_LINES", len(lines))
     return len(blob)
 
-# 7: the hand-off confirmation, then the handoff() name. F4HWN's keys 8 / 9
+# 7 opens QR Map at once, without a confirmation page. F4HWN's keys 8 / 9
 # (Sig Finder) are left out: KLEANFW has no vfo_stage.
-QR = ["POSITION AS A QR CODE", "THEN QR MAP", "", "MENU OK   OTHER KEY NO"]
-ask_size = page("ASKQR", QR, tail=["QR Map"])
-a.const("ASK_SIZE", ask_size)
-a.const("ASK_LINES", len(QR))
 # MENU: the help page.
 help_size = page("HELP", [
     "UP/DN  SCROLL, MESSAGE",
@@ -89,7 +84,6 @@ help_size = page("HELP", [
     "7      QR MAP",
     "EXIT   QUIT",
 ])
-assert ask_size <= help_size                # both pages share handleKey()'s buffer
 assert help_size <= 184                      # handleKey()'s stack frame: +24 B of code at 192
 a.const("T_TITLE_CHARS", len(TITLE))
 a.table("T_PROTO", proto_names())           # 16 location, then 8 user protocols

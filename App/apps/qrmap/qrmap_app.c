@@ -23,8 +23,9 @@
  *   bytes 0-3   latitude,  int32, centi-arcseconds, north positive (+-90 degrees)
  *   bytes 4-7   longitude, int32, centi-arcseconds, east positive (+-180 degrees)
  *   bytes 8-31  optional label, ASCII, up to the message end or a NUL
- * APRS RX sends the position of the frame shown (key 7, then MENU), with the
- * source callsign as the label, which is shown beside the code, not encoded.
+ * APRS RX sends the position of the frame shown (key 7), with the source
+ * callsign as the label (EPIRB 406 and the sonde apps: their ID), which is
+ * shown beside the code, not encoded.
  * Shorter than 8 bytes, out of range, or launched from the Apps menu: a
  * "no position" page.
  *

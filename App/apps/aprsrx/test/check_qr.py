@@ -74,12 +74,11 @@ GOOD = [
 ]
 for view in (COMPACT, SCROLL):
     for name, frame, lat, lon in GOOD:
-        lines = run([f(frame), *k("7M")], view)
-        check(f"{name} prompt", any(l.endswith(" MENU=QR") for l in lines), f"view {view}")
+        lines = run([f(frame), *k("7")], view)
         got = handoff(lines)
         check(f"{name} message", got == ("QR Map", lat, lon, "F4HWN"), f"view {view}: {got}")
 
-# Nothing that is not a usable position opens the prompt.
+# Nothing that is not a usable position opens QR Map.
 BAD = [
     ("minutes 60", pos_frame("!4860.00N/00216.25E-")),
     ("lon minutes 60", pos_frame("!4850.90N/00260.25E-")),
@@ -96,8 +95,7 @@ BAD = [
 ]
 for view in (COMPACT, SCROLL):
     for name, frame in BAD:
-        lines = run([f(frame), *k("7M")], view)
-        check(f"{name} no prompt", not any("MENU=QR" in l for l in lines), f"view {view}")
+        lines = run([f(frame), *k("7")], view)
         check(f"{name} no hand-off", handoff(lines) is None, f"view {view}")
 
 A = pos_frame("!4850.90N/00216.25E-", "F4AAA")
@@ -105,41 +103,41 @@ B = pos_frame("!1000.00S/02000.00W-", "F4BBB-12")
 A_POS = ("QR Map", cas(48, 50, 90), cas(2, 16, 25), "F4AAA")
 B_POS = ("QR Map", cas(10, 0, 0, True), cas(20, 0, 0, True), "F4BBB-12")
 
-# Any other key cancels and does not act: key 2 would clear the frames.
-lines = run([f(A), *k("72"), *k("7M")])
-check("cancel keeps the frame", handoff(lines) == A_POS, f"{handoff(lines)}")
-lines = run([f(A), *k("7X"), *k("M")])
-check("EXIT only cancels", handoff(lines) is None and lines[-1] == "R", f"{lines[-3:]}")
+# 7 opens QR Map at once; other keys keep their own job and do not open it.
+lines = run([f(A), *k("1"), *k("7")])
+check("7 after another key", handoff(lines) == A_POS, f"{handoff(lines)}")
 lines = run([f(A), *k("M")])
-check("MENU alone does nothing", handoff(lines) is None)
+check("MENU does nothing", handoff(lines) is None)
+lines = run([f(A), *k("X")])
+check("EXIT quits", handoff(lines) is None and lines[-1] == "R", f"{lines[-3:]}")
 
-# A new frame withdraws the question; 7 then applies to the new frame.
-lines = run([f(A), *k("7"), f(B), *k("M")])
-check("new frame cancels", handoff(lines) is None, f"{handoff(lines)}")
-lines = run([f(A), *k("7"), f(B), *k("M"), *k("7M")])
-check("then the new frame", handoff(lines) == B_POS, f"{handoff(lines)}")
+# A new frame: 7 applies to the frame shown, the newest.
+lines = run([f(A), f(B), *k("7")])
+check("the new frame", handoff(lines) == B_POS, f"{handoff(lines)}")
 
 # The frame on screen is the one sent, also an older one.
-lines = run([f(A), f(B), *k("D"), *k("7M")])
+lines = run([f(A), f(B), *k("D"), *k("7")])
 check("older frame", handoff(lines) == A_POS, f"{handoff(lines)}")
-lines = run([f(A), f(B), *k("D"), *k("U"), *k("7M")])
+lines = run([f(A), f(B), *k("D"), *k("U"), *k("7")])
 check("back to the newest", handoff(lines) == B_POS, f"{handoff(lines)}")
 
 # QR Map not installed: capture reopened, frames kept, a notice, keys alive.
-lines = run([f(A), *k("7M"), *k("1"), *k("7")], installed=False)
-check("missing: tried", "H- QR Map" in lines, f"{lines}")
-check("missing: capture reopened", lines.count("O") == 2 and "E" not in lines, f"{lines}")
+# The key after the notice only hides it (key 2 would clear the frames).
+lines = run([f(A), *k("7"), *k("2"), *k("7")], installed=False)
+check("missing: tried twice", lines.count("H- QR Map") == 2, f"{lines}")
+check("missing: capture reopened", lines.count("O") == 3 and "E" not in lines, f"{lines}")
 check("missing: notice", any(l.endswith(" NO QR Map") for l in lines), f"{lines}")
 after = lines[lines.index("H- QR Map"):]
 check("missing: frame kept", any(l.startswith("B -89dBm") for l in after), f"{after}")
-check("missing: prompt again", any(l.endswith(" MENU=QR") for l in after), f"{after}")
+between = after[1:after.index("H- QR Map", 1)]
+check("missing: key 2 only hides the notice", "B -89dBm" in between, f"{between}")
 check("missing: exits", lines[-1] == "R")
 
 # Coming back from QR Map with EXIT still down must not quit APRS RX.
-lines = run(["^:X", f(A), *k("7M")])
+lines = run(["^:X", f(A), *k("7")])
 check("held EXIT ignored", handoff(lines) == A_POS, f"{lines[-4:]}")
 
 if fails:
     sys.exit(f"FAIL aprsrx hand-off: {fails} checks")
 print(f"APRS RX -> QR Map: {len(GOOD)} positions and {len(BAD)} rejections in both views, "
-      "confirmation, cancel, new frame, older frame, app missing, held EXIT OK")
+      "key 7 at once, new frame, older frame, app missing, held EXIT OK")
