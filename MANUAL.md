@@ -1353,16 +1353,19 @@ Requer **os dois** apps `FMVFO.app` e `FMMemory.app`. Sem eles, F+0 dá bipe dup
 | **0–9** | Digita a frequência (VFO) ou o canal com 2 dígitos (Memória) |
 | **UP/DOWN** | Sintonia ou canal |
 | **\*** | Scan manual (UP/DOWN continua em qualquer direção) |
-| **MENU** | Menu FM: Live RSSI e Save (VFO) ou Name/Delete (Memória) |
+| **MENU** | Menu FM: Save e Live RSSI (VFO, abre no Save) ou Live RSSI/Name/Delete (Memória). Com o menu aberto só UP/DOWN, MENU e EXIT funcionam |
 | **EXIT** | Apaga dígito / fecha menu / para o scan / sai |
 | **F+1** ou segurar **1** | Troca a banda (4 bandas configuráveis) |
 | **F+3** ou segurar **3** | Alterna FM VFO ↔ FM Memória |
-| **F+\*** ou segurar **\*** | Scan automático (confirme com MENU ou \*) |
+| **F+\*** ou segurar **\*** | Scan automático (confirme com MENU ou \*); durante um scan, para o scan |
 | **F+0** ou segurar **0** | Sai |
 
 ### 15.3 Recursos
 
 - 48 memórias com nome (renomear e apagar pelo menu, editor da seção 23).
+- **Salvar no VFO**: MENU, MENU abre o Ch Save e um terceiro MENU grava. O Ch Save abre na memória que já tem a frequência, senão na primeira vazia, senão no CH-01. UP/DOWN ou 2 dígitos escolhem outra. Uma memória ocupada aparece como `05 - NOME` (ou `05 - 101.5` sem nome); `CH-05` é memória vazia. Salvar de novo a mesma frequência mantém o nome.
+- O cabeçalho do VFO mostra `VFO CH05` quando a frequência sintonizada já está salva. F+3 fica no VFO se a banda não tem memórias.
+- O scan automático para no fim da banda selecionada.
 - **LIVE RSSI**: medidor de sinal atualizado continuamente.
 - Se o canal de rádio selecionado receber sinal, o FM cede a tela e o áudio. Cinco segundos após o fim da recepção, o FM volta no mesmo modo, banda e frequência.
 

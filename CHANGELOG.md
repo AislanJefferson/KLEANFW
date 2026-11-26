@@ -17,8 +17,49 @@ first. The GOGUFW history (upstream, by Gogu-Qs) is kept unchanged below them.
   120,408 / 120,832 bytes (+200 B, 424 bytes free); RAM 15,648 bytes (+8 B).
   Code review and builds only, not radio-tested.
 
+### Changed
+
+- FM VFO 3.6.2: MENU opens on **SAVE**, so MENU, MENU opens Ch Save and a
+  third MENU stores (it took MENU, DOWN, MENU, MENU); LIVE RSSI is one
+  UP/DOWN away. Ch Save offers the memory that already
+  holds this frequency, else the first empty one, else CH-01, and shows what
+  an occupied memory holds (`05 - NAME` or `05 - 101.5`). The header reads
+  `VFO CH05` when the tuned frequency is stored. F+3 stays in the VFO when
+  the band has no memory instead of loading FM Memory, which jumped straight
+  back. Code review and builds only, not radio-tested.
+
 ### Fixed
 
+- FM VFO / FM Memory 3.6.2:
+  - Auto scan stopped at 108.0 MHz in every band: on 76-90 and 64-76 it
+    wrapped and filled the 48 memories with repeated stations (or never
+    ended with no station). It now stops at the band's top.
+  - Ch Save no longer writes the name `CH-nn`: storing the same frequency
+    again keeps the memory's name, and a new station gets a blank name
+    (still shown as CH-nn), which never erases the names flash sector.
+  - F+\* (or a long \*) during a scan stops it, instead of asking "saved
+    channels will be erased" and then only stopping the scan.
+  - The RSSI meter shows no bars while it has no reading (after a tune and
+    during a scan) instead of full bars.
+  - The open menu is modal: digits, \*, F and long presses no longer act
+    behind it (in FM Memory, digits behind CH-DEL changed the channel to be
+    deleted). Long 1, 3 and \* do nothing behind Ch Save, LIVE RSSI, the
+    auto-scan question or the name editor; long 0 still quits.
+  - A half-typed frequency/channel is dropped by any other key, F+key or
+    long press, so a scan no longer shows `88-.-` and EXIT stops the scan at
+    once.
+  - The key-release wait after a mode switch is 100 ms as documented
+    (it was ~20 ms).
+  - A memory at the very top of the band (108.0, 90.0, 76.0) is no longer
+    hidden.
+  - FM VFO 4,088 / 4,096 bytes (was 4,096), FM Memory 3,824 / 4,096 bytes
+    (was 3,856). Code review and builds only, not radio-tested.
+- Firmware: at power-on, a saved FM Memory channel at the very top of the band
+  (108.0, 90.0, 76.0) is kept, like the FM Memory app now does. Before, the
+  boot moved to the next memory, or left memory mode if it was the only one.
+  Same image size (120,408 bytes, one instruction changes). The unused built-in
+  FM scan now also stops at the band's top (not compiled). Code review and
+  build only, not radio-tested.
 - APRS Edit: key 1 in the comment editor now also gives `-` (`. , ? ! -`).
   Host-tested, not radio-tested. The firmware image is unchanged.
 
