@@ -69,19 +69,18 @@ Requisitos: Docker com a imagem `uvk1-uvk5v3` (a mesma do firmware) e
 
 | Modelo | `-m` | Arquivo de entrada (raiz do repo) | Versão no bloco | Imagem gerada |
 |---|---|---|---|---|
-| UV-K1 | `k1` | `f4hwn.k1.stock_singleboot_v7.00.15.bin` | **7.03.05** | `build/stockpatch/f4hwn.k1.stock.v7.03.05.bin` |
-| UV-K5 V3 | `k5v3` (ou `k5`) | `f4hwn.k5.stock_singleboot_v7.00.15.bin` | 7.00.15 | `build/stockpatch/f4hwn.k5v3.stock.v7.00.15.bin` |
+| UV-K1 | `k1` | `K1ENG_v7.03.05_publish.bin` | **7.03.05** | `build/stockpatch/f4hwn.k1.stock.v7.03.05.bin` |
+| UV-K5 V3 | `k5v3` (ou `k5`) | `K5ENG_v7.00.15_publish.bin` | 7.00.15 | `build/stockpatch/f4hwn.k5v3.stock.v7.00.15.bin` |
 
-O arquivo do K1 tem `v7.00.15` no nome, mas o firmware dentro dele é a 7.03.05.
 Use a imagem do modelo do rádio: o script recusa um arquivo do outro modelo e
 diz qual é o certo.
 
 ```sh
 # UV-K1
-tools/stockpatch/make_multiboot.sh f4hwn.k1.stock_singleboot_v7.00.15.bin -m k1
+tools/stockpatch/make_multiboot.sh K1ENG_v7.03.05_publish.bin -m k1
 
 # UV-K5 V3, com saída escolhida
-tools/stockpatch/make_multiboot.sh f4hwn.k5.stock_singleboot_v7.00.15.bin -m k5v3 -o stock-k5v3.bin
+tools/stockpatch/make_multiboot.sh K5ENG_v7.00.15_publish.bin -m k5v3 -o stock-k5v3.bin
 ```
 
 O script compila o stub, confere o arquivo contra o modelo, gera a imagem e

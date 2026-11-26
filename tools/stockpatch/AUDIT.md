@@ -1,9 +1,8 @@
 # Auditoria do stock v7.00.15 + stub de boot
 
-Análise estática do stock do UV-K5 V3 (`K5ENG_v7.00.15_publish.bin`, hoje
-`f4hwn.k5.stock_singleboot_v7.00.15.bin`; o UV-K1 está no §15), feita com
-`tools/stockpatch/disasm.sh` (objdump do Docker `uvk1-uvk5v3`) e com o
-decodificador de `tools/stockpatch/patch_stock.py`. Tudo o que está aqui foi
+Análise estática do stock do UV-K5 V3 (`K5ENG_v7.00.15_publish.bin`; o UV-K1
+está no §15), feita com `tools/stockpatch/disasm.sh` (objdump do Docker
+`uvk1-uvk5v3`) e com o decodificador de `tools/stockpatch/patch_stock.py`. Tudo o que está aqui foi
 reproduzido neste repositório; os endereços são os da imagem já decifrada.
 
 ## 1. Identidade e formato
@@ -417,7 +416,7 @@ do v7.00.15 não foi seguido.
 
 ## 15. UV-K1 (stock 7.03.05)
 
-O arquivo `f4hwn.k1.stock_singleboot_v7.00.15.bin` é outro build. Até o §14,
+O arquivo `K1ENG_v7.03.05_publish.bin` é outro build. Até o §14,
 a análise valeu para o do K5 V3, que também foi o arquivo testado no rádio do
 usuário, um K1.
 

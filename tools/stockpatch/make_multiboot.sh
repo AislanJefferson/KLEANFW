@@ -40,8 +40,8 @@ Supported firmware:
   k5v3  UV-K5 V3  version block 7.00.15
 
 Examples:
-  tools/stockpatch/make_multiboot.sh f4hwn.k1.stock_singleboot_v7.00.15.bin -m k1
-  tools/stockpatch/make_multiboot.sh f4hwn.k5.stock_singleboot_v7.00.15.bin -m k5v3 -o /tmp/stock.bin
+  tools/stockpatch/make_multiboot.sh K1ENG_v7.03.05_publish.bin -m k1
+  tools/stockpatch/make_multiboot.sh K5ENG_v7.00.15_publish.bin -m k5v3 -o /tmp/stock.bin
 TXT
 }
 
